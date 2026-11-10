@@ -1,0 +1,10 @@
+Adversarial bandit convex optimisation with regret d^(3/2) sqrt(n) up to logarithms
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This project contains code taken from Maiti2026Power (Rémy Degenne) and from Tau Ceti (The Tau Ceti
+contributors), both under the Apache License, Version 2.0, and is built on Mathlib, Copyright (c) the respective
+Mathlib authors, Apache License 2.0. The code taken sits in AdversarialBco/Gauss/MaureyPisier.lean, whose header
+carries both copyright lines and names the source files; the sources, commits and changes are listed in
+README.md, section Built on.
+
+Neither Maiti2026Power nor Tau Ceti has a NOTICE file.

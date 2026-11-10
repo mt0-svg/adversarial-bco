@@ -1,0 +1,42 @@
+name = "adversarial-bco"
+version = "1.0.0"
+description = "Adversarial bandit convex optimisation: minimax regret at most a constant times d^(3/2) sqrt(n) log^(3/2)(n diam K)"
+keywords = ["math", "formal verification", "bandit convex optimisation", "online learning", "minimax regret"]
+license = "Apache-2.0"
+licenseFiles = ["LICENSE", "NOTICE"]
+preferReleaseBuild = true
+releaseRepo = "https://github.com/mt0-svg/adversarial-bco"
+defaultTargets = ["Statement", "Main", "Challenge", "Solution"]
+
+[leanOptions]
+pp.unicode.fun = true
+relaxedAutoImplicit = false
+autoImplicit = false
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.34.1"
+
+# The frozen statements: Corollary 1.2 (Statement), Theorem 1.1, Lemma 7.13 and Corollary 1.2 with their constants
+# (StatementExplicit), Theorem 3.1 and Proposition 2.2 with their constants (StatementBody).
+[[lean_lib]]
+name = "Statement"
+roots = ["AdversarialBco.Statement", "AdversarialBco.StatementExplicit", "AdversarialBco.StatementBody"]
+
+# The development and the theorems.
+[[lean_lib]]
+name = "Main"
+roots = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Body2.Main"]
+globs = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Explicit.+", "AdversarialBco.Body2.+", "AdversarialBco.Lemmas", "AdversarialBco.Body", "AdversarialBco.Body.+", "AdversarialBco.Gauss.+"]
+
+# The statements with `sorry`, which nothing imports, and the modules that prove them: the pairs Comparator checks
+# (config.json: Challenge and Solution; config-explicit.json: ChallengeExplicit and AdversarialBco.Explicit;
+# config-body.json: ChallengeBody and AdversarialBco.Body2.Main).
+[[lean_lib]]
+name = "Challenge"
+roots = ["AdversarialBco.Challenge", "AdversarialBco.ChallengeExplicit", "AdversarialBco.ChallengeBody"]
+
+[[lean_lib]]
+name = "Solution"
+roots = ["AdversarialBco.Solution"]

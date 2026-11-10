@@ -1,0 +1,1064 @@
+\documentclass[11pt]{amsart}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\input{glyphtounicode}
+\pdfgentounicode=1
+\usepackage{amsmath,amssymb,mathrsfs}
+\usepackage[table]{xcolor}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[margin=1in]{geometry}
+\usepackage{url}
+\usepackage[pdfauthor={311859884+mt0-svg@users.noreply.github.com},
+            pdftitle={Adversarial bandit convex optimisation with regret d\textasciicircum(3/2) sqrt(n) up to logarithms},
+            pdfkeywords={bandit convex optimisation, adversarial bandits, minimax regret, information ratio, exploration by optimisation, Gaussian exploration},
+            bookmarksnumbered=true]{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+\emergencystretch=3em
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\numberwithin{equation}{section}
+
+\newcommand{\repo}{https://github.com/mt0-svg/adversarial-bco}
+% robust, so that amsart does not uppercase the address in the author line
+\DeclareRobustCommand{\authorlink}{\href{\repo/issues/new/choose}{\nolinkurl{311859884+mt0-svg@users.noreply.github.com}}}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\cK}{\mathcal{K}}
+\newcommand{\cJ}{\mathcal{J}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\cG}{\mathscr{G}}
+\newcommand{\cF}{\mathscr{F}}
+\newcommand{\Reg}{\mathfrak{R}}
+\newcommand{\BReg}{\mathfrak{BR}}
+\newcommand{\diam}{\operatorname{diam}}
+\newcommand{\dist}{\operatorname{dist}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Mills}{\operatorname{M}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\ip}[1]{\langle #1\rangle}
+\newcommand{\lnp}{\ln_{+}}
+\newcommand{\fbar}{\bar f}
+\newcommand{\Fbar}{\bar F}
+
+\begin{document}
+
+\title[Adversarial bandit convex optimisation]{Adversarial bandit convex optimisation with regret \texorpdfstring{$d^{3/2}\sqrt{n}$}{d^{}(3/2) sqrt(n)} up to logarithms}
+\author{\authorlink}
+\thanks{2020 {\em Mathematics Subject Classification.} Primary: 68Q32; Secondary: 90C25, 62L05, 03B35.\\\indent
+{\em Key words and phrases.} Bandit convex optimisation; adversarial bandits; minimax regret; information ratio; exploration by optimisation; Gaussian exploration.}
+
+\begin{abstract}
+In adversarial bandit convex optimisation a learner plays points of a convex body in $d$ dimensions for $n$ rounds against convex losses with values in $[0,1]$ chosen in advance, observing only the loss at the point played. When the body contains a unit ball and has diameter $D$, we give a learner whose expected regret, like the minimax regret, is at most a constant times $d^{3/2}\sqrt n\,\ln^{3/2}(nD)$; the best bound known had $d^{5/2}$. The new step is a one-round inequality: for every finitely supported law on convex $n$-Lipschitz losses, some law on the body has regret at most $1/n$ plus the square root of $d^2$ times the variance of the losses under it, up to logarithms, where $d^4$ was known. The learner, exploration by optimisation with the observation replaced by a coin, is explicit.
+\end{abstract}
+
+\maketitle
+
+\definecolor{paperorange}{RGB}{190,90,0}
+\definecolor{leangreen}{RGB}{0,122,61}
+\definecolor{compblue}{RGB}{0,84,166}
+\newcommand{\badge}[2]{\colorbox{#1}{\strut\textcolor{white}{\sffamily\bfseries\small #2}}}
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.5}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.2\textwidth} >{\raggedright\arraybackslash}p{0.7\textwidth}}
+\rowcolor{black!6}
+\multicolumn{2}{>{\raggedright\arraybackslash}p{0.93\textwidth}}{\textit{This is AI-generated research: the results, proofs and code were found and written by AI. Credit goes to all the humans whose work it builds on.}}\\
+\badge{leangreen}{Proved in Lean 4} & Theorem~\ref{thm:explicit}, Corollary~\ref{cor:minimax}, Proposition~\ref{prop:body} and Theorem~\ref{thm:dil}, with their constants, and Lemma~\ref{lem:marg} are proved in Lean~4 with Mathlib, from statements written out from the definitions of the paper, with only the standard axioms; Comparator checks the statements (Section~\ref{sec:formal}). The other numbered statements, except four remarks, are steps of these proofs, each stated as the formal proof proves it (Section~\ref{sec:formal-proved}). The inequalities between explicit numbers that the proofs use are proved in Lean as part of these proofs.\\
+\badge{paperorange}{Proof on paper} & The text proves every lemma, proposition and theorem from undergraduate analysis, except the inequalities between explicit numbers that it marks as checked in Lean, which it states without derivation. Remarks~\ref{lem:sd}, \ref{lem:finite-minimax}, \ref{lem:pinsker} and~\ref{lem:ecg} lie outside the formal proof.\\
+\rowcolor{black!6}
+\multicolumn{2}{>{\raggedright\arraybackslash}p{0.93\textwidth}}{Lean proofs, code and the \TeX{} source: \href{\repo}{\texttt{github.com/mt0-svg/adversarial-bco}}}\\
+\end{tabular}
+\end{center}
+
+\clearpage
+
+\section{Introduction}\label{sec:intro}
+
+
+\subsection{The game and the result}
+
+Let $\cK\subset\R^d$ be a convex body, that is a compact convex set with nonempty interior, and let $\cG(\cK)$ be the set of convex functions $\cK\to[0,1]$. The game lasts $n$ rounds.
+\begin{enumerate}[label=(\arabic*)]
+\item Before the game, an adversary chooses losses $f_1,\dots,f_n\in\cG(\cK)$ and reveals nothing.
+\item In round $t=1,\dots,n$ the learner chooses $x_t\in\cK$, possibly at random, as a function of $x_1,f_1(x_1),\dots,x_{t-1},f_{t-1}(x_{t-1})$ and of its own randomisation, and observes $f_t(x_t)$ and nothing else.
+\end{enumerate}
+The regret of a learner with actions $X_1,\dots,X_n$ against $f=(f_1,\dots,f_n)$ is
+\begin{equation}\label{eq:regret}
+\Reg_n(f)=\E\Bigl[\sum_{t=1}^n f_t(X_t)\Bigr]-\inf_{x\in\cK}\sum_{t=1}^n f_t(x),
+\end{equation}
+the expectation being over the randomisation of the learner only. The infimum need not be attained, since a convex function on $\cK$ need not be lower semicontinuous at the boundary.
+
+The learner of this paper keeps a finite net $\cC$ of a body slightly inside $\cK$ and, in each round, solves one convex program for the law of its action and for a table of loss estimates; it reads the observation only through a coin with success probability $f_t(x_t)$. It is exploration by optimisation \cite{LG21} with the coin of \cite{AG12,XZ25}, and it is stated as Algorithm~\ref{alg:exo} in Section~\ref{sec:explicit}. The theorem bounds its regret against every sequence fixed in advance, and against an adaptive adversary in the weaker form of the pseudo-regret, where the best point is chosen after the expectation.
+
+\begin{theorem}\label{thm:explicit}
+Let $d\ge1$ and $n\ge2$ be integers, $\cK\subset\R^d$ a convex body containing $B(x_0,1)$, $D\ge\diam\cK$, and
+\[
+\beta=1.2\cdot10^9\,d^2\ln(ndD)\ln(2n).
+\]
+The learner of Algorithm~\ref{alg:exo}, run with $\varepsilon=1/(n^2(2\beta)^{1/2})$, $\eta=(8\ln m/(n\beta))^{1/2}$ and $\mathrm{tol}=1/n$, satisfies for every $f\in\cG(\cK)^n$
+\[
+\Reg_n(f)\le6.71+\Bigl(\tfrac12\,\beta\,n\ln m\Bigr)^{1/2}\le6.71+\Bigl(\tfrac12\,\beta\,n\,d\ln\bigl(5n^2(2\beta)^{1/2}D\bigr)\Bigr)^{1/2}
+\]
+and $\Reg_n(f)\le C_X\,d^{3/2}\sqrt n\,\ln^{3/2}(nD)$ with $C_X=1.9\cdot10^5$; here $m\le(5n^2(2\beta)^{1/2}D)^d$ is the size of its net. For $d\ge n$ the last bound follows from $\Reg_n(f)\le n$ alone. The same bounds hold for $\sup_{x\in\cK}\E\sum_t(f_t(X_t)-f_t(x))$ when each $f_t$ is chosen as a function of the earlier actions and coins of the learner.
+\end{theorem}
+
+The learner needs $D$, $x_0$, $n$ and a membership test for the inner body $\cJ$ of Section~\ref{sec:proof}. The learner is explicit and not efficient: the bound on $m$ is exponential in $d$, and each round is a convex program of size polynomial in $m$ (Section~\ref{sec:explicit-cost}, outside the formal proof). The constant $C_0=1.2\cdot10^9$ in $\beta$ is an upper bound for $4\cdot 1.6\cdot10^6\,C_T$, with $C_T=(2+4\ln C_1)/\ln2+48$ and $C_1=52(\pi/2)^{1/2}\frac{17}{16}(1+10^8)$, the constant of the one-round inequality (Section~\ref{sec:body}); and $C_X=1.9\cdot10^5=(27C_0)^{1/2}+10^4$, where $(27C_0)^{1/2}$ comes from the exploration term $(\frac12\beta n\ln m)^{1/2}$, with $C_0$ through $\beta$ and $27/2$ through the logarithm of the size of the net, and $10^4$ covers the additive constant $6.71$.
+
+A policy is a family $\pi=(\pi_1,\dots,\pi_n)$ of maps, $\pi_t$ sending each history $(x_1,o_1,\dots,x_{t-1},o_{t-1})\in(\cK\times[0,1])^{t-1}$ to a probability law on $\cK$. When all its laws are supported by one finite set $\cC\subset\cK$, we call it a \emph{$\cC$-policy}; no measurability is asked of the maps $\pi_t$, and the law of $(x_1,\dots,x_n)$ against $f$ is the law on $\cC^n$ given by the finite product
+\begin{equation}\label{eq:play}
+\Prob_{\pi,f}(y_1,\dots,y_n)=\prod_{t=1}^n\pi_t\bigl(y_1,f_1(y_1),\dots,y_{t-1},f_{t-1}(y_{t-1})\bigr)(\{y_t\}).
+\end{equation}
+Its regret $\Reg_n(\pi,f)$ is \eqref{eq:regret} with this law, and the minimax regret $\Reg_n^\star(\cG(\cK))$ is the infimum, over finite sets $\cC\subset\cK$ and $\cC$-policies $\pi$, of $\sup_{f\in\cG(\cK)^n}\Reg_n(\pi,f)$. An upper bound on it bounds the infimum over any larger class of policies whose law of play is defined. Marginalising the coins of the learner gives a $\cC$-policy with the same law of play (Lemma~\ref{lem:marg}), hence the following bound.
+
+\begin{corollary}\label{cor:minimax}
+Let $\cK\subset\R^d$ be a convex body containing a Euclidean ball of radius $1$ and $D=\diam\cK$. For every $n\ge1$,
+\[
+\Reg_n^\star(\cG(\cK))\le C_X\,d^{3/2}\sqrt n\,\ln^{3/2}(nD).
+\]
+\end{corollary}
+
+Both results rest on a one-round inequality, Proposition~\ref{prop:body}, which is the main contribution of the paper: for a convex body $\cJ$ containing a ball of radius $1/2$ and every finitely supported law $\mu$ on the convex $n$-Lipschitz functions $\cJ\to[0,1]$, some law $\rho$ on $\cJ$ has regret at most $1/n$ plus $(\beta V)^{1/2}$, where $V$ is the variance of the loss under $\rho\otimes\mu$ and $\beta$ is of order $d^2$ up to logarithms. The inequality of \cite[Theorem~3]{Lat20} has $\beta$ of order $d^4\ln(nd/m)$, for losses with strong convexity parameter $m$. The passage from this inequality to a learner is in print, as the next subsection explains.
+
+\subsection{Earlier bounds}
+
+For $d=1$ the minimax regret is of order $\sqrt n$ up to logarithms \cite{BDKP15}, and the first bound polynomial in $d$ times $\sqrt n$ is \cite{BE18}; both go through the minimax theorem and a Bayesian argument, which for \cite{BE18} gives an algorithm with running time exponential in a polynomial of $n$ \cite{BEL21}. The kernel method of \cite{BEL21} has regret $d^{9.5}\sqrt n$ up to logarithms; its version that takes time $\mathrm{poly}(d\ln n)$ per step pays a further factor $\mathrm{poly}(d)\,n^{o(1)}$, and \cite{Lat24} lists it at $d^{10.5}\sqrt n$. Its authors conjecture that $d^{3/2}\sqrt n$ is the right order. The best bound in print for the adversarial problem is $C\,d^{5/2}\sqrt n\ln(nD)$ \cite[Theorem~1]{Lat20}, again by existence. The best polynomial-time bound in print is that of an online Newton method in \cite[Chapter~11]{Lat24}, a refinement of the method of \cite{FHLM24}, whose own bound is $d^{3.5}\sqrt n$: regret of order $d^{2.5}\sqrt n$ times a power of $\ln(1/\delta)$, with probability $1-\delta$, for losses in $[0,1]$ on a body with $B(0,1)\subset\cK\subset B(0,2d)$. In the stochastic version, where one convex function is observed with noise, the regret is at most of order $d^{3/2}\sqrt n$ up to logarithms and lower-order terms, for Lipschitz losses on all of $\R^d$ whose minimiser lies in a known ball of radius $r$, with a further factor $1+r/d$ \cite{LG23} and for bounded losses on a body in a suitable position \cite{FHLM24}; it is at least of order $d^{4/3}\sqrt n$ for $n\ge d^{10/3}$ on the ball, with Gaussian noise \cite{RH26}. The monograph \cite{Lat24} surveys the field.
+
+Theorem~\ref{thm:explicit} lowers the exponent of $d$ in the adversarial bound from $5/2$ to $3/2$. The exponent is new; the explicitness is not. Explicit learners with regret of order $d^{5/2}\sqrt n$ up to logarithms, inefficient in $d$, are in print three times: exploration by optimisation \cite[Section~10]{LG21}, its form in \cite[Section~8.5]{Lat24}, and the adaptive minimax sampling of \cite{XZ25}, which already replaces the observation by a coin and which its authors describe as the first algorithm with a finite running time at that order. What the paper adds is the one-round inequality, Proposition~\ref{prop:body}, with Theorem~\ref{thm:dil} and the dilution behind it. Theorem~\ref{thm:explicit} follows from it by a converter that is in print, exploration by optimisation \cite{LG21}; we prove the converter in full and credit each component where it enters (Section~\ref{sec:explicit}), where \cite{Lat20} goes through minimax duality and a Bayesian argument instead. In the minimax step of a round the compactness is asked of the adversary's side only, a compact set of finite dimension, and no Tychonoff argument enters, where \cite{XZ25} applies Tychonoff's theorem to the learner's side; that finite-dimensional set is the parameterisation of the adversary with Bernoulli rewards of \cite[Appendix, Concave parameterization with Bernoulli reward]{XZ25}, and the closed form of the value of a round (Lemma~\ref{lem:dual}) is the formula given there for a fixed law of play, minimised over that law, with losses in place of rewards. We claim no gain in complexity over \cite{XZ25}. The bound carries a factor $\ln^{3/2}(nD)$ instead of the $\ln(nD)$ of \cite{Lat20}.
+
+\subsection{The proof}
+
+The proof changes the one-round step of \cite{Lat20} and replaces its converter by exploration by optimisation.
+\begin{enumerate}[label=(\arabic*)]
+\item The learner plays in the inner body $\cJ$, on which every loss is $n$-Lipschitz, at a cost of $1$ (Lemma~\ref{lem:inner}, Section~\ref{sec:reduce}).
+\item The class of convex $n$-Lipschitz functions on $\cJ$ satisfies a one-round inequality $\mathrm{(H)}[\alpha,\beta]$, between the regret of an exploratory law and the variance of the losses under it, with $\alpha=1/n$ and $\beta$ of order $d^2\ln(ndD)\ln n$ (Proposition~\ref{prop:body}, Section~\ref{sec:body}), against $d^4\ln(nd/m)$ in \cite[Theorem~3]{Lat20} for a class with strong convexity parameter $m$. This is the new step. It follows from an inequality on $\R^d$ (Theorem~\ref{thm:dil}, Section~\ref{sec:core}) by an extension of the losses with a penalty for leaving $\cJ$, a projection and Gaussian concentration (Appendix~\ref{app:gauss}).
+\item Exploration by optimisation on a net of $\cJ$ turns $\mathrm{(H)}[\alpha,\beta]$ into regret at most $n\alpha$ plus a term of order $(\beta nd\ln(nD))^{1/2}$ and the cost of the net (Theorem~\ref{thm:exo}, Section~\ref{sec:explicit}). The coin makes each round a convex program in finite dimension, a minimax inequality with compactness on one side exchanges the learner and the adversary in that round, and the value of the round is bounded through $\mathrm{(H)}$ and Pinsker's inequality, as in \cite[proof of Theorem~2]{Lat20}.
+\end{enumerate}
+
+The inequality on $\R^d$ is proved with Gaussian exploration. For a temperature $\lambda>0$, the Gaussian $N(b,A)$ that minimises the expected mean loss minus $\lambda\ln\det A^{1/2}$ is the Gaussian variational approximation of the law with density proportional to $e^{-\Fbar/\lambda}$ \cite{OA09,CB13}; its stationarity conditions say that the mean loss is flat on average and has curvature $\lambda A^{-1}$ on average (Lemma~\ref{lem:ec}). For each loss of the family, the decrease from the centre $b$ toward the loss's own minimiser is turned, by Gaussian integration by parts on a half space, into a covariance between the loss and a score whose second moment is bounded independently of the direction and the distance (Lemma~\ref{lem:inf}). The Cauchy and Schwarz inequality then bounds the gap of each loss at $b$ by $d$ times the root mean square of its deviation from the mean loss, up to a logarithm of the Lipschitz constant that enters through the Mills ratio (Lemma~\ref{lem:half}, Proposition~\ref{prop:core}). The integration by parts is the infinitesimal form of the change of measure behind the optimistic surrogate of \cite{BEL21,LG21a}. Finally the regret may be carried by losses of small total weight whose gains are much larger than the floor; the exploratory law mixes a Gaussian at the scale of those gains with a small weight, chosen among the scales by a layer-cake argument that costs a logarithm (Theorem~\ref{thm:dil}).
+
+The exponent $3/2$ is the limit of this route: for the unit ball and $d>256$, \cite[Theorem~12]{BLS25} gives a law on convex losses under which every exploratory law has regret at least $2^{-19}(d/\ln d)$ times the square root of its variance; its authors conclude: ``At least naively, this means that the information-theoretic machinery will not yield a bound on the regret for general bandit convex optimisation that is better than $\tilde O(d^{1.5}\sqrt n)$.'' This is not a lower bound on the regret.
+
+\subsection{Conventions}
+
+Throughout, $|\cdot|$ is the Euclidean norm, $\ip{\cdot,\cdot}$ the inner product, $B(x,r)$ the closed ball, $\ln$ the natural logarithm and $\lnp=\max(\ln,0)$. A law is a Borel probability measure; $N(b,A)$ is the Gaussian law of mean $b$ and covariance $A$, $\varphi$ and $Q$ are the standard Gaussian density and upper tail on $\R$, and $\Mills=Q/\varphi$ is the Mills ratio. Constants written $C$, $C_0$, $C'$ are absolute.
+
+
+\section{The inner body and the one-round inequality}\label{sec:proof}
+
+This section states the two results that the proof of Theorem~\ref{thm:explicit} combines with the converter of Section~\ref{sec:explicit}. For $f\colon\cJ\to\R$ continuous on a compact set $\cJ$ we write $f_\star=\min_{\cJ}f$.
+
+The learner plays on a smaller body, on which every loss is Lipschitz. For a convex body $\cK$ and $n\ge1$ let
+\[
+\cJ=\{x\in\cK: B(x,1/n)\subset\cK\},
+\]
+and for a compact set $\cJ$ let $\cF(\cJ,n)$ be the set of convex functions $f\colon\cJ\to[0,1]$ with $|f(x)-f(y)|\le n|x-y|$ for $x,y\in\cJ$. The next lemma passes from $\cK$ to $\cJ$; it is proved in Section~\ref{sec:reduce}.
+
+\begin{lemma}\label{lem:inner}
+Let $\cK\subset\R^d$ be a convex body containing $B(x_0,1)$, $D=\diam\cK$ and $n\ge2$.
+\begin{enumerate}[label=(\alph*)]
+\item $\cJ$ is a convex body containing $B(x_0,1-1/n)$, and $1\le\diam\cJ\le D$.
+\item For every $f\in\cG(\cK)$ the restriction of $f$ to $\cJ$ lies in $\cF(\cJ,n)$.
+\item For $f_1,\dots,f_n\in\cG(\cK)$, $\inf_{\cJ}\sum_t f_t\le\inf_{\cK}\sum_t f_t+1$.
+\end{enumerate}
+\end{lemma}
+
+On $\cJ$ the regret is controlled by a one-round inequality between the regret of an exploratory law and the variance of the losses under it. For a class $\cF$ of continuous functions on a compact set $\cJ$ and $\alpha,\beta\ge0$, we say that $\cF$ satisfies $\mathrm{(H)}[\alpha,\beta]$ if for every finitely supported probability law $\mu$ on $\cF$ whose mean $\fbar=\int f\,d\mu(f)$ lies in $\cF$ there is a Borel probability law $\rho$ on $\cJ$ with
+\begin{equation}\label{eq:H}
+\int\fbar\,d\rho-\int f_\star\,d\mu(f)\le\alpha+\Bigl(\beta\int\!\!\int\bigl(\fbar(x)-f(x)\bigr)^2\,d\rho(x)\,d\mu(f)\Bigr)^{1/2}.
+\end{equation}
+The left side is the regret of a play drawn from $\rho$ against a loss drawn from $\mu$, measured against the minimum of that loss; the integral on the right is the variance of the loss under $\rho\otimes\mu$, which is what one observation reveals. Section~\ref{sec:explicit} turns \eqref{eq:H} into a regret bound. The hypothesis is supplied by the following proposition, the new step of the paper. It is proved in Section~\ref{sec:body} from a one-round inequality on $\R^d$, Theorem~\ref{thm:dil}.
+
+\begin{proposition}\label{prop:body}
+Let $d\ge1$ and $n\ge2$ be integers, and let $\cJ\subset\R^d$ be a convex body containing a ball of radius $1/2$, of diameter $D_\cJ$. Then $\cF(\cJ,n)$ satisfies $\mathrm{(H)}[1/n,\beta]$ with $\beta=C_0\,d^2\ln(ndD_\cJ)\ln(2n)$ and $C_0=1.2\cdot10^9$.
+\end{proposition}
+
+
+The constant $\beta$ is of order $d^2$ up to logarithms; the printed value \cite[Theorem~3]{Lat20} is of order $d^4\ln(nd/m)$ for a class with strong convexity parameter $m$. Since $\cF(\cJ,n)$ is closed under finite convex combinations, the mean $\fbar$ in \eqref{eq:H} always lies in it. The three logarithms of the final bound have different sources: one comes from the dilution over the scales of the losses in Theorem~\ref{thm:dil}, one from the Gaussian tail in the second-order term of Lemma~\ref{lem:half}, and one from the entropy $d\ln(1/\varepsilon)$ of the net in Theorem~\ref{thm:exo}.
+
+\section{A one-round inequality on \texorpdfstring{$\R^d$}{R\^{}d}}\label{sec:core}
+
+This section proves the one-round inequality for a finite family of convex Lipschitz functions on all of $\R^d$; Section~\ref{sec:body} brings it back to a convex body.
+
+\subsection{Setting and statement}\label{sec:core-setting}
+
+A \emph{family} is a finite set of indices $c$ with weights $\mu_c>0$, $\sum_c\mu_c=1$, and convex $L$-Lipschitz functions $F_c\colon\R^d\to\R$, each attaining its minimum at some point $x_c$, whose mean $\Fbar=\sum_c\mu_cF_c$ is coercive: $\Fbar(x)\ge a_1|x|-a_2$ for some $a_1>0$ and $a_2$. Then $\Fbar$ is convex, $L$-Lipschitz and attains its minimum. The family is \emph{regular} if moreover every $F_c$ is of class $C^2$ with a Lipschitz gradient; then so is $\Fbar$. Write
+\[
+u_c=F_c-\Fbar,\qquad V(x)=\sum_c\mu_c\,u_c(x)^2,\qquad \Delta_\star=\min\Fbar-\sum_c\mu_c\min F_c .
+\]
+The \emph{floor} $\Delta_\star$ is the regret of the best fixed point: for a Borel probability law $p$ on $\R^d$ with $\int|x|\,dp<\infty$ put
+\[
+\Delta(p)=\int\Fbar\,dp-\sum_c\mu_c\min F_c\ \ (\ge\Delta_\star),\qquad \mathcal I(p)=\int V\,dp .
+\]
+The minima of the $F_c$ are not assumed equal: this is what a round of the learner produces (Lemma~\ref{lem:conv}), a family each of whose members is compared with its own minimum.
+
+Gaussian laws enter through a temperature $\lambda>0$. For $b\in\R^d$ and $S$ symmetric positive definite let $Z$ be a standard Gaussian vector of $\R^d$, $w=SZ$, $x=b+w$, so that $x$ has law $N(b,A)$ with $A=S^2$, and put
+\begin{equation}\label{eq:entropic}
+\mathcal E_\lambda(b,S)=\E\,\Fbar(b+SZ)-\lambda\ln\det S .
+\end{equation}
+The minimiser $(b,S)$ of $\mathcal E_\lambda$, which exists and is unique by Lemma~\ref{lem:ec}, or the law $N(b,A)$, is the \emph{entropic Gaussian of $\Fbar$ at temperature $\lambda$}. It balances the expected value of the mean loss against the volume of the Gaussian: a cold Gaussian sits near the minimiser of $\Fbar$, a hot one spreads until its cost $\E\Fbar(x)-\min\Fbar$, at most $\lambda d$ by Lemma~\ref{lem:ec} when $\Fbar$ is of class $C^1$, matches the temperature.
+
+\begin{theorem}\label{thm:dil}
+Let $(\mu_c,F_c)_c$ be a family with $\Delta_\star>0$, let $b^\star$ be a minimiser of $\Fbar$, and let $g_c=F_c(b^\star)-\min F_c$ and $g_{\max}=\max_cg_c$. There is a scale $h\in[\Delta_\star/2,g_{\max}]$, one of the values $g_c$, with the following property. Let $(b_h,S_h)$ be the entropic Gaussian of $\Fbar$ at temperature $\lambda_h=h/(16d)$, $A_h=S_h^2$, $s_h$ the largest eigenvalue of $S_h$, $T_h=(2\lnp(26\,d\,L\,s_h/h))^{1/2}$ with $\lnp=\max(\ln,0)$, $q=\Delta_\star/(4h)$, and
+\[
+p_h=(1-q)\,\delta_{b^\star}+\tfrac q2\,\delta_{b_h}+\tfrac q2\,N(b_h,A_h).
+\]
+Then $\Delta(p_h)\le\frac{65}{64}\Delta_\star$,
+\begin{equation}\label{eq:P3}
+V(b^\star)+V(b_h)+\E\,V(b_h+S_hZ)\ge\frac{h\,\Delta_\star}{2K_S\,(1+T_h)^2\,d^2\,\ln(2g_{\max}/\Delta_\star)},
+\end{equation}
+where $K_S=2(32/\kappa)^2(13/4+2\kappa_2)$, $\kappa=\varphi(0)-\varphi(1)+Q(1)$ and $\kappa_2=1-Q(1)-\varphi(1)$, and
+\[
+\Delta(p_h)^2\le K_D\,(1+T_h)^2\,d^2\,\ln\bigl(2g_{\max}/\Delta_\star\bigr)\;\mathcal I(p_h),\qquad K_D=1.6\cdot10^6 .
+\]
+\end{theorem}
+
+Since $\sum_c\mu_cg_c=\Fbar(b^\star)-\sum_c\mu_c\min F_c=\Delta_\star$, $g_{\max}\ge\Delta_\star$ and the logarithm is at least $\ln2$. The theorem is an information-ratio bound of order $d^2$ up to logarithms. The floor may be carried by components of small total weight whose gains $g_c$ are much larger than $\Delta_\star$; a Gaussian whose cost is of the order of the floor is then too narrow to read them. The law $p_h$ takes a hotter Gaussian, at the scale $h$ of the gains that carry the floor, and dilutes it with a mass $q$ small enough to keep its cost $q\lambda_hd=\Delta_\star/64$. The two point masses at $b^\star$ and at the centre $b_h$ read the components whose gain at $b_h$ is lost because the centre has moved toward them (Step~1 of the proof). The bound \eqref{eq:P3} is the lower bound on the variance that Steps~1 to~3 of the proof produce; Section~\ref{sec:body} uses it.
+
+The proof rests on one inequality for one component, Proposition~\ref{prop:core} below, which comes from three lemmas. Lemma~\ref{lem:ec} gives the entropic Gaussian and its stationarity conditions; Lemma~\ref{lem:inf} is the gradient inequality of a component toward its minimiser, integrated by parts against the Gaussian on a half space; Lemma~\ref{lem:half} bounds below the second-order term that the integration by parts produces. The three lemmas and the proposition are statements about functions on $\R^d$ and the standard Gaussian; this section proves Theorem~\ref{thm:dil} from them for regular families, and Appendix~\ref{app:calc} extends it to every family by a limit.
+
+\subsection{The three lemmas}
+
+The stationarity conditions of the entropic Gaussian are used in Proposition~\ref{prop:core}, and its cost in Theorem~\ref{thm:dil}. Every law below of the form $N(b,A)$ with $A$ positive definite has a density.
+
+\begin{lemma}[entropic Gaussian]\label{lem:ec}
+Let $\Fbar\colon\R^d\to\R$ be convex, Lipschitz and coercive, and $\lambda>0$. Then $\mathcal E_\lambda$ has exactly one minimiser $(b,S)$, and it minimises also the extension $\mathcal E_\lambda(b,S)=\E\,\Fbar(b+SZ)-\lambda\ln|\det S|$ of \eqref{eq:entropic} to the invertible $S$. Every $b$ and every linear map $S$ have
+\[
+\mathrm{(S4)}\ \ \E\,\Fbar(b+SZ)\ge\Fbar(b).
+\]
+If $\Fbar$ is moreover of class $C^1$, every minimiser $(b,S)$ of $\mathcal E_\lambda$ over the invertible $S$ has, with $x=b+SZ$,
+\begin{gather*}
+\mathrm{(S1)}\ \ \E\,\nabla\Fbar(x)=0,\qquad\mathrm{(S2)}\ \ \E\bigl[\ip{v,Z}\ip{\nabla\Fbar(x),Sv'}\bigr]=\lambda\ip{v,v'}\ \ (v,v'\in\R^d),\\
+\mathrm{(S3)}\ \ \E\,\Fbar(x)\le\Fbar(z)+\lambda d\ \ (z\in\R^d).
+\end{gather*}
+\end{lemma}
+
+Conditions (S1) and (S2) are the stationarity conditions of the Gaussian variational approximation \cite{OA09}, and the objective \eqref{eq:entropic} is convex in $(b,S)$ \cite{CB13}; the proof below uses neither fact. With $z$ a minimiser of $\Fbar$, (S3) bounds the cost $\E\Fbar(x)-\min\Fbar$ by $\lambda d$.
+
+The other lemmas are stated in the coordinates of the Gaussian. For $(b,S)$ with $S$ invertible and $F\colon\R^d\to\R$ write $F^{b,S}(g)=F(b+Sg)$, so that $\E F(b+SZ)=\E F^{b,S}(Z)$. If $F$ is convex and $L$-Lipschitz, $F^{b,S}$ is convex and $L\|S\|$-Lipschitz, $\|S\|$ the operator norm. If $\Fbar$ is differentiable, $\ip{\nabla\Fbar^{b,S}(g),v}=\ip{\nabla\Fbar(b+Sg),Sv}$, so that for $G=\Fbar^{b,S}$ conditions (S1), (S2) and (S4) read
+\[
+\E\,\nabla G(Z)=0,\qquad\E\bigl[\ip{v,Z}\ip{\nabla G(Z),v'}\bigr]=\lambda\ip{v,v'}\ \ (v,v'\in\R^d),\qquad\E\,G(Z)\ge G(0).
+\]
+A component $c$ with $x_c\ne b$ sits in these coordinates at $y_c=S^{-1}(x_c-b)$. Its \emph{depth} $\vartheta_c=|y_c|$ is the distance from $b$ to $x_c$ in the metric of the Gaussian, and its \emph{gap} at $b$ is $\gamma_c=F_c(b)-\min F_c=F_c^{b,S}(0)-F_c^{b,S}(y_c)$. Along the segment from $0$ to $y_c$ the convex function $F_c^{b,S}$ decreases at rate at least $\gamma_c/\vartheta_c$. Lemma~\ref{lem:inf} reads this decrease from the Gaussian: at a point $g$ of a half space it moves $g$ by an infinitesimal step toward a point of the segment, and the gradient inequality, integrated by parts, turns the decrease into a covariance between $u_c^{b,S}$ and an explicit score.
+
+Let $\varphi$ and $Q$ be the standard Gaussian density and upper tail on $\R$, $Z_1$ a standard Gaussian variable, $\Mills(T)=Q(T)/\varphi(T)$ the Mills ratio, and
+\begin{gather*}
+\kappa=\E\min(Z_1^+,1)=\varphi(0)-\varphi(1)+Q(1),\\
+\kappa_2=\E\bigl[(\min(Z_1,1)Z_1-\mathbf 1\{Z_1<1\})^2;Z_1>0\bigr]=1-Q(1)-\varphi(1).
+\end{gather*}
+
+\begin{lemma}[infinitesimal see-saw]\label{lem:inf}
+Let $F,G\colon\R^d\to\R$ be differentiable with bounded gradients, $F$ convex, $e$ a unit vector, $R>0$ and $\Gamma$ a real number with $F(Re)\le F(0)-\Gamma$. Put $\zeta=\ip{e,Z}$, $\Omega=\{\zeta>0\}$, $k=\min(\zeta^+,1)$, $m=\mathbf 1_\Omega/R$ and
+\[
+\ell=\mathbf 1_\Omega\Bigl[\frac{|Z|^2-d}R-k\zeta+\mathbf 1\{\zeta<1\}\Bigr].
+\]
+Then
+\begin{multline}\label{eq:inf}
+\frac{\kappa\,\Gamma}R+\E\bigl[k\ip{\nabla G(Z),e}\bigr]-\E\bigl[m\bigl(\ip{\nabla G(Z),Z}-G(Z)+G(0)\bigr)\bigr]\\
+\le\E\bigl[\bigl(F(Z)-G(Z)\bigr)(\ell-m)\bigr]+\frac{F(0)-G(0)}{2R}.
+\end{multline}
+Moreover $\E k=\kappa$, $\E m=1/(2R)$ and $\E(\ell-m)^2\le(2d+1)/R^2+2\kappa_2$.
+\end{lemma}
+
+The three terms on the left are the \emph{tilt}, the decrease of $F$ toward the point $Re$; the \emph{second-order term}, which reads the curvature of $G$ in the direction $e$; and the \emph{dilation term}, the price of the radial part of the step. With $F=F_c^{b,S}$ and $G=\Fbar^{b,S}$ the right side is a covariance of $u_c^{b,S}$ in the variance currency of \eqref{eq:H}: the score $\ell-m$ has a second moment bounded whatever its direction, and by $3+2\kappa_2$ for $R\ge d^{1/2}$. The proof of Proposition~\ref{prop:core} bounds the dilation term by (S2) and (S4), the tilt by the gap and the second-order term by the next lemma.
+
+\begin{lemma}[second-order term]\label{lem:half}
+Let $e$ be a unit vector, $\zeta=\ip{e,Z}$, $k=\min(\zeta^+,1)$, $\lambda$ real, $L\ge0$, and $H\colon\R^d\to\R$ differentiable with $|H|\le L$, a bounded gradient and $\ip{\nabla H,e}\ge0$, such that $\E H(Z)=0$ and $\E[\zeta H(Z)]=\lambda$. Then for every $T\ge0$
+\[
+\E\bigl[k\,H(Z)\bigr]\ge\kappa\,\Mills(T)\bigl(\lambda-2L\varphi(T)\bigr).
+\]
+\end{lemma}
+
+The lemma is applied to $H=\ip{\nabla G,e}$, for which (S1) and (S2) give $\E H(Z)=0$ and $\E[\zeta H(Z)]=\lambda$: the full Gaussian sees the curvature of $G$ in the direction $e$ with weight $\lambda$, and the half space sees at least the fraction $\kappa\Mills(T)$ of the part of it that sits within $T$ of the centre, the Lipschitz constant bounding the rest. This is where the Lipschitz constant enters the final bound, through $\Mills(T)\ge1/(1+T)$ and a logarithm.
+
+\subsection{The core inequality and the proof of Theorem~\ref{thm:dil}}
+
+The three lemmas combine into one inequality for one component that is far above its minimum at the centre of a Gaussian that satisfies (S1), (S2) and (S4); Step~1 of the proof of Theorem~\ref{thm:dil} applies it, in the coordinates of the entropic Gaussian, to every component that keeps its gain when the centre moves.
+
+\begin{proposition}[core inequality]\label{prop:core}
+Let $d\ge1$, $L'\ge0$, and $F,G\colon\R^d\to\R$ convex and differentiable with $|\nabla F|,|\nabla G|\le L'$, the gradient of $G$ differentiable with a bounded derivative and $\ip{\nabla^2G(g)v,v}\ge0$ for all $g,v$. Let $h>0$, $\lambda=h/(16d)$, and assume
+\[
+\E\,\nabla G(Z)=0,\qquad\E\bigl[\ip{v,Z}\ip{\nabla G(Z),v'}\bigr]=\lambda\ip{v,v'}\ \ (v,v'\in\R^d),\qquad G(0)\le\E\,G(Z).
+\]
+Let $T\ge0$ with $2L'\varphi(T)\le h/(32d)$, and assume $F(y)\le F(0)-h/2$ for some $y$. Then
+\[
+\Bigl(\frac{\kappa\,h}{32(1+T)d}\Bigr)^2\le\Bigl(3+2\kappa_2+\frac1{4d}\Bigr)\Bigl(\E\bigl(F(Z)-G(Z)\bigr)^2+\bigl(F(0)-G(0)\bigr)^2\Bigr).
+\]
+\end{proposition}
+
+\begin{proof}
+Since $h>0$, $y\ne0$. Put $R=|y|$ and $e=y/R$, and apply Lemma~\ref{lem:inf} with $\Gamma=h/2$. We bound the three terms on the left of \eqref{eq:inf}.
+
+Tilt. It is $\kappa h/(2R)$.
+
+Dilation. By the gradient inequality for the convex $G$ at $g$ toward $0$, $G(0)\ge G(g)-\ip{\nabla G(g),g}$, so the integrand $\ip{\nabla G(Z),Z}-G(Z)+G(0)$ is nonnegative. Its integral over $\Omega$ is therefore at most its integral over all of $\R^d$, which is $\lambda d-(\E G(Z)-G(0))\le\lambda d$, by the second assumption with $v=v'$ running over an orthonormal basis and by the third. The dilation term is at most $\lambda d/R=h/(16R)$.
+
+Second order. The function $H=\ip{\nabla G,e}$ has $|H|\le L'$, a bounded gradient and $\ip{\nabla H,e}=\ip{\nabla^2G\,e,e}\ge0$; $\E H(Z)=0$ by the first assumption and $\E[\zeta H(Z)]=\lambda$ by the second with $v=v'=e$. Lemma~\ref{lem:half} and $2L'\varphi(T)\le h/(32d)=\lambda/2$ give a second-order term at least $\kappa\Mills(T)\lambda/2=\kappa\Mills(T)h/(32d)$.
+
+So the left side of \eqref{eq:inf} is at least $(\kappa/2-1/16)h/R+\kappa\Mills(T)h/(32d)$, with $\kappa/2-1/16\ge\kappa/32>0$, since $\kappa\ge0.312$ (checked in Lean). Put $\omega=\min(1,R/d^{1/2})$. If $R\le d^{1/2}$, then $\omega=R/d^{1/2}$ and $\omega$ times the left side is at least $(\kappa/2-1/16)h/d^{1/2}\ge(\kappa/32)h/d$. If $R\ge d^{1/2}$, then $\omega=1$ and the left side is at least $\kappa\Mills(T)h/(32d)$. Since $\Mills(T)\ge1/(1+T)$ (Lemma~\ref{lem:mills}), in both cases $\omega$ times the left side is at least $\kappa h/(32(1+T)d)$.
+
+By the Cauchy and Schwarz inequality and Lemma~\ref{lem:inf}, the right side of \eqref{eq:inf} is at most $(\E(F(Z)-G(Z))^2)^{1/2}((2d+1)/R^2+2\kappa_2)^{1/2}+|F(0)-G(0)|/(2R)$. Since $\omega\le1$ and $\omega/R\le d^{-1/2}$, $\omega^2((2d+1)/R^2+2\kappa_2)\le(2d+1)/d+2\kappa_2\le3+2\kappa_2$ and $\omega/(2R)\le1/(2d^{1/2})$. Hence
+\[
+\frac{\kappa\,h}{32(1+T)d}\le(3+2\kappa_2)^{1/2}\bigl(\E(F(Z)-G(Z))^2\bigr)^{1/2}+\frac1{2d^{1/2}}\,|F(0)-G(0)|,
+\]
+and $(\alpha_1y_1+\alpha_2y_2)^2\le(\alpha_1^2+\alpha_2^2)(y_1^2+y_2^2)$ gives the claim.
+\end{proof}
+
+The proof above and the proof of Lemma~\ref{lem:half} use two properties of the Mills ratio.
+
+\begin{lemma}\label{lem:mills}
+For $T\ge0$, $1/(1+T)\le\Mills(T)\le\Mills(0)=(\pi/2)^{1/2}$, and $\Mills$ is nonincreasing.
+\end{lemma}
+
+\begin{proof}
+Let $v(T)=Q(T)-\varphi(T)/(1+T)$. Since $\varphi'(T)=-T\varphi(T)$, $v'(T)=-\varphi(T)+\varphi(T)\bigl(T(1+T)+1\bigr)/(1+T)^2=-T\varphi(T)/(1+T)^2\le0$, and $v(T)\to0$ as $T\to\infty$, so $v\ge0$. For the monotonicity, $Q(T)=\int_T^\infty\varphi\le\int_T^\infty(s/T)\varphi(s)\,ds=\varphi(T)/T$ for $T>0$, and $\Mills'(T)=-1+T\Mills(T)\le0$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:dil}]
+Let the family be regular; Lemma~\ref{lem:approx} of Appendix~\ref{app:calc} gives the theorem for every family from this case. For $h>0$ let $\Lambda(h)=\sum_{c:g_c\ge h}\mu_c$, let $(b_h,S_h)$ be the entropic Gaussian at temperature $\lambda_h=h/(16d)$ and $x=b_h+S_hZ$, and put $V_{\mathrm G}(h)=\E\,V(x)$. The minimiser $b^\star$ is fixed first, before any scale; the proof uses of it only that it minimises $\Fbar$. By Lemma~\ref{lem:ec}, $(b_h,S_h)$ minimises $\mathcal E_{\lambda_h}$ also over the invertible $S$, so (S1) to (S4) hold for it.
+
+Step 1, one scale. We show that for every $h>0$, with $K_S$ the constant of \eqref{eq:P3},
+\begin{equation}\label{eq:scale}
+\Lambda(h)\,h^2\le K_S\,(1+T_h)^2\,d^2\bigl(V_{\mathrm G}(h)+V(b_h)+V(b^\star)\bigr).
+\end{equation}
+Let $c$ have $g_c\ge h$. Then $F_c(b_h)-\min F_c=g_c+F_c(b_h)-F_c(b^\star)$. Either this is at least $h/2$, and we call $c$ \emph{good}, or $F_c(b_h)-F_c(b^\star)<h/2-g_c\le-h/2$, and we call $c$ \emph{moved}. For a moved $c$, since $\Fbar(b_h)\ge\Fbar(b^\star)$,
+\[
+u_c(b_h)-u_c(b^\star)=\bigl(F_c(b_h)-F_c(b^\star)\bigr)-\bigl(\Fbar(b_h)-\Fbar(b^\star)\bigr)<-h/2,
+\]
+so $u_c(b_h)^2+u_c(b^\star)^2\ge h^2/8$. If the moved components have total weight at least $\Lambda(h)/2$, then $V(b_h)+V(b^\star)\ge\Lambda(h)h^2/16$, and $16\le K_S$. Otherwise the good components have weight at least $\Lambda(h)/2$. For a good $c$ apply Proposition~\ref{prop:core} to $F=F_c^{b_h,S_h}$ and $G=\Fbar^{b_h,S_h}$, with $L'=Ls_h$ and $T=T_h$. Both are convex and differentiable with gradients bounded by $Ls_h$; the gradient of $G$ is differentiable with a bounded derivative since the family is regular, and $\ip{\nabla^2G\,v,v}\ge0$ since $G$ is convex; the three assumptions on $G$ are (S1), (S2) and (S4) in the coordinates of the Gaussian; and $F(y)\le F(0)-h/2$ at $y=S_h^{-1}(x_c-b_h)$, since $F_c(x_c)=\min F_c\le F_c(b_h)-h/2$. For $T_h$: if $26dLs_h/h\ge1$, then $\varphi(T_h)=(2\pi)^{-1/2}h/(26dLs_h)\le h/(64dLs_h)$ because $26(2\pi)^{1/2}\ge64$ (checked in Lean); if $26dLs_h/h<1$, then $T_h=0$ and $64dLs_h/h<64/26\le(2\pi)^{1/2}$, so $2Ls_h\varphi(0)<h/(32d)$. In both cases $2Ls_h\varphi(T_h)\le h/(32d)$. Since $\E(F(Z)-G(Z))^2=\E u_c(x)^2$ and $F(0)-G(0)=u_c(b_h)$, Proposition~\ref{prop:core} gives
+\[
+\Bigl(\frac{\kappa\,h}{32(1+T_h)d}\Bigr)^2\le\Bigl(3+2\kappa_2+\frac1{4d}\Bigr)\bigl(\E u_c(x)^2+u_c(b_h)^2\bigr).
+\]
+Multiplying by $\mu_c$ and summing over the good components,
+\[
+\tfrac12\Lambda(h)\,h^2\le(32/\kappa)^2(1+T_h)^2d^2\bigl(3+2\kappa_2+1/(4d)\bigr)\bigl(V_{\mathrm G}(h)+V(b_h)\bigr),
+\]
+which is \eqref{eq:scale}, since $1/(4d)\le1/4$.
+
+Step 2, the law at a scale $h\ge\Delta_\star/2$. Then $q=\Delta_\star/(4h)\le1/2$. By (S4) and (S3) with $z=b^\star$,
+\[
+\Delta(p_h)=\Delta_\star+\tfrac q2\bigl(\Fbar(b_h)-\min\Fbar\bigr)+\tfrac q2\bigl(\E\Fbar(x)-\min\Fbar\bigr)\le\Delta_\star+q\lambda_hd=\Delta_\star+\frac{\Delta_\star}{4h}\cdot\frac h{16}=\frac{65}{64}\Delta_\star .
+\]
+Since $1-q\ge1/2\ge q/2$, \eqref{eq:scale} gives
+\[
+\mathcal I(p_h)\ge\tfrac q2\bigl(V(b^\star)+V(b_h)+V_{\mathrm G}(h)\bigr)\ge\frac{\Delta_\star\,h\,\Lambda(h)}{8K_S(1+T_h)^2d^2}.
+\]
+
+Step 3, the scale. By the layer-cake formula $\Delta_\star=\sum_c\mu_cg_c=\int_0^{g_{\max}}\Lambda(t)\,dt$, and at most $\Delta_\star/2$ of it comes from $t<\Delta_\star/2$ since $\Lambda\le1$. So
+\[
+\frac{\Delta_\star}2\le\int_{\Delta_\star/2}^{g_{\max}}t\Lambda(t)\,\frac{dt}t\le\Bigl(\sup_{t\in[\Delta_\star/2,g_{\max}]}t\Lambda(t)\Bigr)\ln\frac{2g_{\max}}{\Delta_\star}.
+\]
+The function $\Lambda$ is constant on each interval between consecutive values of the $g_c$, closed on the right, so $t\Lambda(t)$ increases there, and the supremum is attained at a value $h=g_c\in[\Delta_\star/2,g_{\max}]$. For that $h$, \eqref{eq:scale} and $h\Lambda(h)\ge\Delta_\star/(2\ln(2g_{\max}/\Delta_\star))$ give \eqref{eq:P3}, Step 2 gives $\mathcal I(p_h)\ge\Delta_\star^2/(16K_S(1+T_h)^2d^2\ln(2g_{\max}/\Delta_\star))$, and
+\[
+\Delta(p_h)^2\le\Bigl(\frac{65}{64}\Bigr)^2\Delta_\star^2\le\Bigl(\frac{65}{64}\Bigr)^2 16K_S\,(1+T_h)^2d^2\ln\frac{2g_{\max}}{\Delta_\star}\,\mathcal I(p_h),
+\]
+with $(65/64)^2\cdot16K_S\le K_D$ (checked in Lean).
+\end{proof}
+
+\subsection{Proofs of the three lemmas}\label{sec:core-proofs}
+
+The integrations by parts of Lemma~\ref{lem:inf} take place on a half space. The next lemma does them by two computations in one variable, a dilation and a translation, with no boundary term. Fix a unit vector $e$, $\zeta=\ip{e,Z}$ and $\Omega=\{\zeta>0\}$, and let $\gamma$ be the standard Gaussian density of $\R^d$.
+
+\begin{lemma}[integration by parts on a half space]\label{lem:ibp}
+Let $G\colon\R^d\to\R$ be differentiable, with $|G(g)|\le a\,e^{c|g|}$ and $|\nabla G(g)|\le a\,e^{c|g|}$ for all $g$, for some constants $a$ and $c$. Then
+\begin{align*}
+&\mathrm{(a)}\ \ \E\bigl[\mathbf 1_\Omega\ip{\nabla G(Z),Z}\bigr]=\E\bigl[\mathbf 1_\Omega G(Z)\bigl(|Z|^2-d\bigr)\bigr],\\
+&\mathrm{(b)}\ \ \E\bigl[\min(\zeta^+,\beta)\ip{\nabla G(Z),e}\bigr]=\E\bigl[G(Z)\bigl(\min(\zeta^+,\beta)\,\zeta-\mathbf 1\{0<\zeta<\beta\}\bigr)\bigr]\ \text{ for every }\beta\ge0.
+\end{align*}
+\end{lemma}
+
+\begin{proof}
+All the expectations are finite, since $\E\,e^{c'|Z|}|Z|^j<\infty$ for all $c'$ and $j$.
+
+(a) For $t>0$ let $\Phi(t)=\int_\Omega G(ty)\gamma(y)\,dy$. For fixed $y$ the derivative of $t\mapsto G(ty)$ is $\ip{\nabla G(ty),y}$, bounded for $t\in[1/2,2]$ by $a\,e^{2c|y|}|y|$, which is integrable; by the mean value theorem and dominated convergence $\Phi'(1)=\E[\mathbf 1_\Omega\ip{\nabla G(Z),Z}]$. On the other hand $\Omega$ is a cone, so the change of variables $z=ty$ gives $\Phi(t)=\int_\Omega G(z)\,t^{-d}\gamma(z/t)\,dz$. With $\gamma(z)=(2\pi)^{-d/2}e^{-|z|^2/2}$, the derivative of $t\mapsto t^{-d}\gamma(z/t)$ is $t^{-d}\gamma(z/t)(|z|^2/t^3-d/t)$, which for $t\in[1/2,2]$ is at most $2^d(2\pi)^{-d/2}e^{-|z|^2/8}(8|z|^2+2d)$ in absolute value; times $a\,e^{c|z|}$ this bound is integrable. Dominated convergence gives $\Phi'(1)=\int_\Omega G(z)\gamma(z)(|z|^2-d)\,dz$, the right side of (a).
+
+(b) Put $W'=Z-\zeta e$; it is independent of $\zeta$, which is a standard Gaussian variable. Fix $W'$ and let $f(t)=G(te+W')$, so that $f'(t)=\ip{\nabla G(te+W'),e}$ and $|f(t)|,|f'(t)|\le a\,e^{c|W'|}e^{c|t|}$. The function $g(t)=\min(t^+,\beta)\varphi(t)$ is continuous and vanishes on $(-\infty,0]$; it is of class $C^1$ on $[0,\beta]$ and on $[\beta,\infty)$ with $g'(t)=(\mathbf 1\{t<\beta\}-\min(t,\beta)\,t)\varphi(t)$. Integrating $g f'$ by parts on $[0,\beta]$ and on $[\beta,r]$, the terms at $\beta$ cancel and the term at $0$ vanishes; the term $g(r)f(r)$ tends to $0$ as $r\to\infty$, and both integrals converge absolutely, so
+\[
+\int\min(t^+,\beta)f'(t)\varphi(t)\,dt=\int f(t)\bigl(\min(t^+,\beta)\,t-\mathbf 1\{0<t<\beta\}\bigr)\varphi(t)\,dt.
+\]
+Taking the expectation in $W'$ gives (b); Fubini's theorem applies, both integrands being bounded by $a\,e^{c|W'|}e^{c|t|}(\beta|t|+\beta+1)\varphi(t)$.
+\end{proof}
+
+\begin{proof}[Proof of Lemma~\ref{lem:ec}]
+Existence. Let $S$ be positive definite, and $s$ and $s_{\min}$ its largest and smallest eigenvalues. For a convex $G$ and a centred Gaussian vector $w$, $w$ and $-w$ have the same law, so $\E G(b+w)=\E[(G(b+w)+G(b-w))/2]\ge G(b)$; we call this symmetrisation. It gives $\E|b+SZ|\ge|b|$ and, from $|b+SZ|+|b-SZ|\ge2|SZ|$, $\E|b+SZ|\ge\E|SZ|\ge\E|\ip{v,SZ}|=s\,\E|Z_1|=s(2/\pi)^{1/2}$ for a unit eigenvector $v$ of $S$ with eigenvalue $s$. With $\Fbar(x)\ge a_1|x|-a_2$,
+\[
+\mathcal E_\lambda(b,S)\ge a_1\max\bigl(|b|,(2/\pi)^{1/2}s\bigr)-a_2-\lambda(d-1)\ln s-\lambda\ln s_{\min}.
+\]
+So $\mathcal E_\lambda$ tends to $+\infty$ when $|b|+s\to\infty$ or, with $s$ bounded, when $s_{\min}\to0$. It is continuous (dominated convergence, $\Fbar$ being Lipschitz), so it attains its minimum on a compact set $\{|b|\le r_1,\ r_2\le s_{\min},\ s\le r_1\}$ that contains a point where its value is below its infimum outside. The minimiser is unique by Lemma~\ref{lem:unique}, and (S4) is symmetrisation, $SZ$ being a centred Gaussian vector for every linear $S$.
+
+Invertible $S$. For $S$ invertible let $P=(SS^{\mathsf T})^{1/2}$, which is positive definite. The centred Gaussian vectors $SZ$ and $PZ$ have the same covariance $SS^{\mathsf T}$, hence the same law, and $|\det S|=\det P$. So $\mathcal E_\lambda(b,S)=\mathcal E_\lambda(b,P)$: the infimum over the invertible $S$ is the minimum over the positive definite $S$, and the minimiser over the positive definite $S$ minimises over the invertible $S$.
+
+Stationarity. Let $\Fbar$ be of class $C^1$ and $L$-Lipschitz, and $(b,S)$ minimise $\mathcal E_\lambda$ over the invertible $S$. For $db\in\R^d$ and a $d\times d$ matrix $dS$, the derivative of $t\mapsto\Fbar(b+t\,db+(S+t\,dS)Z)$ is bounded by $L(|db|+\|dS\||Z|)$, which is integrable, and $S+t\,dS$ is invertible for $t$ small; so $t\mapsto\mathcal E_\lambda(b+t\,db,S+t\,dS)$ is differentiable at $0$ with derivative $\E\ip{\nabla\Fbar(x),db+dS\,Z}-\lambda\tr(S^{-1}dS)$, and it vanishes there. With $dS=0$ this is (S1). With $db=0$ and $dS=Sv'v^{\mathsf T}$, for which $dS\,Z=\ip{v,Z}Sv'$ and $\tr(S^{-1}dS)=\ip{v,v'}$, it is (S2).
+
+(S3). Write $w=SZ=\sum_i\ip{e_i,Z}Se_i$ for an orthonormal basis $(e_i)$; (S2) with $v=v'=e_i$, summed over $i$, gives $\E\ip{\nabla\Fbar(x),w}=\lambda d$. Let $z\in\R^d$ and $j(r)=\E\Fbar(z+r(x-z))$ for $r\in[0,1]$. It is convex and differentiable, with $j'(r)=\E\ip{\nabla\Fbar(z+r(x-z)),x-z}$ (the integrand is bounded by $L|x-z|$), $j(0)=\Fbar(z)$ and $j(1)=\E\Fbar(x)$. By (S1), $j'(1)=\ip{\E\nabla\Fbar(x),b-z}+\E\ip{\nabla\Fbar(x),w}=\lambda d$, and convexity gives $j(1)-j(0)\le j'(1)$.
+\end{proof}
+
+\begin{proof}[Proof of Lemma~\ref{lem:inf}]
+Put $v=\mathbf 1_\Omega Z/R-k\,e$.
+
+(i) The gradient inequality. Let $g\in\R^d$ with $\ip{e,g}>0$, and $k=\min(\ip{e,g},1)\in(0,1]$. The point $y=kRe$ lies on the segment from $0$ to $Re$, so by convexity $F(y)\le(1-k)F(0)+kF(Re)\le F(0)-k\Gamma$. The gradient inequality $F(y)\ge F(g)+\ip{\nabla F(g),y-g}$ of the convex differentiable $F$, divided by $R$, gives
+\[
+\ip{\nabla F(g),g/R-ke}\ge\frac{F(g)-F(y)}R\ge\frac{F(g)-F(0)}R+\frac{k\,\Gamma}R .
+\]
+So $\ip{\nabla F(Z),v}\ge m(F(Z)-F(0))+k\Gamma/R$ on $\Omega$, and outside $\Omega$ both sides vanish.
+
+(ii) Integration by parts. Both $F$ and $G$ are Lipschitz, so they and their gradients are bounded by $a\,e^{|g|}$ for some $a$. For $H\in\{F,G\}$, Lemma~\ref{lem:ibp}(a) divided by $R$ minus Lemma~\ref{lem:ibp}(b) with $\beta=1$ gives $\E\ip{\nabla H(Z),v}=\E[H(Z)\ell]$, since $k\zeta=\mathbf 1_\Omega k\zeta$ and $\mathbf 1\{0<\zeta<1\}=\mathbf 1_\Omega\mathbf 1\{\zeta<1\}$. With (i) and $\E k=\kappa$,
+\[
+\E[F(Z)\ell]\ge\E\bigl[m\bigl(F(Z)-F(0)\bigr)\bigr]+\frac{\kappa\,\Gamma}R .
+\]
+
+(iii) The difference. Subtract $\E[G(Z)\ell]=\E[m\ip{\nabla G(Z),Z}]-\E[k\ip{\nabla G(Z),e}]$ and write $F(Z)-F(0)=(F(Z)-G(Z))-(F(0)-G(0))+(G(Z)-G(0))$:
+\begin{multline*}
+\E\bigl[(F(Z)-G(Z))(\ell-m)\bigr]+\bigl(F(0)-G(0)\bigr)\E m\\
+\ge\frac{\kappa\,\Gamma}R+\E\bigl[k\ip{\nabla G(Z),e}\bigr]-\E\bigl[m\bigl(\ip{\nabla G(Z),Z}-G(Z)+G(0)\bigr)\bigr],
+\end{multline*}
+which is \eqref{eq:inf} once $\E m=1/(2R)$.
+
+(iv) The moments. Since $\zeta$ is a standard Gaussian variable, $\E k=\E\min(Z_1^+,1)=\kappa$ and $\E m=\Prob(\zeta>0)/R=1/(2R)$. Write $|Z|^2=\zeta^2+\Xi$, with $\Xi$ independent of $\zeta$ and of chi-square law with $d-1$ degrees of freedom. On $\Omega$, $\ell-m=(|Z|^2-d-1)/R-(k\zeta-\mathbf 1\{\zeta<1\})$. The first term depends on $\zeta$ through its square, so $\E[(|Z|^2-d-1)^2;\Omega]=\frac12\E(|Z|^2-d-1)^2=\frac12(\Var|Z|^2+1)=(2d+1)/2$. The second term is $\min(\zeta,1)\zeta-\mathbf 1\{\zeta<1\}$ on $\Omega$, of second moment $\kappa_2$ there. The inequality $(y_1+y_2)^2\le2y_1^2+2y_2^2$ gives $\E(\ell-m)^2\le(2d+1)/R^2+2\kappa_2$.
+\end{proof}
+
+\begin{proof}[Proof of Lemma~\ref{lem:half}]
+Let $W'=Z-\zeta e$, independent of $\zeta$, and $\psi(\theta)=\E H(\theta e+W')$. Differentiating under the expectation, the gradient of $H$ being bounded, $\psi$ is differentiable with $\psi'(\theta)=\E\ip{\nabla H(\theta e+W'),e}\ge0$, and $\psi'$ is bounded. So $|\psi|\le L$, $\psi$ is nondecreasing and $\int_\R\psi'\le2L$. By independence and Fubini's theorem, $\E[f(\zeta)H(Z)]=\E[f(\zeta)\psi(\zeta)]$ for every Borel $f$ with $\E|f(\zeta)|<\infty$. With $f=1$, $\E\psi(\zeta)=0$; with $f(t)=t$, $\E[\zeta\psi(\zeta)]=\lambda$; with $f=k$, $\E[kH(Z)]=\E[k\psi(\zeta)]$.
+
+The covariance formula. For every real $t$, $\psi(t)=\psi(0)+\int\psi'(\theta)(\mathbf 1\{\theta<t\}-\mathbf 1\{\theta<0\})\,d\theta$. Multiply by $f(\zeta)-\E f(\zeta)$ at $t=\zeta$ and take the expectation; Fubini's theorem applies, the double integral of the absolute values being at most $2L\,\E|f(\zeta)-\E f(\zeta)|$. So $\operatorname{Cov}(f(\zeta),\psi(\zeta))=\int\psi'(\theta)\operatorname{Cov}(f(\zeta),\mathbf 1\{\zeta>\theta\})\,d\theta$, and, since $\E\psi(\zeta)=0$,
+\[
+\E[k\,\psi(\zeta)]=\int K(\theta)\,\psi'(\theta)\,d\theta,\qquad\lambda=\operatorname{Cov}\bigl(\zeta,\psi(\zeta)\bigr)=\int\varphi(\theta)\,\psi'(\theta)\,d\theta,
+\]
+with $K(\theta)=\operatorname{Cov}(k,\mathbf 1\{\zeta>\theta\})$ and $\operatorname{Cov}(\zeta,\mathbf 1\{\zeta>\theta\})=\E[\zeta;\zeta>\theta]=\varphi(\theta)$.
+
+The kernel. We claim $K(\theta)\ge\kappa Q(|\theta|)$ for every $\theta$. For $\theta\le0$, $k$ vanishes where $\zeta<\theta$, so $K(\theta)=\E k-\E k\,Q(\theta)=\kappa Q(|\theta|)$. For $\theta\ge1$, $K(\theta)=Q(\theta)-\kappa Q(\theta)\ge\kappa Q(\theta)$ since $\kappa<1/2$. For $0\le\theta\le1$, $K(\theta)=\varphi(\theta)-\varphi(1)+Q(1)-\kappa Q(\theta)$, and the claim reads $g(\theta)=\varphi(\theta)-\varphi(1)+Q(1)-2\kappa Q(\theta)\ge0$. Here $g(0)=\kappa-\kappa=0$ by the value of $\kappa$, $g'(\theta)=\varphi(\theta)(2\kappa-\theta)$ is positive and then negative on $[0,1]$, and $g(1)=Q(1)(1-2\kappa)>0$; so $g\ge0$ on $[0,1]$.
+
+Since $Q(|\theta|)=\Mills(|\theta|)\varphi(\theta)$ and $\Mills$ is nonincreasing (Lemma~\ref{lem:mills}), $K(\theta)\ge\kappa\Mills(T)\varphi(\theta)$ for $|\theta|\le T$, and $K\ge0$ everywhere. Hence
+\[
+\E[k\,\psi(\zeta)]\ge\kappa\Mills(T)\int_{|\theta|\le T}\varphi\,\psi'\ge\kappa\Mills(T)\Bigl(\lambda-\varphi(T)\int_\R\psi'\Bigr)\ge\kappa\Mills(T)\bigl(\lambda-2L\varphi(T)\bigr).
+\]
+\end{proof}
+
+\section{The one-round inequality on a convex body}\label{sec:body}
+
+This section proves Proposition~\ref{prop:body}. The losses of a law $\mu$ on $\cF(\cJ,n)$ are extended to $\R^d$, a penalty for leaving $\cJ$ is added so that Theorem~\ref{thm:dil} applies, and the law it gives is projected back onto $\cJ$. The projection changes the variance by the mass that the Gaussian puts outside $\cJ$, which the penalty and Gaussian concentration make small.
+
+\begin{proof}[Proof of Proposition~\ref{prop:body}]
+Since $\cJ$ contains a ball of radius $1/2$, $D_\cJ\ge1$; put $z=ndD_\cJ\ge2$. Fix
+\[
+\Gamma=C'z^{10},
+\]
+with $C'=10^8$, the constant of Lemma~\ref{lem:penalty} below; in particular $\Gamma\ge1$. Let $\mu$ be a finitely supported law on $\cF(\cJ,n)$, written as weights $\mu_c>0$ on functions $f_c$, with mean $\fbar$, and let $\Delta_\star=\min_\cJ\fbar-\sum_c\mu_c\min_\cJ f_c$. If $\Delta_\star\le1/n$, the point mass at a minimiser of $\fbar$ satisfies \eqref{eq:H} with $\alpha=1/n$. Assume $\Delta_\star>1/n$.
+
+Extension and penalty. Let $\mathrm{pr}$ be the nearest-point projection onto $\cJ$ and $r(x)=\dist(x,\cJ)=|x-\mathrm{pr}(x)|$, a convex $1$-Lipschitz function. Put
+\[
+\tilde f_c(x)=\min_{y\in\cJ}\bigl(f_c(y)+n|x-y|\bigr),\qquad F_c=\tilde f_c+\Gamma r .
+\]
+The function $\tilde f_c$ is convex (an infimal convolution of convex functions) and $n$-Lipschitz, equals $f_c$ on $\cJ$ since $f_c$ is $n$-Lipschitz there, and satisfies $f_c(\mathrm{pr}\,x)\le\tilde f_c(x)\le f_c(\mathrm{pr}\,x)+nr(x)$: the upper bound is the choice $y=\mathrm{pr}\,x$, the lower bound holds because $|x-y|\ge|\mathrm{pr}\,x-y|$ for $y\in\cJ$ and $f_c$ is $n$-Lipschitz. So $F_c$ is convex and $(n+\Gamma)$-Lipschitz, $\min F_c=\min_\cJ f_c$, attained in $\cJ$, and the mean $\Fbar$ satisfies $\Fbar(x)\ge\fbar(\mathrm{pr}\,x)+\Gamma r(x)$. Hence $\Fbar$ is coercive, $\min\Fbar=\min_\cJ\fbar$ is attained at a point $b^\star\in\cJ$, the floor of the family $(\mu_c,F_c)$ is $\Delta_\star$, and its gains $g_c=f_c(b^\star)-\min_\cJ f_c$ lie in $[0,1]$. The differences $u_c=F_c-\Fbar$ do not depend on $\Gamma$, and with $u_c^\cJ=f_c-\fbar$ on $\cJ$, $|u_c(x)-u_c^\cJ(\mathrm{pr}\,x)|\le nr(x)$. With $V^\cJ=\sum_c\mu_c(u_c^\cJ)^2$ this gives
+\begin{equation}\label{eq:proj-V}
+V(x)\le2V^\cJ(\mathrm{pr}\,x)+2n^2r(x)^2 .
+\end{equation}
+
+The law. Theorem~\ref{thm:dil} applied to $(\mu_c,F_c)$ with $b^\star$ gives a scale $h\in[\Delta_\star/2,g_{\max}]\subset(1/(2n),1]$, the entropic Gaussian $(b_h,S_h)$ at temperature $\lambda_h=h/(16d)$, with $s_h$ the largest eigenvalue of $S_h$, and the law $p_h$. Let $\rho$ be the image of $p_h$ under $\mathrm{pr}$, a law on $\cJ$. Since $\fbar\circ\mathrm{pr}\le\Fbar$, the regret of $\rho$ is at most $\Delta(p_h)\le\frac{65}{64}\Delta_\star$. The law $p_h$ puts mass at least $q/2$ on each of $\delta_{b^\star}$, $\delta_{b_h}$ and $N(b_h,A_h)$, so \eqref{eq:P3}, with $h\ge\Delta_\star/2$, $K_S\le10^5$ (checked in Lean) and $g_{\max}\le1$, gives
+\begin{equation}\label{eq:iota}
+\mathcal I(p_h)\ge\frac q2\bigl(V(b^\star)+V(b_h)+\E V(x)\bigr)\ge\frac q2\cdot4\iota,\qquad \iota=\frac{\Delta_\star^2}{16\cdot10^5(1+T_h)^2d^2\ln(2/\Delta_\star)},
+\end{equation}
+where $x=b_h+S_hZ$ and $q=\Delta_\star/(4h)$.
+
+The mass outside $\cJ$. Let $\bar m=\E r(x)$. Since $\Fbar(b_h)\ge\min\Fbar=\Fbar(b^\star)$,
+\[
+\Delta(p_h)=\Delta_\star+\tfrac q2\bigl(\Fbar(b_h)-\min\Fbar\bigr)+\tfrac q2\bigl(\E\Fbar(x)-\min\Fbar\bigr)\ge\Delta_\star+\tfrac q2\bigl(\E\Fbar(x)-\min\Fbar\bigr),
+\]
+and $\Delta(p_h)\le\frac{65}{64}\Delta_\star$ gives $\E\Fbar(x)-\min\Fbar\le(2/q)\Delta_\star/64=h/8$. Since $\Fbar\ge\min\Fbar+\Gamma r$, $\Gamma\bar m\le h/8\le1/8$, so $\bar m\le1/(8\Gamma)\le1/8$, and $r(b_h)\le\bar m$ by Jensen's inequality. The triangle inequality through $\mathrm{pr}\,x$ and $\mathrm{pr}\,b_h$ gives $|x-b_h|\le r(x)+D_\cJ+r(b_h)$, and $\E|x-b_h|=\E|S_hZ|\ge s_h(2/\pi)^{1/2}$, so
+\begin{equation}\label{eq:sh}
+s_h\le(\pi/2)^{1/2}(D_\cJ+2\bar m)\le(\pi/2)^{1/2}(D_\cJ+1/4).
+\end{equation}
+The function $Z\mapsto r(b_h+S_hZ)$ is $s_h$-Lipschitz, so Theorem~\ref{thm:gauss} gives $\Prob(r(x)\ge\bar m+t)\le\exp(-2t^2/(\pi^2s_h^2))=\exp(-t^2/(2s'^2))$ for $t\ge0$, with $s'=(\pi/2)s_h$. Fix $t_0\ge0$ and put $\tau=\bar m+t_0$. Pointwise $r^2\le2\tau r+(r-\tau)_+^2$, and
+\[
+\E(r(x)-\tau)_+^2=\int_0^\infty2t\,\Prob\bigl(r(x)>\tau+t\bigr)\,dt\le\int_0^\infty2t\,e^{-(t_0^2+t^2)/(2s'^2)}\,dt=2s'^2e^{-t_0^2/(2s'^2)},
+\]
+so $\E r(x)^2\le2(\bar m+t_0)\bar m+2s'^2e^{-t_0^2/(2s'^2)}$. Take
+\[
+t_0=s'\bigl(2\lnp(8n^2s'^2/\iota)\bigr)^{1/2}.
+\]
+If $8n^2s'^2\ge\iota$ then $2n^2s'^2e^{-t_0^2/(2s'^2)}=\iota/4$; otherwise $t_0=0$ and $2n^2s'^2<\iota/4$. We check that
+\begin{equation}\label{eq:penalty}
+\Gamma\ge\frac{n^2(3+2t_0)}{4\iota}.
+\end{equation}
+Let $A_0=10^5$, $c_1=(\pi/2)^{1/2}\frac{17}{16}$ and $T(z)$, $\iota_0(z)$, $s_0(z)$ be as in Lemma~\ref{lem:penalty}. By \eqref{eq:sh}, $s_h\le c_1z$ and $s'\le s_0(z)=(\pi/2)c_1z$. The bound $26d(n+\Gamma)s_h/h\le C_1z^{12}$ at the end of this proof, which does not use \eqref{eq:penalty}, gives $T_h\le T(z)$. Since $\Delta_\star^2/\ln(2/\Delta_\star)$ increases in $\Delta_\star\in(1/n,1]$, $nd\le z$ and $\ln(2n)\le\ln(2z)$, $\iota\ge\iota_0(z)$. Since $t_0$ is nondecreasing in $s'$ and in $1/\iota$, $t_0\le s_0(2\ln(8z^2s_0^2/\iota_0))^{1/2}$. So the right side of \eqref{eq:penalty} is at most $\mathrm{need}(z)$, which is at most $\Gamma=C'z^{10}$ by Lemma~\ref{lem:penalty}.
+Since $\bar m\le1$, $n^2(\bar m^2+\E r(x)^2)\le n^2\bar m(3+2t_0)+\iota/4\le n^2(3+2t_0)/(8\Gamma)+\iota/4\le3\iota/4$.
+
+The projection. Since $r(b^\star)=0$ and $r(b_h)\le\bar m$,
+\[
+n^2\int r^2\,dp_h\le\frac{q}{2}\,n^2\bigl(\bar m^2+\E r(x)^2\bigr)\le\frac{3q\iota}{8}\le\frac{3}{16}\,\mathcal I(p_h)
+\]
+by \eqref{eq:iota}, and \eqref{eq:proj-V} gives $\int V^\cJ\,d\rho\ge\frac12\mathcal I(p_h)-n^2\int r^2\,dp_h\ge\frac5{16}\mathcal I(p_h)$. With Theorem~\ref{thm:dil}, $\ln(2g_{\max}/\Delta_\star)\le\ln(2/\Delta_\star)<\ln(2n)$ and $16/5\le4$,
+\[
+\Bigl(\int\fbar\,d\rho-\sum_c\mu_c\min_\cJ f_c\Bigr)^2\le\Delta(p_h)^2\le4\cdot1.6\cdot10^6\,(1+T_h)^2d^2\ln(2n)\int V^\cJ\,d\rho .
+\]
+The integral on the right is the double integral of \eqref{eq:H}. It remains to bound $T_h$. With $n+\Gamma\le(1+C')z^{10}$, $h>1/(2n)$, $nd\le z$ and \eqref{eq:sh} with $D_\cJ+1/4\le\frac54D_\cJ\le\frac{17}{16}z$,
+\[
+\frac{26d(n+\Gamma)s_h}{h}\le C_1z^{12},\qquad C_1=52\,(\pi/2)^{1/2}\,\tfrac{17}{16}\,(1+C'),
+\]
+so $(1+T_h)^2\le2+2T_h^2\le2+4\ln C_1+48\ln z\le C_T\ln z$ with $C_T=(2+4\ln C_1)/\ln2+48$, since $\ln z\ge\ln2$. This is \eqref{eq:H} with $\alpha=1/n$ and $\beta=4\cdot1.6\cdot10^6\,C_Td^2\ln(ndD_\cJ)\ln(2n)$, and $4\cdot1.6\cdot10^6\,C_T\le C_0$ (checked in Lean); a larger $\beta$ weakens \eqref{eq:H}.
+\end{proof}
+
+The bounds on $s_h$, $h$, $T_h$, $\iota$ and $t_0$ in the proof are uniform over the law $\mu$ and the scale; this is what lets one penalty $\Gamma$, fixed before $\mu$, serve every law.
+
+\begin{lemma}\label{lem:penalty}
+Let $A_0=10^5$, $c_1=(\pi/2)^{1/2}\frac{17}{16}$, $C'=10^8$ and $C_1=52c_1(1+C')$, and for real $z\ge2$ put
+\begin{gather*}
+T(z)=\bigl(2\ln(C_1z^{12})\bigr)^{1/2},\qquad \iota_0(z)=\frac1{16A_0(1+T(z))^2z^2\ln(2z)},\qquad s_0(z)=\frac\pi2c_1z,\\
+\mathrm{need}(z)=\frac{z^2}{4\iota_0}\Bigl(3+2s_0\bigl(2\ln(8z^2s_0^2/\iota_0)\bigr)^{1/2}\Bigr).
+\end{gather*}
+Then $\mathrm{need}(z)\le C'z^{10}$ for every real $z\ge2$.
+\end{lemma}
+
+\begin{proof}
+Write $l=\ln z\ge\ln2$, $T=T(z)$ and $\Theta=\ln(8z^2s_0^2/\iota_0)=\ln(32\pi^2A_0c_1^2)+6l+2\ln(1+T)+\ln\ln(2z)$, so that $\mathrm{need}(z)=4A_0(1+T)^2z^4\ln(2z)(3+R)$ with $R=2s_0(2\Theta)^{1/2}=\pi c_1z(2\Theta)^{1/2}$, and
+\[
+\ln\frac{\mathrm{need}(z)}{C'z^{10}}=\ln\frac{4A_0}{C'}+2\ln(1+T)+\ln\ln(2z)+\ln(3+R)-6l,\qquad T^2=2\ln C_1+24l .
+\]
+All these are differentiable functions of $l$. The derivative of $\ln\ln(2z)$ is $1/\ln(2z)\le1/\ln4$. Since $dT/dl=12/T$, the derivative of $2\ln(1+T)$ is $24/(T(1+T))$, which decreases in $T$, and $T$ increases with $l$; so it is at most $q_2=24/(T_2(1+T_2))$ with $T_2=T(2)$. Each term of $\Theta$ increases with $l$, so $\Theta\ge\Theta_2$, its value at $z=2$, and $d\Theta/dl=6+24/(T(1+T))+1/\ln(2z)\le6+q_2+1/\ln4$. Since $dR/dl=R(1+(d\Theta/dl)/(2\Theta))$, the derivative of $\ln(3+R)$ is at most $1+(6+q_2+1/\ln4)/(2\Theta_2)$. Hence
+\[
+\frac{d}{dl}\ln\frac{\mathrm{need}(z)}{C'z^{10}}\le\frac1{\ln4}+q_2+1+\frac{6+q_2+1/\ln4}{2\Theta_2}-6 .
+\]
+Since $T_2\ge7$ and $\Theta_2\ge20$ (checked in Lean), $q_2\le1$, and $\ln4\ge1$, so the right side is at most $1+1+1+8/40-6<0$. So the ratio $\mathrm{need}(z)/(C'z^{10})$ decreases on $[2,\infty)$, and it is at most $1$ at $z=2$, since $\mathrm{need}(2)\le2^{10}C'$ (checked in Lean).
+\end{proof}
+
+\section{A cover of the inner body}\label{sec:ids}
+
+The learner of Section~\ref{sec:explicit} plays on a finite subset of $\cJ$, so the comparator and the exploratory laws of $\mathrm{(H)}$ must be moved onto it. This section gives the cover and bounds the cost of the move; the argument is the one of \cite[proof of Theorem~2]{Lat20}.
+
+Throughout, $\cJ\subset\R^d$ is a compact set of diameter $D_\cJ>0$, $n\ge1$, $L>0$, $\alpha,\beta\ge0$, and $\cF$ is a class of $L$-Lipschitz functions $\cJ\to[0,1]$ that satisfies $\mathrm{(H)}[\alpha,\beta]$. Each $f\in\cF$ is continuous on the compact set $\cJ$, so $f_\star=\min_\cJ f$ and the minimum over $\cJ$ of a finite sum of members of $\cF$ exist.
+
+The next lemma gives a finite set and its size; it bounds the size of the net of the learner (Lemma~\ref{lem:net}).
+
+\begin{lemma}\label{lem:cover}
+Let $\varepsilon>0$.
+\begin{enumerate}[label=(\alph*)]
+\item Every finite set $Y\subset\cJ$ with $|y-y'|\ge\varepsilon$ for distinct $y,y'\in Y$ has at most $(1+2D_\cJ/\varepsilon)^d$ elements.
+\item There is a nonempty finite set $\cC\subset\cJ$ of at most $(1+2D_\cJ/\varepsilon)^d$ elements, with $|y-y'|\ge\varepsilon$ for distinct $y,y'\in\cC$ and with every point of $\cJ$ at distance less than $\varepsilon$ from $\cC$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) We may assume $Y$ nonempty. The open balls of radius $\varepsilon/2$ about the points of $Y$ are disjoint, since a common point $z$ of two of them would give $|y-y'|\le|y-z|+|z-y'|<\varepsilon$. Fix $y_0\in Y$; each ball lies in the ball of radius $D_\cJ+\varepsilon/2$ about $y_0$. Comparing Lebesgue measures, $Y$ has at most $(D_\cJ+\varepsilon/2)^d/(\varepsilon/2)^d$ elements.
+
+(b) By (a) the cardinalities of the finite separated subsets of $\cJ$ are bounded, and a one-point subset is one of them; let $\cC$ be one of largest cardinality. If a point of $\cJ$ were at distance at least $\varepsilon$ from all of $\cC$, it could be added to $\cC$.
+\end{proof}
+
+Fix $\varepsilon>0$, a finite set $\cC\subset\cJ$ such that every point of $\cJ$ is at distance less than $\varepsilon$ from $\cC$, such as the set of Lemma~\ref{lem:cover}(b), and an enumeration $c_1,\dots,c_N$ of $\cC$. Let $\Pi\colon\cJ\to\cC$ send $x$ to the point of least index among the points of $\cC$ nearest to $x$. Its fibres are defined by finitely many inequalities between continuous functions, so $\Pi$ is Borel, and $|x-\Pi(x)|<\varepsilon$. For a Borel probability law $\rho$ on $\cJ$, $\Pi_\#\rho$ is its image, a law on $\cC$.
+
+The next lemma bounds the cost of moving the laws onto $\cC$, for Lemma~\ref{lem:conv} and Theorem~\ref{thm:exo}. For a finitely supported law $\mu$ on $\cF$ with mean $\fbar$ and a Borel probability law $\sigma$ on $\cJ$ put
+\[
+V_\mu(\sigma)=\int\!\!\int\bigl(\fbar(x)-f(x)\bigr)^2\,d\sigma(x)\,d\mu(f).
+\]
+
+\begin{lemma}\label{lem:moving}
+\begin{enumerate}[label=(\alph*)]
+\item For $f\in\cF^n$, $\min_\cC\sum_tf_t\le\min_\cJ\sum_tf_t+nL\varepsilon$.
+\item Let $\mu$ be a finitely supported law on $\cF$ with mean $\fbar$, $\rho$ a Borel probability law on $\cJ$ and $\xi=\Pi_\#\rho$. Then $\int\fbar\,d\xi\le\int\fbar\,d\rho+L\varepsilon$ and $V_\mu(\rho)^{1/2}\le V_\mu(\xi)^{1/2}+L\varepsilon$. If $\rho$ satisfies \eqref{eq:H} for $\mu$, then
+\begin{equation}\label{eq:moved}
+\int\fbar\,d\xi-\int f_\star\,d\mu(f)\le\alpha+L\varepsilon\bigl(1+\beta^{1/2}\bigr)+\bigl(\beta V_\mu(\xi)\bigr)^{1/2}.
+\end{equation}
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(a) Let $x^\star$ minimise $\sum_tf_t$ on $\cJ$; since each $f_t$ is $L$-Lipschitz, $\sum_tf_t(\Pi(x^\star))\le\sum_tf_t(x^\star)+nL\varepsilon$.
+
+(b) The first inequality is $\int(\fbar(\Pi(x))-\fbar(x))\,d\rho(x)\le L\varepsilon$. For the second, work in $L^2(\rho\otimes\mu)$, a finite sum of copies of $L^2(\rho)$, with $u(x,f)=f(x)-\fbar(x)$. Then $\|u\|^2=V_\mu(\rho)$ and, by the definition of the image law, $\|u\circ(\Pi\times\mathrm{id})\|^2=V_\mu(\xi)$. Fix $x\in\cJ$ and put $W(f)=f(x)-f(\Pi(x))$, so that $|W|\le L\varepsilon$ on the support of $\mu$. Since $\fbar$ is the mean of $\mu$,
+\[
+u(x,f)-u(\Pi(x),f)=W(f)-\int W\,d\mu,\qquad\int\bigl(u(x,f)-u(\Pi(x),f)\bigr)^2\,d\mu(f)\le\int W^2\,d\mu\le L^2\varepsilon^2,
+\]
+the middle quantity being the variance of $W$ under $\mu$. Integrating in $x$ against $\rho$ and applying Minkowski's inequality gives $\|u\|\le\|u\circ(\Pi\times\mathrm{id})\|+L\varepsilon$. Finally \eqref{eq:moved} follows from the first inequality, \eqref{eq:H} and the second.
+\end{proof}
+
+
+\section{Lipschitz losses on an inner body}\label{sec:reduce}
+
+This section proves Lemma~\ref{lem:inner}. A convex function with values in $[0,1]$ can be arbitrarily steep near the boundary of $\cK$, and on the boundary it need not even be Borel; on the inner body $\cJ$ it is $n$-Lipschitz, and playing in $\cJ$ costs at most $1$ against the best point of $\cK$.
+
+\begin{proof}[Proof of Lemma~\ref{lem:inner}]
+(a) The set $\cJ$ is convex: if $B(x,1/n)$ and $B(y,1/n)$ lie in $\cK$ and $\theta\in[0,1]$, a point $\theta x+(1-\theta)y+u$ with $|u|\le1/n$ is the convex combination $\theta(x+u)+(1-\theta)(y+u)$ of two points of $\cK$. It is closed, since $\cK$ is, and bounded, so it is compact. For $x\in\cK$ the point $y=x_0+(1-1/n)(x-x_0)$ lies in $\cJ$: for $|u|\le1/n$, $y+u=(1-1/n)x+\frac1n(x_0+nu)$ with $x_0+nu\in B(x_0,1)\subset\cK$. Taking $x\in B(x_0,1)$ shows $B(x_0,1-1/n)\subset\cJ$, so $\cJ$ has nonempty interior and diameter at least $2(1-1/n)\ge1$; it lies in $\cK$, so its diameter is at most $D$.
+
+(b) Let $f\in\cG(\cK)$, $x\ne y$ in $\cJ$, $s=|y-x|$ and $z=y+\frac1n(y-x)/s$, a point of $B(y,1/n)\subset\cK$. With $\theta=(1/n)/(s+1/n)$, $y=\theta x+(1-\theta)z$, and convexity gives $f(y)-f(x)\le(1-\theta)(f(z)-f(x))\le1-\theta=s/(s+1/n)\le ns$. Exchanging $x$ and $y$ gives $|f(x)-f(y)|\le n|x-y|$; the restriction lies in $\cF(\cJ,n)$.
+
+(c) Let $x\in\cK$ and $y=x_0+(1-1/n)(x-x_0)=(1-\frac1n)x+\frac1nx_0$, a point of $\cJ$ by (a). By convexity and $0\le f_t\le1$, $f_t(y)\le f_t(x)+\frac1n(f_t(x_0)-f_t(x))\le f_t(x)+\frac1n$. Summing over $t$ and taking the infimum over $x\in\cK$ gives the claim.
+\end{proof}
+
+
+\section{An explicit learner}\label{sec:explicit}
+
+This section proves Theorem~\ref{thm:explicit} and Corollary~\ref{cor:minimax}. The learner runs exponential weights on a finite net $\cC$ of the inner body $\cJ$; in each round it solves a convex program for the law of its action and for a table of loss estimates, and it reads its observation only through a coin of that mean. None of the parts is new, and we credit each where it enters: the algorithm and its regret decomposition are exploration by optimisation \cite{LG21}, \cite[Section~8.5]{Lat24}; the coin is the device of \cite{AG12}, used as here, to make each round a program in finite dimension, by \cite{XZ25}, whose parameterisation of the adversary with Bernoulli rewards is the set $\mathcal A$ of Lemma~\ref{lem:advside} and whose formula for a fixed law of play, minimised over that law, gives the bound of Lemma~\ref{lem:dual}, with losses in place of rewards \cite[Appendix, Concave parameterization with Bernoulli reward]{XZ25}; the step from the one-round inequality to the information ratio of a round (Lemma~\ref{lem:conv}) is a step of the proof of \cite[Theorem~2]{Lat20}, used also in \cite{Lat24,XZ25}, and \cite{FKQR21} bounds its decision-estimation coefficient for convex bandits by a variant of \cite[Theorem~3]{Lat20}. The section is written so that its only input from the rest of the paper is the one-round inequality, Proposition~\ref{prop:body}; it uses besides Lemmas~\ref{lem:inner}, \ref{lem:cover} and~\ref{lem:moving}, Remarks~\ref{lem:pinsker} and~\ref{lem:finite-minimax} and the smoothing of the proof of Theorem~\ref{thm:gauss}; no compactness of a space of policies and no Tychonoff argument enters. Lemmas~\ref{lem:ew} and~\ref{lem:br} give the regret decomposition over the rounds; Lemmas~\ref{lem:mm1} and~\ref{lem:advside} exchange the learner and the adversary in one round; Lemmas~\ref{lem:gibbs} and~\ref{lem:dual} bound the value of the adversary, and Lemma~\ref{lem:conv} and Proposition~\ref{prop:value} bound it through $\mathrm{(H)}$; Lemmas~\ref{lem:class} and~\ref{lem:net} give the class on the net and the net, the latter through Lemma~\ref{lem:cover}. The proof of Theorem~\ref{thm:exo} assembles these, Theorem~\ref{thm:explicit} is Theorem~\ref{thm:exo} with the parameters chosen, and Remark~\ref{lem:sd} serves only the cost of a round.
+
+Throughout, $\cK$ is a convex body of $\R^d$ containing $B(x_0,1)$, $D\ge\diam\cK$ is a number known to the learner, $n\ge2$, $\cJ$ is the inner body of Section~\ref{sec:proof} and $L=n$. Every probability space below is finite, and no measurability is asked of anything.
+
+\subsection{The algorithm}
+
+For a finite set $\cC\subset\R^d$ let $\Delta(\cC)$ be the probability vectors on $\cC$, $\Delta^\circ(\cC)$ those with all coordinates positive, $\ip{u,v}=\sum_{x\in\cC}u(x)v(x)$ for $u,v\in\R^\cC$, and
+let $\mathcal P_L$ be the set of the vectors $v\in[0,1]^\cC$ for which there are $s_x\in\R^d$ ($x\in\cC$) with $|s_x|\le L$ and
+\[
+v(z)\ge v(x)+\ip{s_x,z-x}\qquad\text{for all }x,z\in\cC,
+\]
+that is, the restrictions to $\cC$ of the convex $L$-Lipschitz functions on $\R^d$ with values in $[0,1]$ on $\cC$ (Lemma~\ref{lem:class}). For $q\in\Delta^\circ(\cC)$ and $\eta>0$, let $\mathcal S_q$ be the set of pairs $(p,g)$, $p\in\Delta(\cC)$ and $g=(g(x,b))_{x\in\cC,\,b\in\{0,1\}}$ with $g(x,b)\in\R^\cC$, such that for every $(x,b)$
+\begin{equation}\label{eq:Sq}
+\sum_{z\in\cC}q(z)\exp\bigl(-\eta\,g(x,b)(z)/p(x)\bigr)\le1\ \text{ if }p(x)>0,\qquad g(x,b)\ge0\ \text{ if }p(x)=0 .
+\end{equation}
+For $(p,g)\in\mathcal S_q$, $f\in[0,1]^\cC$ and $y\in\cC$ put
+\begin{gather}
+\mathcal R(p,g;f,y)=\sum_xp(x)f(x)-f(y)+\sum_x\bigl[(1-f(x))\,g(x,0)(y)+f(x)\,g(x,1)(y)\bigr],\label{eq:Rround}\\
+\overline{\mathcal R}(p,g)=\max_{y\in\cC}\ \max_{f\in\mathcal P_L}\mathcal R(p,g;f,y).\notag
+\end{gather}
+
+\begin{algorithm}[exploration by optimisation with a coin]\label{alg:exo}
+\leavevmode
+\begin{center}
+\fbox{\begin{minipage}{0.93\textwidth}
+\textbf{Input:} $d$, $n\ge2$, a number $D\ge\diam\cK$, a point $x_0$ with $B(x_0,1)\subset\cK$, a membership test for $\cJ$; parameters $\varepsilon\in(0,1/4]$, $\eta>0$, $\mathrm{tol}>0$; $L=n$.
+
+\textbf{Net.} Let $h=\varepsilon/(2d^{1/2}(D+1))$. Scan, in a fixed order, the points of $h\mathbb Z^d$ in the cube $x_0+[-D,D]^d$ that lie in $\cJ$, and keep a point if its distance to every point kept so far is at least $\varepsilon/2$. Let $\cC$ be the set kept and $m=|\cC|$.
+
+\textbf{State:} $q_t\in\Delta^\circ(\cC)$, with $q_1$ uniform.
+
+\textbf{Round} $t=1,\dots,n$:
+\begin{enumerate}[label=\arabic*.,leftmargin=2em]
+\item Compute from $q_t$, by a deterministic procedure, $(P_t,G_t)\in\mathcal S_{q_t}$ with $\overline{\mathcal R}(P_t,G_t)\le\inf_{\mathcal S_{q_t}}\overline{\mathcal R}+\mathrm{tol}$.
+\item Draw $X_t$ from $P_t$, play it, and observe $o_t=f_t(X_t)$.
+\item Draw $B_t\in\{0,1\}$ with $\Prob(B_t=1)=o_t$, with fresh randomness, and forget $o_t$.
+\item Put $\hat\ell_t=G_t(X_t,B_t)/P_t(X_t)\in\R^\cC$.
+\item Put $q_{t+1}(y)=q_t(y)e^{-\eta\hat\ell_t(y)}\big/\sum_{z}q_t(z)e^{-\eta\hat\ell_t(z)}$ for $y\in\cC$.
+\end{enumerate}
+\end{minipage}}
+\end{center}
+\end{algorithm}
+
+The infimum in step~1 is finite (Proposition~\ref{prop:value}) and need not be attained, which is why the step asks for a tolerance. Since $X_t$ is drawn from $P_t$, $P_t(X_t)>0$ and $\hat\ell_t$ is a finite vector. The program of step~1 is convex (Lemma~\ref{lem:advside}) and is written as a conic program in Section~\ref{sec:explicit-cost}. The quantity $\mathcal R$ bounds, for $X$ drawn from $p$, $B$ a coin of mean $f(X)$ and $\hat\ell=g(X,B)/p(X)$, the expectation of the loss of the action against the comparator $y$, plus the estimated loss of $y$, plus the increment of the log-partition function of the weights, which \eqref{eq:Sq} makes nonpositive (Lemma~\ref{lem:br}); exponential weights add these bounds over the rounds (Lemma~\ref{lem:ew}). The regret of the learner against $f=(f_1,\dots,f_n)$ is $\Reg_n(f)=\E\sum_tf_t(X_t)-\inf_\cK\sum_tf_t$, the expectation being over its draws, actions and coins.
+
+\begin{theorem}\label{thm:exo}
+Let $\alpha,\beta\ge0$ be such that $\cF(\cJ,n)$ satisfies $\mathrm{(H)}[\alpha,\beta]$, and let $\varepsilon\in(0,1/4]$, $\eta>0$ and $\mathrm{tol}>0$. For every $f\in\cG(\cK)^n$ fixed before the game, the learner of Algorithm~\ref{alg:exo} has
+\[
+\Reg_n(f)\le1+nL\varepsilon+\frac{\ln m}\eta+n\Bigl[\kappa_\varepsilon\alpha+L\varepsilon\bigl(1+\beta^{1/2}\bigr)+\frac{\eta\beta}8+\mathrm{tol}\Bigr],\qquad\kappa_\varepsilon=1+2L\varepsilon,
+\]
+with $2\le m\le(5D/\varepsilon)^d$. The same bound holds for $\sup_{x\in\cK}\E\sum_t(f_t(X_t)-f_t(x))$ when $f_t=A_t(X_1,B_1,\dots,X_{t-1},B_{t-1})$ for maps $A_t$ into $\cG(\cK)$.
+\end{theorem}
+
+Against an adaptive adversary this is a bound on the pseudo-regret, the supremum outside the expectation; the proof gives nothing for $\E\sup_x$, the estimates $\hat\ell_t$ being unbounded.
+
+\subsection{Exponential weights and one round}
+
+\begin{lemma}\label{lem:ew}
+Let $\eta>0$, $\hat\ell_1,\dots,\hat\ell_n\in\R^\cC$ arbitrary, $q_1$ uniform, $Z_t=\sum_zq_t(z)e^{-\eta\hat\ell_t(z)}$ and $q_{t+1}(y)=q_t(y)e^{-\eta\hat\ell_t(y)}/Z_t$. Then for every $y\in\cC$, $\sum_t\bigl(\hat\ell_t(y)+\eta^{-1}\ln Z_t\bigr)\ge-\eta^{-1}\ln m$.
+\end{lemma}
+
+\begin{proof}
+Let $\hat L_t=\hat\ell_1+\dots+\hat\ell_t$ and $W_t=\sum_ze^{-\eta\hat L_t(z)}$, so $W_0=m$. By induction $q_t(z)=e^{-\eta\hat L_{t-1}(z)}/W_{t-1}$, so $Z_t=W_t/W_{t-1}$, and $\sum_t\ln Z_t=\ln W_n-\ln m\ge-\eta\hat L_n(y)-\ln m$.
+\end{proof}
+
+\begin{lemma}\label{lem:br}
+Let $q\in\Delta^\circ(\cC)$, $(p,g)\in\mathcal S_q$, $f\in[0,1]^\cC$ and $y\in\cC$. Let $X$ have law $p$, $B\in\{0,1\}$ with $\Prob(B=1\mid X)=f(X)$, and $\hat\ell=g(X,B)/p(X)$. Then
+\[
+\E\Bigl[f(X)-f(y)+\hat\ell(y)+\eta^{-1}\ln\sum_zq(z)e^{-\eta\hat\ell(z)}\Bigr]\le\mathcal R(p,g;f,y).
+\]
+Moreover, with $c_y(x)=p(x)-\mathbf 1\{x=y\}+g(x,1)(y)-g(x,0)(y)$,
+\begin{equation}\label{eq:affine}
+\mathcal R(p,g;f,y)=\sum_xg(x,0)(y)+\ip{c_y,f}.
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+With $\pi(1\mid x)=f(x)$ and $\pi(0\mid x)=1-f(x)$, the left side is
+\[
+\sum_xp(x)f(x)-f(y)+\sum_{x:p(x)>0}\sum_b\pi(b\mid x)\Bigl[g(x,b)(y)+\frac{p(x)}\eta\ln\sum_zq(z)e^{-\eta g(x,b)(z)/p(x)}\Bigr].
+\]
+For $p(x)>0$ the logarithm is at most $0$ by \eqref{eq:Sq}; for $p(x)=0$ the terms $\pi(b\mid x)g(x,b)(y)$ of $\mathcal R$ are nonnegative, since $g(x,b)\ge0$ there. Dropping the logarithms and adding these terms gives $\mathcal R(p,g;f,y)$. The identity \eqref{eq:affine} is a rearrangement of \eqref{eq:Rround}.
+\end{proof}
+
+The coin makes $\mathcal R$ affine in $f$. Had the learner fed its estimator with the observation $f(X)$ itself, $g(X,f(X))$ would enter at the value $f(X)$, the round's payoff would not be affine in $f$, the adversary's mixed strategies would not reduce to their conditional means, and the minimax step below would need compactness in infinite dimension, as in \cite{LG21}.
+
+\subsection{The minimax step of a round}
+
+\begin{lemma}\label{lem:mm1}
+Let $E$ and $E'$ be real topological vector spaces, $\mathcal A\subset E$ nonempty, compact and convex, $Y\subset E'$ convex, $c$ real, and $\Phi\colon E'\times E\to\R$ such that $\Phi(y,\cdot)$ is continuous on $E$ and concave on $\mathcal A$ for every $y\in Y$, and $\Phi(\cdot,a)$ is continuous and convex on $Y$ for every $a\in\mathcal A$. If every $a\in\mathcal A$ has some $y\in Y$ with $\Phi(y,a)<c$, then some $y\in Y$ has $\Phi(y,a)<c$ for every $a\in\mathcal A$.
+\end{lemma}
+
+\begin{proof}
+For $y\in Y$ the set $K_y=\{a\in\mathcal A:\Phi(y,a)\ge c\}$ is closed in $\mathcal A$, and by assumption no point lies in all of them. Since $\mathcal A$ is compact, finitely many, $K_{y_1},\dots,K_{y_k}$, have empty intersection, so $M=\max_a\min_i\Phi(y_i,a)<c$, the maximum of a continuous function on a compact set. Remark~\ref{lem:finite-minimax} with $P=\mathcal A$, $g_i=-\Phi(y_i,\cdot)$, whose $c$ is $-M$, and $\delta=c-M$ gives a probability vector $\lambda$ with $\sum_i\lambda_i\Phi(y_i,a)<c$ for every $a$. With $y=\sum_i\lambda_iy_i\in Y$, convexity gives $\Phi(y,a)<c$ for every $a$.
+\end{proof}
+
+Compactness is asked of one side only, the adversary's, which the coin makes finite-dimensional. The adversary's mixed strategies are the pairs $(w,\theta)$ in
+\[
+\mathcal A=\bigl\{(w,\theta):\ w\in\Delta(\cC),\ \theta=(\theta_y)_{y\in\cC},\ \theta_y\in w_y\mathcal P_L\bigr\}\subset\R^\cC\times(\R^\cC)^\cC,
+\]
+with the payoff $\Phi(p,g;w,\theta)=\sum_y\bigl[w_y\sum_xg(x,0)(y)+\ip{c_y,\theta_y}\bigr]$. For $w_y>0$ put $f_y=\theta_y/w_y\in\mathcal P_L$; by \eqref{eq:affine}, $\Phi(p,g;w,\theta)=\sum_{y:w_y>0}w_y\mathcal R(p,g;f_y,y)$, the payoff of an adversary that draws the comparator $y$ from $w$ and then a loss vector with conditional mean $f_y$. Put $\underline{\mathcal R}(w,\theta)=\inf_{(p,g)\in\mathcal S_q}\Phi(p,g;w,\theta)$.
+
+\begin{lemma}\label{lem:advside}
+The set $\mathcal A$ is convex and compact, and $\mathcal S_q$ is convex. Let $c$ be real, and assume that every $(w,\theta)\in\mathcal A$ has some $(p,g)\in\mathcal S_q$ with $\Phi(p,g;w,\theta)<c$. Then some $(p,g)\in\mathcal S_q$ has
+\begin{equation}\label{eq:roundminimax}
+\mathcal R(p,g;f,y)<c\qquad\text{for every }y\in\cC\text{ and every }f\in\mathcal P_L .
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+The class $\mathcal P_L$ is convex and compact (Lemma~\ref{lem:class}), so $\mathcal A$ is the image of the compact $\Delta(\cC)\times\mathcal P_L^\cC$ under the continuous map $(w,(f_y))\mapsto(w,(w_yf_y))$. It is convex: for $(w,\theta),(w',\theta')\in\mathcal A$ and $l\in[0,1]$, if $w''_y=lw_y+(1-l)w'_y>0$ then $l\theta_y+(1-l)\theta'_y=w''_yf''_y$ with $f''_y$ the convex combination of $f_y$ and $f'_y$ with the weights $lw_y/w''_y$ and $(1-l)w'_y/w''_y$, and if $w''_y=0$ both terms vanish. The payoff $\Phi$ is linear and continuous in $(w,\theta)$, and in $(p,g)$, $c_y$ is affine and so is $\Phi$, which is therefore continuous. For the convexity of $\mathcal S_q$, consider $E_q=\{(s,u)\in[0,\infty)\times\R^\cC:\ s>0\text{ and }\sum_zq(z)e^{-\eta u(z)/s}\le1,\text{ or }s=0\text{ and }u\ge0\}$. For $s>0$, $(s,u)\mapsto s\ln\sum_zq(z)e^{-\eta u(z)/s}$ is the perspective of a convex function, hence convex, so the part of $E_q$ with $s>0$ is convex. A combination of $(s_1,u_1)$, $s_1>0$, with $(0,u_2)$, $u_2\ge0$, is $(ls_1,lu_1+(1-l)u_2)$, and $\sum_zq(z)e^{-\eta(lu_1+(1-l)u_2)(z)/(ls_1)}\le\sum_zq(z)e^{-\eta u_1(z)/s_1}\le1$; two points with $s=0$ combine to one with $s=0$ and $u\ge0$. So $E_q$ is convex, and $\mathcal S_q$, defined by $(p(x),g(x,b))\in E_q$ for every $(x,b)$, is convex. Lemma~\ref{lem:mm1} with $Y=\mathcal S_q$ gives $(p,g)\in\mathcal S_q$ with $\Phi(p,g;w,\theta)<c$ for every $(w,\theta)\in\mathcal A$. At $w=e_y$, $\theta_y=f$ and $\theta_{y'}=0$ for $y'\ne y$, a point of $\mathcal A$, the formula above gives $\Phi(p,g;w,\theta)=\mathcal R(p,g;f,y)$, which is \eqref{eq:roundminimax}.
+\end{proof}
+
+\subsection{The value of a round}
+
+For $a,b\in[0,1]$ let $\mathrm{kl}(a,b)=a\ln(a/b)+(1-a)\ln((1-a)/(1-b))$, with $0\ln0=0$, and for $r\in\Delta(\cC)$ and $q\in\Delta^\circ(\cC)$ let $\KL(r\|q)=\sum_{y:r(y)>0}r(y)\ln(r(y)/q(y))$.
+
+\begin{lemma}\label{lem:gibbs}
+For $r\in\Delta(\cC)$, $q\in\Delta^\circ(\cC)$ and $\eta>0$, $\inf\bigl\{\ip{r,e}:\ e\in\R^\cC,\ \sum_zq(z)e^{-\eta e(z)}\le1\bigr\}=-\KL(r\|q)/\eta$.
+\end{lemma}
+
+\begin{proof}
+Let $R_+=\{r>0\}$. For a feasible $e$, Jensen's inequality for the logarithm with the weights $r(y)$ on $R_+$ gives $0\ge\ln\sum_{y\in R_+}r(y)\frac{q(y)}{r(y)}e^{-\eta e(y)}\ge-\KL(r\|q)-\eta\ip{r,e}$. Conversely, for $M>0$ let $u(y)=-\eta^{-1}\ln(r(y)/q(y))$ and $e_M(y)=\min(u(y),M)$ on $R_+$, $e_M=M$ off $R_+$, and $e=e_M+\eta^{-1}\ln(1+e^{-\eta M})$. On $R_+$, $e^{-\eta e_M}\le r/q+e^{-\eta M}$, so $\sum_zq(z)e^{-\eta e_M(z)}\le1+e^{-\eta M}$ and $e$ is feasible, and $\ip{r,e}\le-\KL(r\|q)/\eta+\eta^{-1}\ln(1+e^{-\eta M})$, which tends to $-\KL(r\|q)/\eta$.
+\end{proof}
+
+\begin{lemma}\label{lem:dual}
+Let $w\in\Delta(\cC)$, $f_y\in[0,1]^\cC$ and $\theta_y=w_yf_y$ for $y\in\cC$, $\fbar=\sum_yw_yf_y$ and $I_x(w,\theta)=\sum_{y:w_y>0}w_y\,\mathrm{kl}(f_y(x),\fbar(x))$ for $x\in\cC$. For every $x_0\in\cC$ and $\delta>0$ there is $g$ with $(e_{x_0},g)\in\mathcal S_q$ and
+\[
+\Phi(e_{x_0},g;w,\theta)\le\fbar(x_0)-\frac{I_{x_0}(w,\theta)+\KL(w\|q)}\eta-\sum_yw_yf_y(y)+\delta .
+\]
+\end{lemma}
+
+Letting $\delta\to0$ and minimising over $x_0$, $\underline{\mathcal R}(w,\theta)\le\min_{x\in\cC}[\fbar(x)-(I_x(w,\theta)+\KL(w\|q))/\eta]-\sum_yw_yf_y(y)$.
+
+\begin{proof}
+The kl terms are finite: $\fbar(x)=0$ forces $f_y(x)=0$ for all $y$ with $w_y>0$, and $\fbar(x)=1$ forces $f_y(x)=1$. By \eqref{eq:affine}, $\Phi=\ip{p,\fbar}-\sum_yw_yf_y(y)+\sum_{x,b}\ip{W_{x,b},g(x,b)}$ with $W_{x,1}(y)=w_yf_y(x)$ and $W_{x,0}(y)=w_y(1-f_y(x))$, nonnegative vectors of masses $\fbar(x)$ and $1-\fbar(x)$. For fixed $p$ the constraints \eqref{eq:Sq} bind each $g(x,b)$ separately. If $p(x)>0$, Lemma~\ref{lem:gibbs} with $g(x,b)=p(x)e$ gives $\inf\ip{W_{x,b},g(x,b)}=-p(x)k_{x,b}/\eta$, where $k_{x,b}=\Pi\,\KL(r\|q)$ if $W_{x,b}$ has mass $\Pi>0$ and $r=W_{x,b}/\Pi$, and $k_{x,b}=0$ if $W_{x,b}=0$; if $p(x)=0$ the infimum over $g(x,b)\ge0$ is $0$. Take $p=e_{x_0}$, $g(x,b)=0$ for $x\ne x_0$, and $g(x_0,b)$ within $\delta/2$ of the infimum for $b=0,1$. Then $(e_{x_0},g)\in\mathcal S_q$ and $\Phi(e_{x_0},g;w,\theta)\le\fbar(x_0)-(k_{x_0,0}+k_{x_0,1})/\eta-\sum_yw_yf_y(y)+\delta$. Splitting each logarithm, with sums over $y$ with $w_y>0$,
+\[
+k_{x,1}+k_{x,0}=\sum_yw_yf_y(x)\ln\frac{w_yf_y(x)}{\fbar(x)q(y)}+\sum_yw_y(1-f_y(x))\ln\frac{w_y(1-f_y(x))}{(1-\fbar(x))q(y)}=I_x(w,\theta)+\KL(w\|q).
+\]
+With $x=x_0$ this is the claim.
+\end{proof}
+
+The bound on $\underline{\mathcal R}(w,\theta)$ after the lemma is an equality, which the formal proof does not contain: for $(p,g)\in\mathcal S_q$ the infima of the proof give $\ip{W_{x,b},g(x,b)}\ge-p(x)k_{x,b}/\eta$, and $\ip{W_{x,b},g(x,b)}\ge0$ where $p(x)=0$, so $\Phi(p,g;w,\theta)\ge\sum_xp(x)[\fbar(x)-(I_x(w,\theta)+\KL(w\|q))/\eta]-\sum_yw_yf_y(y)$, which is at least the minimum over $x$.
+
+The one-round inequality enters through the next lemma. Let $\cF''_L$ be the class of convex $L$-Lipschitz functions $\cJ\to[-L\varepsilon,1+L\varepsilon]$, and let $\Pi\colon\cJ\to\cC$ be the nearest-point map of Section~\ref{sec:ids} for the net $\cC$.
+
+\begin{lemma}\label{lem:conv}
+Assume that $\cF(\cJ,L)$ satisfies $\mathrm{(H)}[\alpha,\beta]$ and that every point of $\cJ$ is at distance less than $\varepsilon$ from $\cC\subset\cJ$. Let $(w,\theta)\in\mathcal A$, $f_y=\theta_y/w_y$ for $w_y>0$, and $\fbar=\sum_yw_yf_y$. There is $\xi\in\Delta(\cC)$ with
+\[
+\sum_x\xi(x)\fbar(x)-\sum_yw_yf_y(y)\le\kappa_\varepsilon\alpha+L\varepsilon\bigl(1+\beta^{1/2}\bigr)+\Bigl(\tfrac12\beta\,I(\xi)\Bigr)^{1/2},\qquad I(\xi)=\sum_x\xi(x)I_x(w,\theta).
+\]
+\end{lemma}
+
+\begin{proof}
+For $w_y>0$ let $h_y\in\cF''_L$ be the extension of $f_y$ of Lemma~\ref{lem:class}(iii), equal to $f_y$ on $\cC$, and $\mu=\sum_yw_y\delta_{h_y}$, with mean $\bar h=\sum_yw_yh_y$, equal to $\fbar$ on $\cC$. The affine map $T(h)=(h+L\varepsilon)/\kappa_\varepsilon$ sends $\cF''_L$ into $\cF(\cJ,L/\kappa_\varepsilon)$, a subclass of $\cF(\cJ,L)$ closed under finite convex combinations, which therefore satisfies $\mathrm{(H)}[\alpha,\beta]$; it commutes with means and minima. Let $\rho$ be the law that $\mathrm{(H)}$ gives for $T_\#\mu$ and $\xi=\Pi_\#\rho$. Lemma~\ref{lem:moving}(b), whose proof uses of the class only the Lipschitz bound and of $\cC$ only that every point of $\cJ$ is within $\varepsilon$ of it, applied to the class $\cF(\cJ,L/\kappa_\varepsilon)$ with the Lipschitz constant $L/\kappa_\varepsilon$, gives \eqref{eq:moved} for $T_\#\mu$; multiplied by $\kappa_\varepsilon$ it reads
+\[
+\sum_x\xi(x)\bar h(x)-\int h_\star\,d\mu(h)\le\kappa_\varepsilon\alpha+L\varepsilon\bigl(1+\beta^{1/2}\bigr)+\bigl(\beta V_\mu(\xi)\bigr)^{1/2}.
+\]
+On $\cC$, $\bar h=\fbar$ and $h_y=f_y$, so $V_\mu(\xi)=\sum_x\xi(x)\sum_yw_y(\fbar(x)-f_y(x))^2$. Since $y\in\cC\subset\cJ$, $f_y(y)=h_y(y)\ge\min_\cJ h_y$, so $\sum_yw_yf_y(y)\ge\int h_\star\,d\mu$. Remark~\ref{lem:pinsker} on $\{0,1\}$ with the laws of means $f_y(x)$ and $\fbar(x)$ gives $(f_y(x)-\fbar(x))^2\le\frac12\mathrm{kl}(f_y(x),\fbar(x))$, so $V_\mu(\xi)\le I(\xi)/2$.
+\end{proof}
+
+\begin{proposition}\label{prop:value}
+Under the assumptions of Lemma~\ref{lem:conv}, let $q\in\Delta^\circ(\cC)$ and $\mathcal G=\kappa_\varepsilon\alpha+L\varepsilon(1+\beta^{1/2})+\eta\beta/8$. Every $(p,g)\in\mathcal S_q$ has $\mathcal R(p,g;0,y)\ge0$ for some $y\in\cC$, and for every $\mathrm{tol}>0$ some $(p,g)\in\mathcal S_q$ has $\mathcal R(p,g;f,y)<\mathcal G+\mathrm{tol}$ for every $y\in\cC$ and every $f\in\mathcal P_L$.
+\end{proposition}
+
+Since the zero vector lies in $\mathcal P_L$, the infimum of $\overline{\mathcal R}$ over $\mathcal S_q$ is therefore finite and at most $\mathcal G$.
+
+\begin{proof}
+Let $(p,g)\in\mathcal S_q$ and $x\in\cC$. If $p(x)>0$, then $1-t\le e^{-t}$ and \eqref{eq:Sq} give $\sum_zq(z)(1-\eta g(x,0)(z)/p(x))\le1$, that is $\sum_zq(z)g(x,0)(z)\ge0$; if $p(x)=0$, then $g(x,0)\ge0$. So the $q$-average of $y\mapsto\mathcal R(p,g;0,y)=\sum_xg(x,0)(y)$ is nonnegative, and some $y$ has $\mathcal R(p,g;0,y)\ge0$.
+
+Fix $\mathrm{tol}>0$ and $(w,\theta)\in\mathcal A$, and let $\xi$ be given by Lemma~\ref{lem:conv}. By Lemma~\ref{lem:dual} and the bound after it, dropping $\KL(w\|q)\ge0$ and bounding the minimum over $x$ by the $\xi$-average,
+\[
+\underline{\mathcal R}(w,\theta)\le\kappa_\varepsilon\alpha+L\varepsilon\bigl(1+\beta^{1/2}\bigr)+\bigl(\tfrac12\beta I\bigr)^{1/2}-\frac I\eta,\qquad I=I(\xi)\ge0,
+\]
+and $as-s^2/\eta\le a^2\eta/4$ with $a=(\beta/2)^{1/2}$ and $s=I^{1/2}$ gives $\underline{\mathcal R}(w,\theta)\le\mathcal G$. So some $(p,g)\in\mathcal S_q$ has $\Phi(p,g;w,\theta)<\mathcal G+\mathrm{tol}$, and Lemma~\ref{lem:advside} with $c=\mathcal G+\mathrm{tol}$ gives the claim.
+\end{proof}
+
+\subsection{The class on the net and the net}
+
+\begin{lemma}\label{lem:class}
+Let $\cC\subset\cJ$ be finite.
+\begin{enumerate}[label=(\roman*)]
+\item For $F\colon\R^d\to\R$ convex and $L$-Lipschitz and $x\in\R^d$ there is $s\in\R^d$ with $|s|\le L$ and $F(z)\ge F(x)+\ip{s,z-x}$ for every $z$.
+\item $\mathcal P_L$ is convex and compact, and contains the restriction to $\cC$ of every $f\in\cF(\cJ,L)$.
+\item If every point of $\cJ$ is at distance at most $\varepsilon$ from $\cC$, every $v\in\mathcal P_L$, with witnesses $(s_x)$, is the restriction to $\cC$ of $h_v(z)=\max_{x\in\cC}(v(x)+\ip{s_x,z-x})$, which is convex and $L$-Lipschitz with values in $[-L\varepsilon,1+L\varepsilon]$ on $\cJ$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+(i) For $r>0$ let $F^r$ be the function of Lemma~\ref{lem:smooth} for $F$ with $\epsilon=r$. It is convex, $L$-Lipschitz and of class $C^2$, so $|\nabla F^r|\le L$, and $|F^r-F|\le r$. The gradient inequality of the convex differentiable function $F^r$ at $x$ gives $F(z)\ge F^r(z)-r\ge F^r(x)+\ip{s_r,z-x}-r\ge F(x)+\ip{s_r,z-x}-2r$ with $s_r=\nabla F^r(x)$. A subsequence of $(s_{1/k})$, which lies in the closed ball of radius $L$, converges to some $s$ with $|s|\le L$, and the inequality passes to the limit for each $z$.
+
+(ii) The defining inequalities are linear in $(v,s)$ and the ball of radius $L$ is convex, so $\mathcal P_L$ is convex. It is bounded, and closed: if $v_k\to v$ with witnesses $s^k$, a subsequence of $s^k$ converges and the inequalities pass to the limit. For $f\in\cF(\cJ,L)$, the extension $\tilde f(z)=\min_{y\in\cJ}(f(y)+L|z-y|)$ is convex, $L$-Lipschitz and equal to $f$ on $\cJ$, as in the proof of Proposition~\ref{prop:body} with $L$ in place of $n$; (i) at each $x\in\cC$ gives the witnesses.
+
+(iii) The function $h_v$ is a maximum of affine functions with gradients of norm at most $L$. At $z\in\cC$ the term $x=z$ gives $h_v(z)\ge v(z)$, and every term is at most $v(z)$ by the inequalities of $\mathcal P_L$. For $z\in\cJ$ and $x\in\cC$ with $|z-x|\le\varepsilon$, $|h_v(z)-v(x)|\le L\varepsilon$.
+\end{proof}
+
+\begin{lemma}\label{lem:net}
+For $n\ge2$ and $\varepsilon\in(0,1/4]$, the net $\cC$ of Algorithm~\ref{alg:exo} lies in $\cJ$, its distinct points are at distance at least $\varepsilon/2$, every point of $\cJ$ is at distance less than $\varepsilon$ from $\cC$, and $2\le m\le(5D/\varepsilon)^d$.
+\end{lemma}
+
+\begin{proof}
+By Lemma~\ref{lem:inner}(a), $\cJ$ contains $B(x_0,r_0)$ with $r_0=1-1/n\ge1/2$, and $\cJ\subset\cK\subset B(x_0,D)$. Let $x\in\cJ$, $t=hd^{1/2}/(2r_0)\le1$ and $y=(1-t)x+tx_0$. For $|u|\le tr_0$, $y+u=(1-t)x+t(x_0+u/t)$ with $x_0+u/t\in B(x_0,r_0)$, so $B(y,tr_0)\subset\cJ$. Rounding the coordinates of $y$ gives a point $z\in h\mathbb Z^d$ with $|z-y|\le hd^{1/2}/2=tr_0$, so $z\in B(y,tr_0)\subset\cJ\subset x_0+[-D,D]^d$ is a scanned point, and $|x-z|\le t(|x-x_0|+r_0)\le hd^{1/2}(D/(2r_0)+1/2)\le hd^{1/2}(D+1/2)<\varepsilon/2$. Every scanned point is kept or is within $\varepsilon/2$ of a kept point, so $x$ is within $\varepsilon$ of $\cC$. The set $\cC$ is $(\varepsilon/2)$-separated in $\cJ$, so Lemma~\ref{lem:cover}(a) bounds $m$ by $(1+4\diam\cJ/\varepsilon)^d$, and $\diam\cJ\ge1\ge\varepsilon$ gives $1+4\diam\cJ/\varepsilon\le5D/\varepsilon$. Finally $x_0\pm e/2$, for a unit vector $e$, lie in $\cJ$ at distance $1$, each within $\varepsilon\le1/4$ of $\cC$, so $m\ge2$.
+\end{proof}
+
+\subsection{Proof of Theorems~\ref{thm:exo} and~\ref{thm:explicit}}
+
+\begin{proof}[Proof of Theorem~\ref{thm:exo}]
+By Lemma~\ref{lem:inner}(b) each $f_t$ restricted to $\cJ$ lies in $\cF(\cJ,n)$, and by Lemma~\ref{lem:class}(ii) its restriction to $\cC$, still written $f_t$, lies in $\mathcal P_L$. By Lemma~\ref{lem:net}, $\cC\subset\cJ$ and every point of $\cJ$ is within $\varepsilon$ of $\cC$. The solver is deterministic, so $(q_t,P_t,G_t)$ is a function of $H_{t-1}=(X_1,B_1,\dots,X_{t-1},B_{t-1})$, which takes finitely many values; $\Prob(H_n=(x_s,b_s)_s)=\prod_tP_t(x_t)\pi_t(b_t\mid x_t)$ with $\pi_t(1\mid x)=f_t(x)$.
+
+Fix $y\in\cC$. Lemma~\ref{lem:ew}, applied on each path, gives $\sum_t(f_t(X_t)-f_t(y))\le\eta^{-1}\ln m+\sum_t\mathrm{Br}_t(y)$ with $\mathrm{Br}_t(y)=f_t(X_t)-f_t(y)+\hat\ell_t(y)+\eta^{-1}\ln\sum_zq_t(z)e^{-\eta\hat\ell_t(z)}$. Given $H_{t-1}$, $X_t$ has law $P_t$, $B_t$ is a coin of mean $f_t(X_t)$ and $(P_t,G_t)\in\mathcal S_{q_t}$, so Lemma~\ref{lem:br}, step~1 of the algorithm and Proposition~\ref{prop:value} give
+\[
+\E[\mathrm{Br}_t(y)\mid H_{t-1}]\le\mathcal R(P_t,G_t;f_t,y)\le\overline{\mathcal R}(P_t,G_t)\le\mathcal G+\mathrm{tol}.
+\]
+Hence $\E\sum_tf_t(X_t)-\sum_tf_t(y)\le\eta^{-1}\ln m+n(\mathcal G+\mathrm{tol})$ for every $y\in\cC$. By Lemma~\ref{lem:moving}(a), $\min_\cC\sum_tf_t\le\min_\cJ\sum_tf_t+nL\varepsilon$, and by Lemma~\ref{lem:inner}(c), $\inf_\cJ\sum_tf_t\le\inf_\cK\sum_tf_t+1$. This is the bound, with $m$ bounded by Lemma~\ref{lem:net}.
+
+Against $f_t=A_t(H_{t-1})$, $f_t$ is fixed given $H_{t-1}$, so the conditional bound holds as before and Lemma~\ref{lem:ew} is pathwise: $\E\sum_t(f_t(X_t)-f_t(y))\le\eta^{-1}\ln m+n(\mathcal G+\mathrm{tol})$ for each fixed $y\in\cC$. For $x\in\cK$ let $x'=x_0+(1-1/n)(x-x_0)\in\cJ$ and $y_x=\Pi(x')$; on every path $f_t(y_x)\le f_t(x')+n\varepsilon\le f_t(x)+1/n+n\varepsilon$, as in the proofs of Lemmas~\ref{lem:inner}(c) and~\ref{lem:moving}(a). Taking $y=y_x$ gives the bound for $\E\sum_t(f_t(X_t)-f_t(x))$, for every $x\in\cK$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:explicit}]
+By Lemma~\ref{lem:inner}(a), $\cJ$ is a convex body containing a ball of radius $1/2$, with $\diam\cJ\le D$, so Proposition~\ref{prop:body} gives $\mathrm{(H)}[1/n,\beta]$ for $\cF(\cJ,n)$ with $\beta=C_0d^2\ln(ndD)\ln(2n)$, $C_0=1.2\cdot10^9$ (a larger $\beta$ weakens \eqref{eq:H}, and $\diam\cJ\le D$), and $\beta\ge C_0\ln^24\ge2$. Then $\varepsilon=1/(n^2(2\beta)^{1/2})\le1/4$, and Theorem~\ref{thm:exo} with $\alpha=1/n$, $\eta=(8\ln m/(n\beta))^{1/2}$ and $\mathrm{tol}=1/n$ gives, since $nL\varepsilon=n^2\varepsilon$ and $n\kappa_\varepsilon\alpha=1+2n\varepsilon$,
+\[
+\frac{\ln m}\eta+\frac{n\eta\beta}8=\Bigl(\tfrac12\beta n\ln m\Bigr)^{1/2},\qquad 1+n^2\varepsilon+(1+2n\varepsilon)+n^2\varepsilon(1+\beta^{1/2})+1=3+2n\varepsilon+n^2\varepsilon(2+\beta^{1/2}),
+\]
+with $2n\varepsilon=2/(n(2\beta)^{1/2})\le1/2$ and $n^2\varepsilon(2+\beta^{1/2})=2(2\beta)^{-1/2}+2^{-1/2}\le1+2^{-1/2}$, since $n\ge2$ and $(2\beta)^{1/2}\ge2$. So the regret is at most $3+\frac12+1+2^{-1/2}+(\frac12\beta n\ln m)^{1/2}\le6.71+(\frac12\beta n\ln m)^{1/2}$, and $\ln m\le d\ln(5n^2(2\beta)^{1/2}D)$ by Lemma~\ref{lem:net}.
+
+For the order, let $\mathcal L=\ln(nD)\ge\ln4$. If $d\ge n$ the regret is at most $n\le d^{3/2}n^{1/2}\mathcal L^{3/2}$, the losses taking values in $[0,1]$. If $d<n$, then $\ln(ndD)\le2\mathcal L$ and $\ln(2n)\le2\ln n\le2\mathcal L$, so $\beta\le4C_0d^2\mathcal L^2$ and $5n^2(2\beta)^{1/2}D\le5(8C_0)^{1/2}n^2dD\mathcal L$, and since $2\ln n+\ln d+\ln D\le3\mathcal L$, $\ln\mathcal L\le\mathcal L$ and $5(8C_0)^{1/2}\le2^{19}=4^{19/2}$ (checked in Lean), its logarithm is at most $\frac{27}2\mathcal L$. The root is therefore at most $(27C_0)^{1/2}d^{3/2}n^{1/2}\mathcal L^{3/2}=1.8\cdot10^5\,d^{3/2}n^{1/2}\mathcal L^{3/2}$, and $6.71\le10^4\,d^{3/2}n^{1/2}\mathcal L^{3/2}$ since $\mathcal L\ge\ln4\ge1$. This gives the bound with $C_X=1.8\cdot10^5+10^4=1.9\cdot10^5$, and $C_X\ge1$ covers the case $d\ge n$.
+\end{proof}
+
+\subsection{The policy and the cost of a round}\label{sec:explicit-cost}
+
+The learner keeps its coins in its state, while a policy in the sense of Section~\ref{sec:intro} reads only actions and observations. Marginalising the coins gives one with the same law of play. Write $P_t(\cdot\mid x_{<t},b_{<t})$ for the law the learner computes in round $t$ from the earlier actions and coins and $\mathrm{Bern}(o)$ for the law on $\{0,1\}$ of mean $o$; off the earlier actions and coins of positive probability, $P_t$ is extended arbitrarily, and the formulas below multiply it there by $0$.
+
+\begin{lemma}\label{lem:marg}
+For a history $\chi=(x_{<t},o_{<t})\in(\cC\times[0,1])^{t-1}$ put
+\begin{gather*}
+\phi_t(b_{<t}\mid\chi)=\frac{\prod_{s<t}P_s(x_s\mid x_{<s},b_{<s})\,\mathrm{Bern}(o_s)(b_s)}{\sum_{b'\in\{0,1\}^{t-1}}\prod_{s<t}P_s(x_s\mid x_{<s},b'_{<s})\,\mathrm{Bern}(o_s)(b'_s)},\\
+\varpi_t(x\mid\chi)=\sum_{b_{<t}}\phi_t(b_{<t}\mid\chi)P_t(x\mid x_{<t},b_{<t})
+\end{gather*}
+when the denominator is positive, and $\varpi_t(\cdot\mid\chi)$ uniform on $\cC$ otherwise; for a history in $(\cK\times[0,1])^{t-1}$ with an action outside $\cC$, let $\varpi_t(\cdot\mid\chi)$ be uniform on $\cC$ as well. Then $\varpi$ is a $\cC$-policy, a Borel function of the history, and against every $f\in\cG(\cK)^n$ the actions have the same law under $\varpi$ as under the learner; in particular the two have the same regret.
+\end{lemma}
+
+\begin{proof}
+For fixed actions $x_{<t}\in\cC^{t-1}$ the denominator is a polynomial in $o_{<t}$ and $\varpi_t$ a ratio of polynomials where it is positive; the histories with given actions $x_{<t}\in\cC^{t-1}$ form a Borel set, there are finitely many such sets, and $\varpi_t$ is uniform off their union; so $\varpi$ is Borel. Fix $f$ and put $o_s=f_s(x_s)$. Under the learner,
+\[
+\Prob(X_{1:t}=x_{1:t},\,B_{<t}=b_{<t})=\prod_{s<t}\bigl[P_s(x_s\mid x_{<s},b_{<s})\,\mathrm{Bern}(o_s)(b_s)\bigr]\,P_t(x_t\mid x_{<t},b_{<t}),
+\]
+since $X_s$ is drawn from $P_s$ and then $B_s$ from $\mathrm{Bern}(f_s(X_s))$. Summing over $x_t$ and $b_{<t}$ shows that the denominator of $\phi_t(\cdot\mid x_{<t},o_{<t})$ is $\Prob(X_{<t}=x_{<t})$. When it is positive, summing over $b_{<t}$ and dividing by it gives $\Prob(X_t=x_t\mid X_{<t}=x_{<t})=\varpi_t(x_t\mid x_{<t},o_{<t})$; the chain rule then gives, for every $x_{1:n}$, $\Prob(X_{1:n}=x_{1:n})=\prod_t\varpi_t(x_t\mid x_{<t},o_{<t})$, both sides vanishing from the first $t$ with $\Prob(X_{1:t}=x_{1:t})=0$. This is the law \eqref{eq:play} of $\varpi$ against $f$.
+\end{proof}
+
+So the learner of Theorem~\ref{thm:explicit} gives a $\cC$-policy with the same regret bound; its round $t$ is a sum over $2^{t-1}$ strings of coins, and the explicit object with a cost per round polynomial in $m$ is the learner with its coins.
+
+\begin{proof}[Proof of Corollary~\ref{cor:minimax}]
+Let $x_0$ be the centre of a unit ball in $\cK$; then $D\ge2$. For $n\ge2$, run the learner of Theorem~\ref{thm:explicit} with this $D$, and let $\varpi$ be the $\cC$-policy of Lemma~\ref{lem:marg}. Then $\Reg_n(\varpi,f)$ is the regret of the learner, at most $C_Xd^{3/2}\sqrt n\ln^{3/2}(nD)$ for every $f$. For $n=1$ the $\{x_0\}$-policy that plays $x_0$ has regret at most $1\le C_Xd^{3/2}\ln^{3/2}2$.
+\end{proof}
+
+The cost of a round is that of step~1. The maximum over $\mathcal P_L$ in $\overline{\mathcal R}$ is a support function, which linear duality turns into an infimum.
+
+\begin{remark}[not in the formal proof]\label{lem:sd}
+For $c\in\R^\cC$ and $\lambda=(\lambda_{xz})_{x\ne z}\ge0$ let $\mathrm{out}_x=\sum_{z\ne x}\lambda_{xz}$, $\mathrm{in}_x=\sum_{z\ne x}\lambda_{zx}$ and $r_x=\sum_{z\ne x}\lambda_{xz}(z-x)$. Then
+\[
+\max_{v\in\mathcal P_L}\ip{c,v}=\inf_{\lambda\ge0}\Bigl\{\sum_x\bigl[c(x)-\mathrm{out}_x+\mathrm{in}_x\bigr]_++L\sum_x|r_x|\Bigr\}.
+\]
+\end{remark}
+
+\begin{proof}
+Let $\mathcal B=[0,1]^\cC\times B(0,L)^\cC$ and $\mathrm{La}(v,s;\lambda)=\ip{c,v}+\sum_{x\ne z}\lambda_{xz}(v(z)-v(x)-\ip{s_x,z-x})$. For fixed $(v,s)\in\mathcal B$ the infimum over $\lambda\ge0$ is $\ip{c,v}$ if $(v,s)$ is a point of $\mathcal P_L$ with its witnesses, and $-\infty$ otherwise, so the supremum over $\mathcal B$ of this infimum is the left side. The function $\mathrm{La}$ is affine and continuous in $(v,s)$ and affine in $\lambda$, so Lemma~\ref{lem:mm1} with $\mathcal A=\mathcal B$ and $Y=\{\lambda\ge0\}$ exchanges the two. The maximum over $\mathcal B$ separates: the coefficient of $v(x)$ is $c(x)-\mathrm{out}_x+\mathrm{in}_x$, maximised over $[0,1]$ at its positive part, and the term in $s_x$ is $-\ip{s_x,r_x}$, maximised over $|s_x|\le L$ at $L|r_x|$.
+\end{proof}
+
+With Remark~\ref{lem:sd} and \eqref{eq:affine}, step~1 is the following conic program, which the formal proof does not contain: minimise $\tau$ over $p\ge0$ with $\sum_xp(x)=1$, $g$, $\tau$, multipliers $\lambda^y\ge0$, $\mu^y\ge0$, $\varrho^y\ge0$ and $t(x,b,z)\ge0$, subject to $(t(x,b,z),p(x),-\eta g(x,b)(z))$ in the closed exponential cone $\overline{\{(a_1,a_2,a_3):a_2>0,\ a_1\ge a_2e^{a_3/a_2}\}}$ and $\sum_zq(z)t(x,b,z)\le p(x)$ for all $(x,b)$, which together are \eqref{eq:Sq}; $\mu^y_x\ge c_y(x)-\mathrm{out}_x(\lambda^y)+\mathrm{in}_x(\lambda^y)$, $\varrho^y_x\ge|r_x(\lambda^y)|$ and $\sum_xg(x,0)(y)+\sum_x\mu^y_x+L\sum_x\varrho^y_x\le\tau$ for all $y$. Its infimum is $\inf_{\mathcal S_q}\overline{\mathcal R}$, and every feasible point has $\overline{\mathcal R}(p,g)\le\tau$. It has $m^3+5m^2+m+1$ real variables, $2m^2$ exponential cones of dimension $3$, $m^2$ second-order cones of dimension $d+1$, and $m^3+m^2+4m$ linear inequalities with one equation; the signs of $t$ and $\varrho^y$ follow from the cones and are not counted. A round is thus one convex program of size polynomial in $m$, and under Theorem~\ref{thm:explicit} $m\le(5n^2(2\beta)^{1/2}D)^d$, which is polynomial in $n$ and $D$ for fixed $d$ and exponential in $d$. Interior-point methods \cite{NN94} are the standard tool for such programs; we do not analyse the cost of solving it to the tolerance $\mathrm{tol}$, and nothing in the proofs depends on it. A pair formed by a feasible point and a point of $\mathcal A$ whose values $\overline{\mathcal R}$ and $\underline{\mathcal R}$, the latter in the closed form of Lemma~\ref{lem:dual}, differ by at most $\mathrm{tol}$ certifies step~1, by \eqref{eq:roundminimax}. An interior-point method returns points that satisfy \eqref{eq:Sq} only approximately. If $p(x)>0$ and the sum in \eqref{eq:Sq} is $s_{x,b}>1$, adding the constant $p(x)\ln(s_{x,b})/\eta$ to every coordinate of $g(x,b)$ brings the sum to $1$ and raises $\overline{\mathcal R}(p,g)$ by at most $\max_{x,b}\ln(s_{x,b})/\eta$, by \eqref{eq:Rround}. The shifted point meets step~1 when this amount plus the difference between $\overline{\mathcal R}$ at the point before the shift and $\underline{\mathcal R}$ at a point of $\mathcal A$ is at most $\mathrm{tol}$, by \eqref{eq:roundminimax}.
+
+\section{What the proofs do not give}\label{sec:limits}
+
+The learner of Theorem~\ref{thm:explicit} is explicit and not efficient: the bound $(5n^2(2\beta)^{1/2}D)^d$ on the size $m$ of the net is exponential in $d$, and a round is a convex program of size polynomial in $m$ (Section~\ref{sec:explicit-cost}, outside the formal proof). The learners in print that run in time polynomial in $d$ and $n$ have regret of order $d^{2.5}\sqrt n$ up to logarithms, with high probability \cite[Chapter~11]{Lat24}, or larger \cite{BEL21,FHLM24}; against them Theorem~\ref{thm:explicit} gains a factor $d$ in the regret and loses polynomial time. \cite{BEL21} conjecture an algorithm that takes time polynomial in $d$ and $\ln n$ per round and has expected regret $d^{3/2}\sqrt n$ up to logarithms, and that no algorithm does better for large $d$ and $n$. Theorem~\ref{thm:explicit} reaches that regret with an algorithm whose time is exponential in $d$, and it says nothing on either clause.
+
+The exponent $3/2$ is the limit of the method. The lower bound of \cite{BLS25} quoted in Section~\ref{sec:intro} bounds what the information-ratio route can give, as \cite[Section~8.8]{Lat24} notes, and the monograph poses as an exercise the same lower bound, of order $d^2$ up to logarithms, for the quantity that governs exploration by optimisation, which would mean that no analysis of this kind goes below $d^{3/2}\sqrt n$. Neither is a lower bound on the regret. On the lower side the proofs say nothing: the exponent of $d$ in the adversarial minimax regret lies between $1$, given by linear losses \cite{DHK08} (see \cite[Section~2.4]{Lat24}), and $3/2$, and the question is open. The stochastic lower bound $d^{4/3}\sqrt n$ of \cite{RH26} uses Gaussian noise; whether it carries over to the present game, whose observations lie in $[0,1]$, is not settled here.
+
+Theorem~\ref{thm:explicit} holds against an adaptive adversary for the pseudo-regret, the supremum over the comparator taken outside the expectation, which is also the form of the bound of \cite{XZ25}; it gives nothing for the expected supremum, since the loss estimates are unbounded, and no bound with high probability. Bounds with high probability are in print at the order $d^{2.5}\sqrt n$ \cite[Chapter~11]{Lat24}.
+
+\section{The formal proof}\label{sec:formal}
+
+This section says what the Lean formalization of the companion repository \cite{AdvBcoLean} states and proves, and what it trusts.
+
+\subsection{The formal statements}\label{sec:formal-lean}
+The formalization is written in Lean~4 \cite{Lean4} with Mathlib \cite{Mathlib20}, in the versions of Section~\ref{sec:formal-soft}. Seven theorems state results of the paper, each from definitions written out in a statement file of the repository:
+\begin{itemize}
+\item \texttt{AdversarialBco.Explicit.theoremExplicit}: Theorem~\ref{thm:explicit}, with its constants and its bound against an adaptive adversary;
+\item \texttt{AdversarialBco.Explicit.lemmaMarg}: Lemma~\ref{lem:marg};
+\item \texttt{AdversarialBco.Explicit.corollaryExplicit}: Corollary~\ref{cor:minimax}, with $C_X=1.9\cdot10^5$ and every $n\ge1$;
+\item \texttt{AdversarialBco.BodySpec.dilTheorem}: Theorem~\ref{thm:dil}, for every family;
+\item \texttt{AdversarialBco.BodySpec.bodyExplicit}: Proposition~\ref{prop:body}, with $C_0=1.2\cdot10^9$;
+\item \texttt{AdversarialBco.BodySpec.bodyHExplicit}: Proposition~\ref{prop:body} for the inner body $\cJ$ of a convex body $\cK$ that contains a ball of radius $1$, with $\diam\cJ$ replaced in $\beta$ by any $D\ge\diam\cK$, the form that the proof of Theorem~\ref{thm:explicit} uses;
+\item \texttt{AdversarialBco.corollaryADV}: Corollary~\ref{cor:minimax} for another class of learners, with a constant that is not given (below).
+\end{itemize}
+The first three are stated in \texttt{StatementExplicit.lean}, the next three in \texttt{StatementBody.lean} and the last in \texttt{Statement.lean}.
+
+In the first three the body $\cK$ is a compact convex subset of $\R^d$ that contains a closed ball of radius $1$, a loss is a function convex on $\cK$ with values in $[0,1]$ on $\cK$, and the rounds are numbered from $0$. Algorithm~\ref{alg:exo} is written out. Where the algorithm scans the points of the lattice in a fixed order and computes step~1 by a deterministic procedure, the formal statement takes the order and the procedure as arguments: it holds for every order and for every procedure that meets step~1, and it states that both exist. The procedure is asked to meet step~1 at every positive probability vector, which loses nothing, since one that meets it at the weights the run reaches can be changed at the others without changing the law of play. The probability space is the finite set of the histories of actions and coins, with the product law of the proof of Theorem~\ref{thm:exo}. Theorem~\ref{thm:explicit} is stated with, in addition, $m\ge2$. In Theorem~\ref{thm:dil} the conclusion is stated for every entropic Gaussian at the temperature $\lambda_h$, with the statement that one exists, and $s_h$ is the operator norm of $S_h$; by Lemma~\ref{lem:ec} this is the theorem of the text. In Proposition~\ref{prop:body} a finitely supported law on $\cF(\cJ,n)$ is a finite family of weights on functions on $\R^d$ that are convex, $n$-Lipschitz and with values in $[0,1]$ on $\cJ$, and the law $\rho$ charges only $\cJ$ and integrates the functions.
+
+The last theorem states Corollary~\ref{cor:minimax} for learners of another class. A learner there is a probability space $(\Omega,\mu)$ of seeds and, for each round $t$, a jointly measurable map from the seed and the observations $f_1(x_1),\dots,f_{t-1}(x_{t-1})$ to $\cK$; its earlier actions are functions of these, so it has the information of a learner of Section~\ref{sec:intro}. The minimax regret is the infimum, over the learners whose regret is integrable against every sequence of losses fixed in advance, of the supremum over the sequences of the expected regret~\eqref{eq:regret}; the restriction to integrable regret removes learners and so can only raise the infimum. The statement is that there is a constant $C$ such that this minimax regret is at most $C\,d^{3/2}\sqrt n\,\ln^{3/2}(n\diam\cK)$ for all $d\ge1$, $n\ge2$ and every such body $\cK$. Neither class of learners contains the other, since a $\cC$-policy asks no measurability and a measurable learner need not play in a finite set. Its proof runs through Theorem~\ref{thm:exo} against sequences fixed in advance and Proposition~\ref{prop:body} with constants it does not compute.
+
+\subsection{The other statements}\label{sec:formal-proved}
+Every other numbered statement is proved in Lean as a step of the proofs of these theorems, in the form in which the paper states it, except Remarks~\ref{lem:sd}, \ref{lem:finite-minimax}, \ref{lem:pinsker} and~\ref{lem:ecg}, which lie outside the formal proof. The repository lists, for each numbered statement, the Lean declarations that prove it. Every inequality between explicit numbers that these proofs use is proved there as a step of the same proofs; the text marks as checked in Lean those it states without derivation. The formal proof departs from the text in the following places.
+\begin{itemize}
+\item The regular case of Theorem~\ref{thm:dil} is proved for every minimiser of $\mathcal E_{\lambda_h}$ over the invertible $S$, with $s_h$ the operator norm of $S$, and Lemma~\ref{lem:compact} for minimisers over the invertible $S$; by Lemma~\ref{lem:ec} the entropic Gaussian is one of them.
+\item Lemma~\ref{lem:mm1} rests on the minimax theorem of Sion as Mathlib states it, in place of Remark~\ref{lem:finite-minimax}, and Pinsker's inequality enters in its form for two Bernoulli laws. Theorem~\ref{thm:exo} is proved for every finite $\cC\subset\cJ$ of covering radius less than $\varepsilon$, the nearest point of Lemma~\ref{lem:moving} being a measurable selection.
+\item Theorem~\ref{thm:gauss} is proved for $F(b+SZ)$, with $F$ an $L$-Lipschitz function on $\R^d$, $b$ a point and $S$ a linear map from $\R^k$ to $\R^d$; the theorem of the text is the case $b=0$, $S=\mathrm{Id}$. Its proof is the argument of Maurey and Pisier for continuously differentiable functions (Lemma~\ref{lem:mp}), in the formalization of R.~Degenne \cite{Maiti2026Power}, with two lemmas of the Tau Ceti project \cite{TauCeti}, both under the Apache License~2.0 and ported to the versions of Section~\ref{sec:formal-soft} with no proof changed; the smoothing of a Lipschitz function and the passage to the limit are written for this paper.
+\end{itemize}
+
+\subsection{What the formal proof trusts}\label{sec:formal-trust}
+The seven theorems depend on the axioms \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound} only, and the formalization has no \texttt{sorry}. The Lean kernel checks every declaration when the package is built. Comparator \cite{Comparator} checks that the theorems prove, with no other axiom, the statements of three challenge files that import only Mathlib, one for each statement file, a copy of it (for \texttt{StatementExplicit.lean}, with the definitions of \texttt{Statement.lean} it uses) that differs from it only in its comments and in the statements it adds with no proof. Within Comparator, nanoda \cite{nanoda}, a second implementation of the kernel, checks again every declaration the theorems depend on, Mathlib included. Comparator accepts the seven theorems.
+
+\subsection{Software and hardware}\label{sec:formal-soft}
+The formalization uses Lean~4.34.1 and Mathlib~v4.34.1. The package was built, with Mathlib already built, in less than seven minutes on four cores, and Comparator with nanoda then ran in $112$, $108$ and $113$ seconds on four cores, for the challenge files of \texttt{Statement.lean}, \texttt{StatementExplicit.lean} and \texttt{StatementBody.lean}; all on one machine with an AMD Ryzen~9 5900X processor ($12$ cores, $24$ threads) and $64$~GB of memory. The peak memory of the three Comparator runs, which counts the page cache, was below $3.7$~GB with the files of Mathlib already cached; it is larger when they are read for the first time.
+
+\appendix
+
+\section{Gaussian concentration for Lipschitz functions}\label{app:gauss}
+
+Gaussian concentration for Lipschitz functions is due to \cite[Theorem~1A and Corollary~1]{TIS76}, with the constant $1/2$ in the exponent. This appendix proves the form used in Section~\ref{sec:body}, with the constant $2/\pi^2$, by the interpolation argument of Maurey and Pisier \cite[Theorem~2.2, p.~176, and p.~177]{Pis86}. For a standard Gaussian vector $W$ of $\R^k$, $\E e^{b|W|}\le\prod_i\E e^{b|W_i|}\le2^ke^{kb^2/2}$, since $\E e^{aW_1}=e^{a^2/2}$; so a function on $\R^k$ bounded by $c+\ell|w|$, and its exponential $e^{s(c+\ell|w|)}$, are integrable against the law of $W$. If $X$ and $Y$ are independent standard Gaussian vectors of $\R^k$ and $\theta$ is real, then $(\sin\theta\,X+\cos\theta\,Y,\ \cos\theta\,X-\sin\theta\,Y)$ is again a pair of independent standard Gaussian vectors, since its law is the image of the standard Gaussian law of $\R^{2k}$ under an orthogonal map.
+
+\begin{theorem}\label{thm:gauss}
+Let $Z$ be a standard Gaussian vector of $\R^k$ and $G\colon\R^k\to\R$ an $\ell$-Lipschitz function with $\ell>0$. Then $G(Z)$ is integrable and, for every $t\ge0$,
+\[
+\Prob\bigl(G(Z)-\E G(Z)\ge t\bigr)\le e^{-2t^2/(\pi^2\ell^2)}.
+\]
+\end{theorem}
+
+The proof treats continuously differentiable functions first.
+
+\begin{lemma}\label{lem:mp}
+Let $Z$ be a standard Gaussian vector of $\R^k$ and $G\colon\R^k\to\R$ of class $C^1$ with $|\nabla G|\le\ell$. Then $G(Z)$ is integrable and $\E\,e^{s(G(Z)-\E G(Z))}\le e^{\pi^2s^2\ell^2/8}$ for every real $s$.
+\end{lemma}
+
+\begin{proof}
+Since $|G(x)|\le|G(0)|+\ell|x|$, $G(Z)$ and $e^{sG(Z)}$ are integrable. Let $X$ and $Y$ be independent standard Gaussian vectors of $\R^k$. Jensen's inequality in $Y$ gives $\E e^{s(G(X)-\E G(Y))}\le\E e^{s(G(X)-G(Y))}$. For $u,v\in\R^k$ and real $\theta$ put $U_\theta=\sin\theta\,u+\cos\theta\,v$ and $V_\theta=\cos\theta\,u-\sin\theta\,v$; the derivative of $\theta\mapsto G(U_\theta)$ is $\ip{\nabla G(U_\theta),V_\theta}$, continuous in $\theta$, so
+\[
+G(u)-G(v)=\int_0^{\pi/2}\ip{\nabla G(U_\theta),V_\theta}\,d\theta .
+\]
+Jensen's inequality for the uniform probability on $[0,\pi/2]$ gives
+\[
+e^{s(G(u)-G(v))}\le\frac2\pi\int_0^{\pi/2}\exp\Bigl(\frac{\pi s}2\ip{\nabla G(U_\theta),V_\theta}\Bigr)\,d\theta .
+\]
+Take $u=X$ and $v=Y$, and take expectations (the integrand is nonnegative, so Fubini's theorem applies). For each $\theta$ the pair $(U_\theta,V_\theta)$ is a pair of independent standard Gaussian vectors, so given $U_\theta$ the variable $\ip{\nabla G(U_\theta),V_\theta}$ is a centred Gaussian of variance $|\nabla G(U_\theta)|^2\le\ell^2$, and
+\[
+\E\exp\Bigl(\frac{\pi s}2\ip{\nabla G(U_\theta),V_\theta}\Bigr)=\E\exp\Bigl(\frac{\pi^2s^2}8|\nabla G(U_\theta)|^2\Bigr)\le e^{\pi^2s^2\ell^2/8}.
+\]
+The weight $2/\pi$ on an interval of length $\pi/2$ gives $\E e^{s(G(X)-G(Y))}\le e^{\pi^2s^2\ell^2/8}$, and the first inequality of the proof gives the claim.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:gauss}]
+Since $|G(x)|\le|G(0)|+\ell|x|$, $G(Z)$ and $e^{sG(Z)}$ are integrable for every real $s$. Fix $\epsilon>0$, let $\psi_\epsilon$ be a nonnegative function of class $C^\infty$ on $\R^k$ with support in the closed ball $B(0,\epsilon)$ and $\int\psi_\epsilon=1$, and $G_\epsilon(x)=\int G(x-y)\psi_\epsilon(y)\,dy$. As in the proof of Lemma~\ref{lem:smooth}, which uses no convexity for these two facts, $G_\epsilon$ is of class $C^\infty$ and $\ell$-Lipschitz, so $|\nabla G_\epsilon|\le\ell$; and $|G_\epsilon-G|\le\ell\epsilon$, since $|G(x-y)-G(x)|\le\ell\epsilon$ on the support of $\psi_\epsilon$. The centred variables $G(Z)-\E G(Z)$ and $G_\epsilon(Z)-\E G_\epsilon(Z)$ then differ by at most $2\ell\epsilon$, and Lemma~\ref{lem:mp} gives, for every real $s$,
+\[
+\E\,e^{s(G(Z)-\E G(Z))}\le e^{2|s|\ell\epsilon}\,\E\,e^{s(G_\epsilon(Z)-\E G_\epsilon(Z))}\le e^{2|s|\ell\epsilon}e^{\pi^2s^2\ell^2/8}.
+\]
+Letting $\epsilon\to0$ gives $\E\,e^{s(G(Z)-\E G(Z))}\le e^{\pi^2s^2\ell^2/8}$. For $t\ge0$ and $s=4t/(\pi^2\ell^2)$, Markov's inequality gives
+\[
+\Prob\bigl(G(Z)-\E G(Z)\ge t\bigr)\le e^{-st+\pi^2s^2\ell^2/8}=e^{-2t^2/(\pi^2\ell^2)}.
+\]
+\end{proof}
+
+In Section~\ref{sec:body} the theorem is applied to $Z\mapsto r(b_h+S_hZ)$, which is $s_h$-Lipschitz since $r$ is $1$-Lipschitz and $|S_hv|\le s_h|v|$.
+
+The formal proofs of Lemmas~\ref{lem:half} and~\ref{lem:ibp}(b) use Gaussian integration by parts in one coordinate, the next lemma; the proofs of the text do not. Write $\gamma_k$ for the standard Gaussian density of $\R^k$. A function on $\R^k$ has \emph{exponential growth} if it is bounded by $c\,e^{b|w|}$ for some constants $b$, $c$; by the bound on $\E e^{b|W|}$ above, such functions, and their products with polynomials, are integrable against $\gamma_k$.
+
+\begin{lemma}\label{lem:gibp}
+Let $W$ be a standard Gaussian vector of $\R^k$ and $H$ of class $C^1$ with $H$ and $\partial_iH$ of exponential growth. Then $\E[W_iH(W)]=\E[\partial_iH(W)]$.
+\end{lemma}
+
+\begin{proof}
+For $k=1$, integrate by parts on $[-r,r]$ with $\gamma_1'(u)=-u\gamma_1(u)$; the boundary terms are at most $2ce^{br-r^2/2}\to0$ and both integrals converge absolutely. For general $k$, apply the case $k=1$ in the coordinate $w_i$ for fixed other coordinates $w'$, with the constant $ce^{b|w'|}$, and integrate in $w'$ (Fubini).
+\end{proof}
+
+\section{A minimax inequality with one finite side}\label{app:minimax}
+
+The proof of Lemma~\ref{lem:mm1} in the text uses the following inequality, in which one side of the game is finite. Its proof uses the nearest point of a closed convex set of $\R^m$ and compactness. The formal proof of Lemma~\ref{lem:mm1} uses the minimax theorem of Sion instead (Section~\ref{sec:formal-proved}).
+
+\begin{remark}[not in the formal proof]\label{lem:finite-minimax}
+Let $P$ be a nonempty compact convex subset of a real topological vector space and $g_1,\dots,g_m\colon P\to\R$ convex and continuous, and let $c=\min_P\max_ig_i$. For every $\delta>0$ there is a probability vector $\lambda$ on $\{1,\dots,m\}$ with $\min_P\sum_i\lambda_ig_i>c-\delta$.
+\end{remark}
+
+\begin{proof}
+Let $G=(g_1,\dots,g_m)\colon P\to\R^m$. The set $E=G(P)+[0,\infty)^m$ is convex, since for $p,p'\in P$, $z,z'\in[0,\infty)^m$ and $t\in[0,1]$ the convexity of the $g_i$ gives $(1-t)(G(p)+z)+t(G(p')+z')\in G((1-t)p+tp')+[0,\infty)^m$; it is closed, since $G(P)$ is compact: if $G(p_j)+z_j\to y$ with $z_j\ge0$, a subsequence of $G(p_j)$ converges to some $g\in G(P)$, and $y-g\ge0$. The point $v=(c-\delta)(1,\dots,1)$ is not in $E$, since otherwise some $p$ would have $\max_ig_i(p)<c$. Let $e_0$ be a point of $E$ nearest to $v$; it exists because the intersection of $E$ with a closed ball about $v$ that meets $E$ is compact. Put $w=e_0-v\ne0$. For $y\in E$ and $\theta\in(0,1]$, $|e_0+\theta(y-e_0)-v|^2\ge|e_0-v|^2$, that is $2\theta\ip{w,y-e_0}+\theta^2|y-e_0|^2\ge0$; dividing by $\theta$ and letting $\theta\to0$ gives $\ip{w,y}\ge\ip{w,e_0}=\ip{w,v}+|w|^2>\ip{w,v}$. Every coordinate of $w$ is nonnegative: if $w_i<0$, the points $e_0+Te_i\in E$ would make $\ip{w,y}\to-\infty$. So $\lambda=w/\sum_iw_i$ is a probability vector, and for $p\in P$, with $y=G(p)$, $\sum_i\lambda_ig_i(p)>\ip{\lambda,v}=c-\delta$. The minimum over the compact $P$ of the left side is attained.
+\end{proof}
+
+\section{Pinsker's inequality}\label{app:info}
+
+For laws $P$, $P'$ on a finite set with $P$ absolutely continuous with respect to $P'$,
+\[
+\KL(P\|P')=\sum_{w:P(w)>0}P(w)\ln\frac{P(w)}{P'(w)} .
+\]
+
+The proof of Lemma~\ref{lem:conv} uses the next inequality for two laws on $\{0,1\}$ and $Z$ the identity; the formal proof proves that case.
+
+\begin{remark}[not in the formal proof]\label{lem:pinsker}
+Let $P$, $P'$ be laws on a finite set $\Omega$, $P$ absolutely continuous with respect to $P'$, and $Z\colon\Omega\to[0,1]$. Then $(\E_PZ-\E_{P'}Z)^2\le\frac12\KL(P\|P')$.
+\end{remark}
+
+\begin{proof}
+Let $A=\{w:P(w)>P'(w)\}$, $a=P(A)$, $b=P'(A)$. If $A$ is empty then $P=P'$. Otherwise $0<b<a\le1$. By the convexity of $u\mapsto u\ln u$ and Jensen's inequality with the weights $P'(w)/b$ on $A$, and with the weights $P'(w)/(1-b)$ on the points of $\Omega\setminus A$ where $P'>0$, $\KL(P\|P')\ge k(a,b)=a\ln(a/b)+(1-a)\ln((1-a)/(1-b))$, with $0\ln0=0$. Let $g(b')=k(a,b')-2(a-b')^2$ for $b'\in(0,a]$; then $g(a)=0$ and $g'(b')=(b'-a)\bigl(1/(b'(1-b'))-4\bigr)\le0$, so $k(a,b)\ge2(a-b)^2$. Finally $\sum_w|P(w)-P'(w)|=2(a-b)$, and since $|Z-\frac12|\le\frac12$, $|\E_PZ-\E_{P'}Z|=|\sum_w(P(w)-P'(w))(Z(w)-\frac12)|\le a-b$.
+\end{proof}
+
+\section{From regular families to every family}\label{app:calc}
+
+This appendix proves the uniqueness of the entropic Gaussian and Theorem~\ref{thm:dil} for every family, from the regular case of Section~\ref{sec:core}. The tools are a smoothing, a uniqueness lemma and a compactness lemma; no gradient of a nonsmooth function enters. Symmetrisation is the inequality $\E G(b+w)\ge G(b)$ of the proof of Lemma~\ref{lem:ec}, for $G$ convex and $w$ an integrable random vector whose law is even, since $\E G(b+w)=\E\frac12(G(b+w)+G(b-w))$; here $w$ is a centred Gaussian vector (Lemmas~\ref{lem:unique} and~\ref{lem:compact}).
+
+\begin{lemma}[smoothing]\label{lem:smooth}
+Let $F\colon\R^d\to\R$ be convex and $L$-Lipschitz, and $\epsilon>0$. There is a function $F_\epsilon\colon\R^d\to\R$ of class $C^2$, convex, $L$-Lipschitz and with a Lipschitz gradient, such that $|F_\epsilon-F|\le\epsilon$.
+\end{lemma}
+
+\begin{proof}
+Let $s=\epsilon/(L+1)$, $\psi$ a nonnegative function of class $C^\infty$ with support in the closed ball $B(0,s)$ and $\int\psi=1$ (a multiple of $y\mapsto\exp(-1/(1-|y|^2/s^2))$ on the open ball, extended by $0$, is one), and $F_\epsilon(x)=\int F(x-y)\psi(y)\,dy$. Then $F_\epsilon$ is an average of the convex functions $x\mapsto F(x-y)$, and $|F_\epsilon(x)-F_\epsilon(x')|\le\int|F(x-y)-F(x'-y)|\,\psi(y)\,dy\le L|x-x'|$. It is of class $C^\infty$ with $\nabla F_\epsilon(x)=\int F(x-y)\nabla\psi(y)\,dy$, so $|\nabla F_\epsilon(x)-\nabla F_\epsilon(x')|\le\int|F(x-y)-F(x'-y)|\,|\nabla\psi(y)|\,dy\le L|x-x'|\int|\nabla\psi|$. Finally $|F(x-y)-F(x)|\le L|y|\le Ls<\epsilon$ on the support of $\psi$, so $|F_\epsilon-F|\le\epsilon$.
+\end{proof}
+
+\begin{lemma}[uniqueness]\label{lem:unique}
+Let $\Fbar\colon\R^d\to\R$ be convex, Lipschitz and coercive, and $\lambda>0$. Then $\mathcal E_\lambda$ has at most one minimiser.
+\end{lemma}
+
+\begin{proof}
+For each value of $Z$, $(b,S)\mapsto\Fbar(b+SZ)$ is convex, so $\E\Fbar(b+SZ)$ is convex in $(b,S)$. The function $S\mapsto-\ln\det S$ is strictly convex on positive definite matrices: with $S_t=(1-t)S_1+tS_2$ and $\nu_i$ the eigenvalues of $S_1^{-1/2}(S_2-S_1)S_1^{-1/2}$, $\ln\det S_t=\ln\det S_1+\sum_i\ln(1+t\nu_i)$, strictly concave in $t$ unless every $\nu_i$ vanishes. So two minimisers $(b_1,S_1)$ and $(b_2,S_2)$ have $S_1=S_2=S$, since otherwise their midpoint would give a smaller value. Suppose $b_1\ne b_2$ and put $v=b_2-b_1$. Then $b\mapsto\mathcal E_\lambda(b,S)$ is convex and minimal at $b_1$ and $b_2$, so $t\mapsto\E\Fbar(b_1+tv+SZ)$ is constant on $[0,1]$. With $A=S^2$, $\eta_v=A^{-1}v/(v^{\mathsf T}A^{-1}v)$ and $\zeta_v=\ip{\eta_v,SZ}$, write $SZ=\zeta_vv+W'$; $\zeta_v$ and $W'$ are jointly Gaussian with $\E[W'\zeta_v]=A\eta_v-v/(v^{\mathsf T}A^{-1}v)=0$, hence independent, and $\zeta_v$ has a Gaussian law with positive variance. Let $\phi_v(r)=\E\Fbar(b_1+rv+W')$, a convex function with $\phi_v(r)\ge a_1|b_1+rv|-a_2$ by coercivity and symmetrisation, so $\phi_v$ is not affine. By Fubini's theorem $\E\Fbar(b_1+tv+SZ)=\E\phi_v(t+\zeta_v)$, and the value at $t=1/2$ is the mean of the values at $0$ and $1$:
+\[
+\E\Bigl[\tfrac12\bigl(\phi_v(\zeta_v)+\phi_v(1+\zeta_v)\bigr)-\phi_v\bigl(\tfrac12+\zeta_v\bigr)\Bigr]=0 .
+\]
+The integrand is continuous in $\zeta_v$ and nonnegative by convexity, and $\zeta_v$ has a positive density, so $\phi_v(r+\frac12)=\frac12(\phi_v(r)+\phi_v(r+1))$ for every real $r$. A convex function equal to its chord at the midpoint of an interval is affine on that interval: if it were strictly below the chord at some point of $(r,r+\frac12)$, convexity on the interval from that point to $r+1$ would put its value at $r+\frac12$ strictly below the chord, and symmetrically on the other side. So $\phi_v$ is affine on every interval $[r,r+1]$, hence on $\R$, a contradiction.
+\end{proof}
+
+\begin{lemma}[compactness]\label{lem:compact}
+Let $G_k$ $(k\ge1)$ and $G$ be convex functions on $\R^d$, each $G_k$ being $L'$-Lipschitz, with $G_k\to G$ locally uniformly and $G_k(x)\ge a_1|x|-a_2$ for all $k$ and $x$, where $a_1>0$. Let $\lambda_k\to\lambda>0$ and $(b_k,S_k)$ be the entropic Gaussian of $G_k$ at $\lambda_k$. Then a subsequence of $(b_k,S_k)$ converges to the entropic Gaussian $(b,S)$ of $G$ at $\lambda$, and along it $\E H_k(b_k+S_kZ)\to\E H(b+SZ)$ for all continuous $H_k$ converging locally uniformly to $H$ (which is then continuous) with $|H_k(y)|\le c(1+|y|^2)$ for all $k$ and $y$.
+\end{lemma}
+
+\begin{proof}
+Write $\mathcal E_k$ for the objective \eqref{eq:entropic} of $G_k$ at $\lambda_k$ and $\mathcal E$ for that of $G$ at $\lambda$; $G$ is convex, $L'$-Lipschitz and coercive with the constants $a_1$, $a_2$. Since $G_k(0)\to G(0)$, $|G_k(y)|\le c_0+L'|y|$ for all $k$. So $\mathcal E_k(b_k,S_k)\le\mathcal E_k(0,\mathrm{Id})\le c_0+L'\E|Z|=:c_2$. Let $s_k$ and $s_k'$ be the largest and smallest eigenvalues of $S_k$. As in the proof of Lemma~\ref{lem:ec}, $\E G_k(b_k+S_kZ)\ge a_1\max(|b_k|,(2/\pi)^{1/2}s_k)-a_2$, and $\lambda_k\ln\det S_k\le\lambda_kd\lnp s_k$; so $a_1\max(|b_k|,(2/\pi)^{1/2}s_k)-a_2-\lambda_kd\lnp s_k\le c_2$, which bounds $s_k$ and $|b_k|$. Next $\lambda_k\ln\det S_k=\E G_k(b_k+S_kZ)-\mathcal E_k(b_k,S_k)\ge-a_2-c_2$, so $\ln s_k'\ge\ln\det S_k-(d-1)\lnp s_k$ is bounded below. A subsequence converges to some $(b,S)$ with $S$ positive definite. For each value of $Z$, $y_k=b_k+S_kZ\to y=b+SZ$ and $H_k(y_k)\to H(y)$, with $|H_k(y_k)|\le c'(1+|Z|^2)$; dominated convergence gives $\E H_k(y_k)\to\E H(y)$. With $H_k=G_k$ this gives $\mathcal E_k(b_k,S_k)\to\mathcal E(b,S)$, and for fixed $(b',S')$ the same argument gives $\mathcal E_k(b',S')\to\mathcal E(b',S')$. So $\mathcal E(b,S)\le\mathcal E(b',S')$: $(b,S)$ minimises $\mathcal E$, and it is the entropic Gaussian of $G$ by Lemma~\ref{lem:unique}.
+\end{proof}
+
+\begin{remark}[not in the formal proof]\label{lem:ecg}
+The limit argument of the proof of Lemma~\ref{lem:approx} for (S3), with $\Fbar$ smoothed by Lemma~\ref{lem:smooth}, gives (S3) for the entropic Gaussian of every convex, Lipschitz and coercive $\Fbar$ at every temperature. The formal proof does not contain this statement, and the paper does not use it.
+\end{remark}
+
+\begin{lemma}\label{lem:approx}
+Theorem~\ref{thm:dil} holds for every family.
+\end{lemma}
+
+\begin{proof}
+Let $(\mu_c,F_c)$ be a family with $\Delta_\star>0$ and $b^\star$ a minimiser of $\Fbar$. For $k\ge1$ let $\epsilon_k=1/k$, and let $F_c^k$ be the function that Lemma~\ref{lem:smooth} gives for the convex $(L+\epsilon_k)$-Lipschitz function $F_c+\epsilon_k|\cdot-b^\star|$ with $\epsilon=\epsilon_k^2$. It is convex, $(L+\epsilon_k)$-Lipschitz, of class $C^2$ with a Lipschitz gradient, and
+\[
+\bigl|F_c^k-F_c-\epsilon_k|\cdot-b^\star|\bigr|\le\epsilon_k^2 .
+\]
+So $F_c^k$ is coercive and attains its minimum, and $(\mu_c,F_c^k)$ is a regular family whose mean $\Fbar_k$ has $|\Fbar_k-\Fbar-\epsilon_k|\cdot-b^\star||\le\epsilon_k^2$, so $\Fbar_k\ge\Fbar-1$ is coercive with the constants $a_1$ and $a_2+1$. As $k\to\infty$, $F_c^k\to F_c$ and $\Fbar_k\to\Fbar$ locally uniformly, and so do $u_c^k=F_c^k-\Fbar_k$ and $V_k=\sum_c\mu_c(u_c^k)^2$; since $u_c^k$ is $2(L+1)$-Lipschitz and $u_c^k(0)$ is bounded, $|V_k(y)|\le c(1+|y|^2)$ for all $k$. The minima converge: $\min F_c-\epsilon_k^2\le\min F_c^k\le F_c^k(x_c)\le\min F_c+\epsilon_k|x_c-b^\star|+\epsilon_k^2$. A minimiser $b^\star_k$ of $\Fbar_k$ satisfies $\Fbar(b^\star)+\epsilon_k|b^\star_k-b^\star|-\epsilon_k^2\le\Fbar_k(b^\star_k)\le\Fbar_k(b^\star)\le\Fbar(b^\star)+\epsilon_k^2$, so $|b^\star_k-b^\star|\le2\epsilon_k\to0$ and $\min\Fbar_k\to\min\Fbar$. Hence the floor $\Delta_\star^k$ of the family $k$ tends to $\Delta_\star$, its gains $g_c^k=F_c^k(b^\star_k)-\min F_c^k$ tend to $g_c$, and $g^k_{\max}\to g_{\max}$.
+
+For $k$ large, $\Delta^k_\star>0$, and the regular case of Theorem~\ref{thm:dil} for the family $k$ and its minimiser $b^\star_k$ gives a scale $h_k=g^k_{c_k}\in[\Delta^k_\star/2,g^k_{\max}]$ and the entropic Gaussian $(b_k,S_k)$ of $\Fbar_k$ at $h_k/(16d)$, with \eqref{eq:P3} for the family $k$. Along a subsequence $c_k$ is a constant $c_0$, so $h_k\to h=g_{c_0}\in[\Delta_\star/2,g_{\max}]$ and $h>0$. By Lemma~\ref{lem:compact} with $G_k=\Fbar_k$ and $G=\Fbar$, a further subsequence has $(b_k,S_k)\to(b_h,S_h)$, the entropic Gaussian of $\Fbar$ at $\lambda_h=h/(16d)$. Along it $V_k(b^\star_k)\to V(b^\star)$, $V_k(b_k)\to V(b_h)$ and, by Lemma~\ref{lem:compact} with $H_k=V_k$, $\E V_k(b_k+S_kZ)\to\E V(b_h+S_hZ)$; the largest eigenvalue of $S_k$ tends to that of $S_h$, so the quantity $T$ of the family $k$, formed with its Lipschitz constant $L+\epsilon_k$, tends to $T_h$; and $\ln(2g^k_{\max}/\Delta^k_\star)\to\ln(2g_{\max}/\Delta_\star)$. Every term of \eqref{eq:P3} converges, so \eqref{eq:P3} holds for $(\mu_c,F_c)$ at the scale $h$, one of the values $g_c$.
+
+(S4) holds for $(b_h,S_h)$ by Lemma~\ref{lem:ec}, and so does (S3) in the limit: for each $k$ and $z$, Lemma~\ref{lem:ec} for the mean $\Fbar_k$, of class $C^1$, gives $\E\Fbar_k(b_k+S_kZ)\le\Fbar_k(z)+\lambda_kd$ with $\lambda_k=h_k/(16d)$; along the subsequence the left side tends to $\E\Fbar(b_h+S_hZ)$, by Lemma~\ref{lem:compact} with $H_k=\Fbar_k$, and the right side to $\Fbar(z)+\lambda_hd$. The other two conclusions follow from \eqref{eq:P3}, (S3) and (S4): Step~2 of the proof of Theorem~\ref{thm:dil} uses only (S3) and (S4) to bound $\Delta(p_h)$, and \eqref{eq:P3} gives $\mathcal I(p_h)\ge\frac q2\cdot h\Delta_\star/(2K_S(1+T_h)^2d^2\ln(2g_{\max}/\Delta_\star))=\Delta_\star^2/(16K_S(1+T_h)^2d^2\ln(2g_{\max}/\Delta_\star))$, from which the last display of the proof gives the bound with $K_D$.
+\end{proof}
+
+The perturbation $\epsilon_k|\cdot-b^\star|$ makes the prescribed $b^\star$ the limit of the minimisers $b^\star_k$; without it the limit would be some minimiser of $\Fbar$, which would be enough for Proposition~\ref{prop:body}, since every minimiser of the penalised mean there lies in $\cJ$.
+
+\section*{Acknowledgements}
+
+We thank Hedi Hadiji for suggesting the Bayesian approach of Lattimore through minimax duality, and for the remark that the analysis of exploration by optimisation should apply to the one-round inequality, which led to the explicit learner.
+
+\section*{Contact}
+Questions, corrections and comments are welcome as issues on the repository: \url{\repo/issues/new/choose}.
+
+\bibliographystyle{amsplain}
+\bibliography{refs}
+
+\end{document}

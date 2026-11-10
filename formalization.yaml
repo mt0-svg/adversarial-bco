@@ -1,0 +1,289 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "adversarial-bco"
+  description: >-
+    Adversarial bandit convex optimisation: on a convex body of R^d containing a unit ball, an explicit learner has
+    regret at most 1.9e5 d^(3/2) sqrt(n) log^(3/2)(n D) against convex losses with values in [0, 1] fixed in
+    advance, and the minimax regret over n rounds obeys the same bound; the one-round inequality behind them holds
+    with beta = 1.2e9 d^2 log(n d D) log(2n).
+  authors: [mt0-svg]
+  license: "Apache-2.0"
+
+sources:
+  - title: "Improved regret for zeroth-order adversarial bandit convex optimisation"
+    authors: ["Tor Lattimore"]
+    id: "https://doi.org/10.4171/MSL/17"
+    type: article
+    location: "Theorem 1: the bound C d^(5/2) sqrt(n) log(nD) that Theorem 1.1 and Corollary 1.2 of the original proof improve (arXiv:2006.00475)"
+    relationship: background
+    author_endorsement: not-contacted
+  - title: "Adversarial bandit convex optimisation with regret d^(3/2) sqrt(n) up to logarithms"
+    authors: [mt0-svg]
+    id: "https://github.com/mt0-svg/adversarial-bco"
+    type: original-proof
+    location: "paper/main.tex, Theorem 1.1, Corollary 1.2, Proposition 2.2, Theorem 3.1 and Lemma 7.13, in the form of Section 9.1"
+    relationship: formalizes
+    author_endorsement: n/a
+
+related_formalizations: []
+
+classification:
+  arxiv: ["cs.LG", "math.OC", "stat.ML"]
+  msc2020: ["68Q32", "90C25", "62L05", "03B35"]
+
+status:
+  scope: "Theorem 1.1, Lemma 7.13, Corollary 1.2, Theorem 3.1 and Proposition 2.2 with their constants, and Corollary 1.2 for measurable learners, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, as the paper states them, except four remarks outside the formal proof (alignment)"
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: [propext, Classical.choice, Quot.sound]
+  main_results:
+    - declaration: "AdversarialBco.Explicit.theoremExplicit"
+      file: "AdversarialBco/Explicit.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-explicit.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.Explicit.lemmaMarg"
+      file: "AdversarialBco/Explicit.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-explicit.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.Explicit.corollaryExplicit"
+      file: "AdversarialBco/Explicit.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-explicit.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.BodySpec.dilTheorem"
+      file: "AdversarialBco/Body2/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-body.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.BodySpec.bodyExplicit"
+      file: "AdversarialBco/Body2/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-body.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.BodySpec.bodyHExplicit"
+      file: "AdversarialBco/Body2/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-body.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.corollaryADV"
+      file: "AdversarialBco/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config.json"
+      literature_dependencies: []
+
+automation:
+  methods:
+    - method: agent
+
+fidelity:
+  divergences: >-
+    Theorem 1.1 takes the scan order of the net and the procedure of step 1 of Algorithm 7.1 as arguments, holds for
+    every order and every procedure that meets step 1 at every positive probability vector, and states that both
+    exist; its probability space is the finite set of histories of actions and coins with the product law, and
+    rounds are indexed from 0. Theorem 3.1 states its conclusions for every entropic Gaussian at the temperature,
+    with the existence of one. corollaryADV states Corollary 1.2 with no value of the constant, n >= 2, and the
+    infimum over learners that are a probability space of seeds and, for each round, a jointly measurable map from
+    the seed and the past observations to the body, whose regret is integrable against every sequence of losses
+    (Section 9.1 of the paper). The other statements are proved as steps, in places in the form the proofs use
+    (Section 9.2 of the paper).
+
+review:
+  status: agent-reviewed
+  notes: "the proof was refereed by agents with fresh context; Comparator checks the seven main statements against three statement files that import only Mathlib."
+
+alignment:
+  namespace: "AdversarialBco"
+  statements:
+    - source: "Theorem 1.1"
+      lean: "AdversarialBco.Explicit.theoremExplicit"
+      module: "AdversarialBco/Explicit.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.theoremExplicit (AdversarialBco/Explicit.lean), the statement TheoremExplicit of AdversarialBco/StatementExplicit.lean, Algorithm 7.1 written out (Section 9.1); from AdversarialBco.Explicit.theoremExplicit_of_bodyH (AdversarialBco/Explicit/Main.lean) and AdversarialBco.BodySpec.bodyHExplicit; the numerical inequalities of the proof: AdversarialBco.Explicit.ex_params, ex_const, ex_CX_beta, ex_CX_log, ex_CX_final and ex_CX, and AdversarialBco.thmC_c_large"
+    - source: "Corollary 1.2"
+      lean: "AdversarialBco.Explicit.corollaryExplicit"
+      module: "AdversarialBco/Explicit.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.corollaryExplicit (AdversarialBco/Explicit.lean), the statement CorollaryExplicit of AdversarialBco/StatementExplicit.lean, from AdversarialBco.Explicit.corollaryExplicit_of_bodyH and AdversarialBco.Explicit.lemmaMarg; for measurable learners, with a constant that is not computed and n >= 2: AdversarialBco.corollaryADV (AdversarialBco/Main.lean, Section 9.1)"
+    - source: "Lemma 2.1"
+      lean: "AdversarialBco.convex_inner"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "(a) AdversarialBco.convex_inner, isCompact_inner, closedBall_subset_inner, AdversarialBco.Body2.inner_ball, AdversarialBco.Body2.one_le_diam, AdversarialBco.Body.tr_inner; (b) abs_sub_le_inner, sub_le_of_convex_bdd; (c) sInf_inner_le, convex_comb_le, closedBall_shrink_subset"
+    - source: "Proposition 2.2"
+      lean: "AdversarialBco.BodySpec.bodyExplicit"
+      module: "AdversarialBco/Body2/Main.lean"
+      status: proved
+      note: "AdversarialBco.BodySpec.bodyExplicit (AdversarialBco/Body2/Main.lean), the statement BodyExplicit of AdversarialBco/StatementBody.lean; from AdversarialBco.Body2.bodyExplicit_of_dil (AdversarialBco/Body2/PropBody.lean), with (4.1) from AdversarialBco.Body2.proj_var, lipExt_ge and proj_nonexp, and the steps mass_arith, sh_arith, outside_arith and final_arith; on the inner body of Lemma 2.1, for every D >= diam K: AdversarialBco.BodySpec.bodyHExplicit; the numerical inequalities of the proof: AdversarialBco.Body2.KS_bounds and C0_bound"
+    - source: "Theorem 3.1"
+      lean: "AdversarialBco.BodySpec.dilTheorem"
+      module: "AdversarialBco/Body2/Main.lean"
+      status: proved
+      note: "AdversarialBco.BodySpec.dilTheorem (AdversarialBco/Body2/Main.lean), the statement DilTheorem of AdversarialBco/StatementBody.lean: an entropic Gaussian at the temperature exists, and every one has the conclusions; from the regular case AdversarialBco.Body2.dilRegExplicit (AdversarialBco/Body2/Dil2.lean) by AdversarialBco.DilAll.dilTheorem_of_reg (AdversarialBco/Explicit/DilAll.lean); the numerical inequalities of the proof: AdversarialBco.Body2.KS_bounds, phi_T_le and scale_arith2"
+    - source: "Lemma 3.2"
+      lean: "AdversarialBco.Body.ec_min_exists"
+      module: "AdversarialBco/Body/Dil.lean"
+      status: proved
+      note: "existence of a minimiser over the invertible S: AdversarialBco.Body.ec_min_exists; one with S positive definite: AdversarialBco.DilAll.isMinInv_spd, which minimises over the positive definite S: AdversarialBco.DilAll.isEntropicGaussian_of_isMinInv; uniqueness: AdversarialBco.DilAll.entropic_unique; (S4): AdversarialBco.Body.ec_S4; (S1) and (S2): AdversarialBco.Body.ec_first_order and AdversarialBco.Body2.minInv_stationary; (S3): AdversarialBco.Body.ec_S3"
+    - source: "Lemma 3.3"
+      lean: "AdversarialBco.Body2.inf_std"
+      module: "AdversarialBco/Body2/Half.lean"
+      status: proved
+      note: "AdversarialBco.Body2.inf_std (AdversarialBco/Body2/Half.lean); E k = kappa: AdversarialBco.Body2.integral_kfun_inner; E m = 1/(2R): AdversarialBco.Body2.integral_ind_inner; the bound on E(l - m)^2: AdversarialBco.Body2.score_sq_std; kappa_2 as an integral: AdversarialBco.Body2.integral_score_sq_phi"
+    - source: "Lemma 3.4"
+      lean: "AdversarialBco.Body2.half_std"
+      module: "AdversarialBco/Body2/Half.lean"
+      status: proved
+      note: "AdversarialBco.Body2.half_std (AdversarialBco/Body2/Half.lean); the kernel bound: AdversarialBco.Body2.Kker_ge"
+    - source: "Proposition 3.5"
+      lean: "AdversarialBco.Body2.core_one"
+      module: "AdversarialBco/Body2/Half.lean"
+      status: proved
+      note: "AdversarialBco.Body2.core_one (AdversarialBco/Body2/Half.lean); the bounds on kappa: AdversarialBco.Body2.kappa_bounds, used in AdversarialBco.Body2.core_bracket"
+    - source: "Lemma 3.6"
+      lean: "AdversarialBco.Body2.mills_lower"
+      module: "AdversarialBco/Body2/Gauss1.lean"
+      status: proved
+      note: "AdversarialBco.Body2.mills_lower, mills_antitone and mills_zero (AdversarialBco/Body2/Gauss1.lean)"
+    - source: "Lemma 3.7"
+      lean: "AdversarialBco.Body2.ibp_a"
+      module: "AdversarialBco/Body2/Ibp.lean"
+      status: proved
+      note: "(a) AdversarialBco.Body2.ibp_a and (b) AdversarialBco.Body2.ibp_b (AdversarialBco/Body2/Ibp.lean)"
+    - source: "Lemma 4.1"
+      lean: "AdversarialBco.Body2.penalty_need"
+      module: "AdversarialBco/Body2/Penalty.lean"
+      status: proved
+      note: "AdversarialBco.Body2.penalty_need (AdversarialBco/Body2/Penalty.lean); T(2) >= 7, Theta(2) >= 20 and need(2) <= 2^10 C': AdversarialBco.Body2.penalty_numeric"
+    - source: "Lemma 5.1"
+      lean: "AdversarialBco.card_le_of_separated"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "(a) AdversarialBco.card_le_of_separated; (b) AdversarialBco.exists_maximal_separated"
+    - source: "Lemma 5.2"
+      lean: "AdversarialBco.Explicit.ex_comparator"
+      module: "AdversarialBco/Explicit/Main.lean"
+      status: proved
+      note: "(a), together with Lemma 2.1 (c): AdversarialBco.Explicit.ex_comparator; (b): AdversarialBco.integral_comp_le_add, sqrt_V_le_bdd, sqrt_integral_sq_add_le, sqrt_wsum_sq_add_le, var_le_sq_mean, with a measurable nearest point in place of the one of least index (exists_measurable_nearest); (5.1) in the proof of AdversarialBco.conv_coin"
+    - source: "Algorithm 7.1"
+      lean: "AdversarialBco.Explicit.net"
+      module: "AdversarialBco/StatementExplicit.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.net, IsStep1, IsSolver, weights, exoKernel and coinLaw (AdversarialBco/StatementExplicit.lean): rounds from 0, the scan order and the procedure of step 1 given as arguments (Section 9.1)"
+    - source: "Theorem 7.2"
+      lean: "AdversarialBco.Explicit.ex_pseudo_main"
+      module: "AdversarialBco/Explicit/Main.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.ex_pseudo_main (the adaptive form) and AdversarialBco.Explicit.ex_coinReg_of_pseudo (sequences fixed in advance) (AdversarialBco/Explicit/Main.lean), for every finite C in J of covering radius below eps in place of the net; the size of the net: AdversarialBco.Explicit.ex_net_card and ex_net_two"
+    - source: "Lemma 7.3"
+      lean: "AdversarialBco.ew_recursive"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.ew_recursive, rounds indexed from 0, and its form along a path, ew_path"
+    - source: "Lemma 7.4"
+      lean: "AdversarialBco.br_round"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.br_round (the expectation written as a finite sum) and br_step"
+    - source: "Lemma 7.5"
+      lean: "AdversarialBco.mm1"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.mm1"
+    - source: "Lemma 7.6"
+      lean: "AdversarialBco.convex_advSet"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.convex_advSet, isCompact_advSet, convex_Fq and convex_Eq; (7.4): AdversarialBco.round_exists, with omega_mix"
+    - source: "Lemma 7.7"
+      lean: "AdversarialBco.gibbs_lower"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.gibbs_lower (the inequality >=) and gibbs_upper (the infimum approached within every delta > 0)"
+    - source: "Lemma 7.8"
+      lean: "AdversarialBco.primal_vertex"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.primal_vertex, with AdversarialBco.compensation in its proof"
+    - source: "Lemma 7.9"
+      lean: "AdversarialBco.conv_coin"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.conv_coin, with pinsker_var, pinsker_bern and clamp_extension_PL, for C of covering radius at most eps through a measurable projection"
+    - source: "Proposition 7.10"
+      lean: "AdversarialBco.Explicit.ex_Rbar_lower"
+      module: "AdversarialBco/Explicit/Main.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.ex_Rbar_lower; the bound: AdversarialBco.value_dual and round_exists, with vertex_value_le, value_arith and min_le_avg, and at the net AdversarialBco.Explicit.ex_step1_exists and ex_round_value"
+    - source: "Lemma 7.11"
+      lean: "AdversarialBco.sg_exists"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "(i) AdversarialBco.sg_exists; (ii) convex_PL, isCompact_PL, PL_of_convex and PL_of_adm; (iii) extension_PL and clamp_extension_PL"
+    - source: "Lemma 7.12"
+      lean: "AdversarialBco.Explicit.ex_net_facts"
+      module: "AdversarialBco/Explicit/Main.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.ex_net_facts, ex_net_card and ex_net_two"
+    - source: "Lemma 7.13"
+      lean: "AdversarialBco.Explicit.lemmaMarg"
+      module: "AdversarialBco/Explicit/Marg.lean"
+      status: proved
+      note: "AdversarialBco.Explicit.lemmaMarg (AdversarialBco/Explicit/Marg.lean), the statement LemmaMarg of AdversarialBco/StatementExplicit.lean, for every learner with coins whose laws are probability vectors on C"
+    - source: "Remark 7.14"
+      status: not-formalized
+      note: "the cost of a round only; not in the formal proof"
+    - source: "Theorem A.1"
+      lean: "AdversarialBco.Gauss.gaussConcAt"
+      module: "AdversarialBco/Gauss/Concentration.lean"
+      status: proved
+      note: "AdversarialBco.Gauss.gaussConcAt (AdversarialBco/Gauss/Concentration.lean), for F(b + S Z) with F Lipschitz on R^d and S linear from R^k to R^d (b = 0, S = Id is the statement here), through AdversarialBco.Gauss.hasSubgaussianMGF_sub_integral_of_lipschitz"
+    - source: "Lemma A.2"
+      lean: "AdversarialBco.Gauss.hasSubgaussianMGF_sub_integral_stdGaussian"
+      module: "AdversarialBco/Gauss/MaureyPisier.lean"
+      status: proved
+      note: "AdversarialBco.Gauss.hasSubgaussianMGF_sub_integral_stdGaussian (AdversarialBco/Gauss/MaureyPisier.lean)"
+    - source: "Lemma A.3"
+      lean: "AdversarialBco.Body.stein_coord"
+      module: "AdversarialBco/Body/Basic.lean"
+      status: proved
+      note: "AdversarialBco.Body.stein_coord, on the standard Gaussian of R^d for Phi with a derivative of at most exponential growth, with AdversarialBco.gaussian_ibp_1d, gaussian_ibp_pi and hasDerivAt_gaussianPDFReal_0_1"
+    - source: "Remark B.1"
+      status: not-formalized
+      note: "the formal proof of Lemma 7.5 (AdversarialBco.mm1) rests on the minimax theorem of Sion in Mathlib"
+    - source: "Remark C.1"
+      status: not-formalized
+      note: "the formal proof uses the case of two Bernoulli laws, AdversarialBco.pinsker_bern, the only case Lemma 7.9 uses"
+    - source: "Lemma D.1"
+      lean: "AdversarialBco.Body.smooth_convex"
+      module: "AdversarialBco/Body/Smooth.lean"
+      status: proved
+      note: "AdversarialBco.Body.smooth_convex (AdversarialBco/Body/Smooth.lean)"
+    - source: "Lemma D.2"
+      lean: "AdversarialBco.DilAll.entropic_unique"
+      module: "AdversarialBco/Explicit/DilAll.lean"
+      status: proved
+      note: "AdversarialBco.DilAll.entropic_unique (AdversarialBco/Explicit/DilAll.lean)"
+    - source: "Lemma D.3"
+      lean: "AdversarialBco.DilAll.limit_isMinInv"
+      module: "AdversarialBco/Explicit/DilAll.lean"
+      status: proved
+      note: "AdversarialBco.DilAll.limit_isMinInv, uniform_bounds and tendsto_integral_cloud (AdversarialBco/Explicit/DilAll.lean), for minimisers over the invertible S"
+    - source: "Remark D.4"
+      status: not-formalized
+      note: "the formal proof passes (S3) to the limit only in the proof of Lemma D.5 (AdversarialBco.DilAll.dilTheorem_of_reg)"
+    - source: "Lemma D.5"
+      lean: "AdversarialBco.DilAll.dilTheorem_of_reg"
+      module: "AdversarialBco/Explicit/DilAll.lean"
+      status: proved
+      note: "AdversarialBco.DilAll.dilTheorem_of_reg (AdversarialBco/Explicit/DilAll.lean), from the regular case AdversarialBco.Body2.dilRegExplicit (minimisers over the invertible S), the regular families from AdversarialBco.DilAll.approx_family"
