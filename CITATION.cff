@@ -1,12 +1,13 @@
 cff-version: 1.2.0
 message: "If you use this work, please cite it as below."
 type: software
-title: "Adversarial bandit convex optimisation with regret d^(3/2) sqrt(n) up to logarithms"
+title: "Adversarial bandit convex optimisation: regret d^(3/2) sqrt(n) with polynomial-time steps on a real RAM, and a matching lower bound"
 authors:
   - name: mt0-svg
 repository-code: "https://github.com/mt0-svg/adversarial-bco"
 license: Apache-2.0
-version: v1.0.0
+version: v2.0.0
+date-released: "2026-11-11"
 doi: 10.5281/zenodo.24115413
 keywords:
   - Lean 4
@@ -16,7 +17,7 @@ keywords:
   - minimax regret
 preferred-citation:
   type: article
-  title: "Adversarial bandit convex optimisation with regret d^(3/2) sqrt(n) up to logarithms"
+  title: "Adversarial bandit convex optimisation: regret d^(3/2) sqrt(n) with polynomial-time steps on a real RAM, and a matching lower bound"
   authors:
     - name: mt0-svg
   doi: 10.5281/zenodo.24115413

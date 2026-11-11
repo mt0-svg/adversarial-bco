@@ -16,10 +16,10 @@ public import Mathlib.Topology.MetricSpace.Bounded
 @[expose] public section
 
 /-!
-# The frozen statement: Corollary 1.2
+# The frozen statement: Corollary 1.6
 
 Adversarial bandit convex optimisation with an oblivious adversary and noiseless bandit feedback: the definitions of
-the statement of Corollary 1.2 of the paper, in the form of its Section 9.1. The statement with a `sorry` proof is
+the statement of Corollary 1.6 of the paper, in the form of its Section 11.1. The statement with a `sorry` proof is
 `AdversarialBco/Challenge.lean`, which repeats these definitions.
 
 * `E d = EuclideanSpace ℝ (Fin d)`. The action set `K ⊆ E d` is a convex body containing a unit ball: compact,
@@ -96,7 +96,7 @@ noncomputable def minimaxRegret {d : ℕ} (K : Set (E d)) (n : ℕ) : ℝ :=
       (∀ f ∈ Advs K n, Integrable (fun ω => regret K f (fun t => pol t ω) n) μ) ∧
       r = sSup ((fun f => expReg K μ pol f n) '' Advs K n)}
 
-/-- Corollary 1.2 of the paper, in the form of its Section 9.1. -/
+/-- Corollary 1.6 of the paper, in the form of its Section 11.1. -/
 def CorollaryADV : Prop :=
   ∃ C : ℝ, ∀ d : ℕ, 1 ≤ d → ∀ n : ℕ, 2 ≤ n → ∀ K : Set (E d), IsCompact K → Convex ℝ K →
     (∃ c : E d, Metric.closedBall c 1 ⊆ K) →

@@ -18,7 +18,7 @@ public import Mathlib
 # Gaussian concentration for continuously differentiable functions (port)
 
 The argument of Maurey and Pisier: for a `C^1` function `G` with `‖∇G‖ ≤ L` and a standard Gaussian vector `Z`,
-`G(Z) - E G(Z)` is sub-Gaussian with variance proxy `π^2 L^2 / 4`. Used in Section 9.2 of the paper through
+`G(Z) - E G(Z)` is sub-Gaussian with variance proxy `π^2 L^2 / 4`. Used in Section 11.2 of the paper through
 `AdversarialBco/Gauss/Concentration.lean`.
 
 Ported to Lean v4.34.1 and Mathlib v4.34.1, with names moved into `AdversarialBco.Gauss` and no proof changed, from:

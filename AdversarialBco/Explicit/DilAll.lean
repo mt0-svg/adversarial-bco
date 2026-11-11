@@ -17,7 +17,7 @@ public import AdversarialBco.Body.Dil
 @[expose] public section
 
 /-!
-# Theorem 3.1 for every family from its regular case (Appendix D)
+# Theorem 3.1 for every family from its regular case (Appendix C)
 
 `dilTheorem_of_reg : DilRegExplicit → EcReg → DilTheorem`, the cut of `AdversarialBco/Body2/Interface.lean`:
 Theorem 3.1 (`BodySpec.DilTheorem`, `AdversarialBco/StatementBody.lean`) for every convex Lipschitz family from its
@@ -27,10 +27,10 @@ case of a regular family (`DilRegExplicit`: class `C^2` with Lipschitz gradients
   the strict concavity of `log det` (`det_add_sq`, by the spectral theorem).
 - B. Gaussian integrals: `S Z` and `P Z` have the same law when `S S^* = P P^*` (`map_stdGaussian_eq`), the standard
   Gaussian charges every open set, dominated convergence along `b_n + S_n Z`.
-- C. Lemma D.2: the entropic Gaussian of a convex coercive Lipschitz function is unique (`entropic_unique`).
-- D. Lemma D.3: minimisers over invertible `S` are minimisers over positive definite `S` (`isMinInv_spd`), lie
+- C. Lemma C.2: the entropic Gaussian of a convex coercive Lipschitz function is unique (`entropic_unique`).
+- D. Lemma C.3: minimisers over invertible `S` are minimisers over positive definite `S` (`isMinInv_spd`), lie
   in a compact set (`uniform_bounds`), and a limit of them is again one (`limit_isMinInv`).
-- E. Lemma D.5: the regular families `F_c + ε_k |· - b*|` smoothed by a bump (`approx_family`), their
+- E. Lemma C.4: the regular families `F_c + ε_k |· - b*|` smoothed by a bump (`approx_family`), their
   minimisers and gains.
 - F. `dilTheorem_of_reg`: conclusions (S3), (S4) and (P3) of the regular families pass to the limit; the hypothesis
   `EcReg` is not used.
@@ -390,7 +390,7 @@ theorem lip_growth {d : ℕ} (G : EuclideanSpace ℝ (Fin d) → ℝ) (K : ℝ�
   have hK : (0 : ℝ) ≤ K := K.2
   nlinarith [mul_le_mul_of_nonneg_left ht hK, mul_nonneg hB0 (sq_nonneg ‖x‖)]
 
-/-! ## C. Uniqueness of the entropic Gaussian (Lemma D.2) -/
+/-! ## C. Uniqueness of the entropic Gaussian (Lemma C.2) -/
 
 open AdversarialBco.Body2 AdversarialBco.BodySpec Filter ProbabilityTheory Topology in
 open scoped RealInnerProductSpace NNReal in
@@ -651,7 +651,7 @@ theorem entropic_unique {d : ℕ} (G : EuclideanSpace ℝ (Fin d) → ℝ) (hGc 
     simpa [smul_smul] using h2
   exact (sub_eq_zero.1 this).symm
 
-/-! ## D. Minimisers over invertible and over positive definite `S`; the limit (Lemma D.3) -/
+/-! ## D. Minimisers over invertible and over positive definite `S`; the limit (Lemma C.3) -/
 
 theorem isEntropicGaussian_of_isMinInv {d : ℕ} (G : EuclideanSpace ℝ (Fin d) → ℝ) (lam : ℝ)
     (b : EuclideanSpace ℝ (Fin d)) (S : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) (hS : IsSPD S)
@@ -807,7 +807,7 @@ theorem limit_isMinInv {d : ℕ} (G : ℕ → EuclideanSpace ℝ (Fin d) → ℝ
   exact le_of_tendsto_of_tendsto' (hI.sub (hlamφ.mul hlog)) (hI'.sub (hlamφ.mul tendsto_const_nhds))
     (fun n => (hmin (φ n)).2 b' S' hS')
 
-/-! ## E. The approximating regular families (Lemma D.5) -/
+/-! ## E. The approximating regular families (Lemma C.4) -/
 
 open AdversarialBco.Body2 AdversarialBco.BodySpec Filter ProbabilityTheory Topology in
 open scoped RealInnerProductSpace NNReal in

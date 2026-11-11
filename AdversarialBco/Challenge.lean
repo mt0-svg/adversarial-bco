@@ -16,10 +16,10 @@ public import Mathlib.Topology.MetricSpace.Bounded
 @[expose] public section
 
 /-!
-# Corollary 1.2 (challenge)
+# Corollary 1.6 (challenge)
 
 Adversarial bandit convex optimisation with an oblivious adversary and noiseless bandit feedback: the definitions of
-the statement of Corollary 1.2 of the paper, in the form of its Section 9.1, with a `sorry` proof: the challenge of
+the statement of Corollary 1.6 of the paper, in the form of its Section 11.1, with a `sorry` proof: the challenge of
 Comparator (`config.json`), which nothing imports, so its warning `declaration uses sorry` is expected;
 `AdversarialBco/Solution.lean` proves it. `AdversarialBco/Statement.lean` holds the same definitions without the
 theorem.
@@ -98,14 +98,14 @@ noncomputable def minimaxRegret {d : ℕ} (K : Set (E d)) (n : ℕ) : ℝ :=
       (∀ f ∈ Advs K n, Integrable (fun ω => regret K f (fun t => pol t ω) n) μ) ∧
       r = sSup ((fun f => expReg K μ pol f n) '' Advs K n)}
 
-/-- Corollary 1.2 of the paper, in the form of its Section 9.1. -/
+/-- Corollary 1.6 of the paper, in the form of its Section 11.1. -/
 def CorollaryADV : Prop :=
   ∃ C : ℝ, ∀ d : ℕ, 1 ≤ d → ∀ n : ℕ, 2 ≤ n → ∀ K : Set (E d), IsCompact K → Convex ℝ K →
     (∃ c : E d, Metric.closedBall c 1 ⊆ K) →
       minimaxRegret K n ≤
         C * (d : ℝ) ^ (3 / 2 : ℝ) * √(n : ℝ) * Real.log (n * Metric.diam K) ^ (3 / 2 : ℝ)
 
-/-- Corollary 1.2 of the paper. -/
+/-- Corollary 1.6 of the paper. -/
 theorem corollaryADV : CorollaryADV := sorry
 
 end AdversarialBco

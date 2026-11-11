@@ -4,10 +4,10 @@ name: CI
 # code/formal-proof/clean_build.sh in dependency order, the heavy modules a few at a time (its header lists its
 # settings). The package's .lake/build is restored first, from the actions cache (the last build on this toolchain and
 # manifest), else from the Lake build archive of the latest release, so only the modules that changed and those that
-# import them are compiled; Comparator replays the theorems of each of its configurations (config.json,
-# config-explicit.json, config-body.json, one job each) and every declaration they depend on, in the kernel the
+# import them are compiled; Comparator replays the theorems of each of its nine configurations (config.json and
+# config-*.json, one job each) and every declaration they depend on, in the kernel the
 # configuration names (nanoda alone with lean_kernel false, the Lean kernel with enable_nanoda false), whatever was
-# restored. Then the checks: every target up to date, the axioms of the theorems of the three configurations, a scan
+# restored. Then the checks: every target up to date, the axioms of the theorems of the nine configurations, a scan
 # of the sources, Comparator and the negative controls of config.json
 # (.github/comparator-controls.tsv, when present).
 # The build runs as a chain of up to five jobs. Each one continues the build of the previous one (handed over
@@ -122,7 +122,7 @@ jobs:
             if (match(out, "(^|[^A-Za-z0-9_.'!?])(" W ")([^A-Za-z0-9_'!?]|$)")) print FILENAME ":" FNR ": " $0
           }
           EOF
-          { find "$ROOT" -name '*.lean' ! -path "$ROOT/Challenge*.lean"; [ ! -f "$ROOT.lean" ] || echo "$ROOT.lean"; } | LC_ALL=C sort > files.txt
+          { find "$ROOT" -name '*.lean' ! -regex "$ROOT/Challenge[A-Za-z0-9]*\.lean"; [ ! -f "$ROOT.lean" ] || echo "$ROOT.lean"; } | LC_ALL=C sort > files.txt
           {
             echo "# Uses of sorry, admit and native_decide outside comments and string literals, in the $(wc -l < files.txt) files of $ROOT/ other than the challenge files Challenge*.lean, and of admit and native_decide in these (whose statements end in sorry)."
             xargs awk -v W='sorry|admit|native_decide' -f scan.awk < files.txt
@@ -134,6 +134,15 @@ jobs:
           cp scan.txt verify/lean/source-scan.txt
           if [ "$hits" -eq 0 ]; then r=PASS; else r=FAIL; fi
           printf 'source-scan\tscan of %s/ for sorry, admit and native_decide outside comments\t%s uses\t%s\tlean/source-scan.txt\n' "$ROOT" "$hits" "$r" > verify/results/source-scan.tsv
+          [ "$r" = PASS ]
+      - name: The challenges of StatementPoly.lean and StatementConj1*.lean are copies of these files
+        shell: bash
+        run: |
+          set -u
+          rc=0; code/formal-proof/challenges.sh > verify/lean/challenges.txt 2>&1 || rc=$?
+          cat verify/lean/challenges.txt
+          if [ "$rc" -eq 0 ]; then r=PASS; else r=FAIL; fi
+          printf 'challenges\tcode/formal-proof/challenges.sh\t%s\t%s\tlean/challenges.txt\n' "$(tail -1 verify/lean/challenges.txt)" "$r" > verify/results/challenges.tsv
           [ "$r" = PASS ]
       - uses: actions/upload-artifact@v4
         if: always()
@@ -334,7 +343,7 @@ jobs:
           lake build --no-build Statement Main Challenge Solution > up-to-date.txt 2>&1 || rc=$?
           cat up-to-date.txt
           cp up-to-date.txt verify/lean/up-to-date.txt
-          n=$(grep -E "declaration uses [\`']sorry[\`']" up-to-date.txt | grep -vcE "$ROOT/Challenge(Explicit|Body)?\.lean" || true)
+          n=$(grep -E "declaration uses [\`']sorry[\`']" up-to-date.txt | grep -vcE "$ROOT/Challenge[A-Za-z0-9]*\.lean" || true)
           if [ "$rc" -eq 0 ] && [ "$n" -eq 0 ]; then r=PASS; else r=FAIL; fi
           printf 'up-to-date\tlake build --no-build Statement Main Challenge Solution\t%s sorry warnings outside the challenge files\t%s\tlean/up-to-date.txt\n' "$n" "$r" > verify/results/up-to-date.tsv
           [ "$rc" -ne 0 ] || echo "built=true" >> "$GITHUB_OUTPUT"
@@ -352,7 +361,7 @@ jobs:
           lean --version > verify/versions/lean.txt
           r=PASS
           [ "$rc" -eq 0 ] || r=FAIL
-          for t in $(jq -r '.theorem_names[]' config.json config-explicit.json config-body.json); do
+          for t in $(jq -r '.theorem_names[]' config.json config-*.json); do
             grep -q "^'$t' depends on axioms: \[" axioms.txt || { echo "no axioms line for $t"; r=FAIL; }
           done
           other=$(sed -n "s/^'[^']*' depends on axioms: \[\(.*\)\]$/\1/p" axioms-joined.txt | tr ',' '\n' | tr -d ' ' \
@@ -388,6 +397,12 @@ jobs:
           - { config: config.json, out: comparator }
           - { config: config-explicit.json, out: comparator-explicit }
           - { config: config-body.json, out: comparator-body }
+          - { config: config-conj1.json, out: comparator-conj1 }
+          - { config: config-poly.json, out: comparator-poly }
+          - { config: config-conj1-exp.json, out: comparator-conj1-exp }
+          - { config: config-conj1-lower.json, out: comparator-conj1-lower }
+          - { config: config-conj1-poly.json, out: comparator-conj1-poly }
+          - { config: config-conj1-poly-exp.json, out: comparator-conj1-poly-exp }
     env:
       CONFIG: ${{ matrix.config }}
       OUT: ${{ matrix.out }}
@@ -458,6 +473,12 @@ jobs:
 
       - name: Check lean4export commit
         run: test "$(git -C .ci/comparator/.lake/packages/lean4export rev-parse HEAD)" = 076e8e57707e813375e8f9da8bf989799ace9680
+
+      # Every module of the package, one at a time in the sandbox, before Comparator runs: Comparator's own build of the
+      # challenge and of anything the restore left out would run them in parallel, and a parallel build of the heavy
+      # modules from an empty directory exceeds the memory of the runner. Restored modules are replayed.
+      - name: Sequential build in the sandbox
+        run: lake env code/formal-proof/seqbuild.sh "$GITHUB_WORKSPACE/.ci/landrun/landrun" "$ROOT"
 
       - name: Start time
         run: echo "START=$(date +%s)" >> "$GITHUB_ENV"

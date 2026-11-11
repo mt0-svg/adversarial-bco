@@ -14,8 +14,8 @@ public import AdversarialBco.Statement
 # The learner and the minimax regret
 
 The definitions of hypothesis (H) and of the learner of Algorithm 7.1, and the lemmas of Sections 5 to 7 and of the
-appendices of the paper that the proof of Corollary 1.2 uses: the exponential weights, the per-round minimax, the
-class and the net, the law of play, Theorem 7.2 for the learner (`thmC_learner`), and Corollary 1.2 from hypothesis
+appendices of the paper that the proof of Corollary 1.6 uses: the exponential weights, the per-round minimax, the
+class and the net, the law of play, Theorem 7.2 for the learner (`thmC_learner`), and Corollary 1.6 from hypothesis
 (H) of the inner body (`corollaryADV_of_bodyH`).
 -/
 
@@ -8656,9 +8656,9 @@ theorem AdversarialBco.thmC_learner {d : ℕ} (hd : 1 ≤ d) (K : Set (Adversari
     linarith
   exact ⟨fun f hf => (key f hf).1, fun f hf => (key f hf).2⟩
 
-/-- Corollary 1.2 of the frozen statement from the statement of `body_H` taken as a hypothesis (the proof of Corollary
+/-- Corollary 1.6 of the frozen statement from the statement of `body_H` taken as a hypothesis (the proof of Corollary
 1.2 in Section 7 of the paper): (H)[1/n, C_B betahat] on the inner
-body; for `d < n`, `thmC_learner` with the parameters of the proof of Corollary 1.2 and `minimaxRegret_le_of_learner` give the bound
+body; for `d < n`, `thmC_learner` with the parameters of the proof of Corollary 1.6 and `minimaxRegret_le_of_learner` give the bound
 with the constant `2 (1 + C_B) + 6 + (C_B/2)^{1/2}` (`thmC_c_main`, `thmC_c_final`); for `d ≥ n`, the regret is at most
 `n` (`minimaxRegret_le_n`, `thmC_c_large`). -/
 theorem AdversarialBco.corollaryADV_of_bodyH
@@ -8679,7 +8679,7 @@ theorem AdversarialBco.corollaryADV_of_bodyH
   · -- d ≥ n: the regret is at most n
     exact (AdversarialBco.minimaxRegret_le_n K hKne n).trans
       (AdversarialBco.thmC_c_large d n hn hdn (Metric.diam K) _ hD2 hC0)
-  -- d < n: the parameters of the proof of Corollary 1.2
+  -- d < n: the parameters of the proof of Corollary 1.6
   set D := Metric.diam K with hDdef
   set bh : ℝ := (d : ℝ) ^ 2 * Real.log (n * d * D) * Real.log (2 * n) with hbh
   obtain ⟨hε0, hε4, hbh0, hΛ0⟩ := AdversarialBco.thmC_c_params d n hd hn D hD2
@@ -8704,3 +8704,117 @@ theorem AdversarialBco.corollaryADV_of_bodyH
   have hmain := AdversarialBco.thmC_c_main n hn bh CB Λ hbh1 hCB hΛ0
   have hfinal := AdversarialBco.thmC_c_final d n hd hn D CB bh Λ hD2 hCB hbh0.le hbh2 hΛ0.le hΛ6
   exact hmm.trans (hmain.trans hfinal)
+
+/-- The rotation of a pair of independent standard Gaussian vectors by an angle `θ` preserves their law. -/
+theorem AdversarialBco.stdGaussian_prod_rotation (d : ℕ) (θ : ℝ) :
+    ((stdGaussian (EuclideanSpace ℝ (Fin d))).prod (stdGaussian (EuclideanSpace ℝ (Fin d)))).map
+        (fun p : EuclideanSpace ℝ (Fin d) × EuclideanSpace ℝ (Fin d) =>
+          (Real.cos θ • p.1 - Real.sin θ • p.2, Real.sin θ • p.1 + Real.cos θ • p.2)) =
+      (stdGaussian (EuclideanSpace ℝ (Fin d))).prod (stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+  set E := EuclideanSpace ℝ (Fin d)
+  have hrot : (fun p : E × E => (Real.cos θ • p.1 - Real.sin θ • p.2, Real.sin θ • p.1 + Real.cos θ • p.2)) =
+      (ContinuousLinearMap.rotation (-θ) : E × E → E × E) := by
+    refine funext fun p => ?_
+    simp [ContinuousLinearMap.rotation_apply, Real.cos_neg, Real.sin_neg, sub_eq_add_neg]
+  rw [hrot]
+  have h_mean_zero : ∀ L : StrongDual ℝ E, (stdGaussian E)[L] = 0 := by
+    intro L; simp [ProbabilityTheory.integral_strongDual_stdGaussian]
+  exact ProbabilityTheory.IsGaussian.map_rotation_eq_self_of_forall_strongDual_eq_zero h_mean_zero (-θ)
+
+open scoped PiLp in
+/-- The mean norm of a standard Gaussian vector of `ℝ^d` is at most `√d`. -/
+theorem AdversarialBco.integral_norm_stdGaussian_le (d : ℕ) :
+    ∫ w, ‖w‖ ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) ≤ √(d : ℝ) := by
+  -- Jensen inequality with x^2 on [0, ∞)
+  have h_convex : ConvexOn ℝ (Set.Ici (0 : ℝ)) (fun x : ℝ => x ^ 2) := convexOn_pow 2
+  have h_cont : ContinuousOn (fun x : ℝ => x ^ 2) (Set.Ici (0 : ℝ)) := continuousOn_pow 2
+  have h_closed : IsClosed (Set.Ici (0 : ℝ)) := isClosed_Ici
+  have h_nonneg : ∀ᵐ (w : EuclideanSpace ℝ (Fin d)) ∂(stdGaussian (EuclideanSpace ℝ (Fin d))), ‖w‖ ∈ Set.Ici (0 : ℝ) := by
+    filter_upwards with w
+    exact norm_nonneg _
+  have h_int_norm : Integrable (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖) (stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+    have h_mem : MemLp (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖) 2 (stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+      (IsGaussian.memLp_two_id (μ := stdGaussian (EuclideanSpace ℝ (Fin d)))).norm
+    exact h_mem.integrable (by norm_num : 1 ≤ (2 : ENNReal))
+  have h_int_norm_sq : Integrable (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖ ^ 2) (stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+    have h_mem : MemLp (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖) 2 (stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+      (IsGaussian.memLp_two_id (μ := stdGaussian (EuclideanSpace ℝ (Fin d)))).norm
+    exact h_mem.integrable_sq
+  have h_jensen := ConvexOn.map_integral_le h_convex h_cont h_closed h_nonneg h_int_norm h_int_norm_sq
+  -- h_jensen : (∫ w, ‖w‖) ^ 2 ≤ ∫ w, ‖w‖ ^ 2
+  have h_norm_sq_int : ∫ (w : EuclideanSpace ℝ (Fin d)), ‖w‖ ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) = (d : ℝ) := by
+    calc
+      ∫ (w : EuclideanSpace ℝ (Fin d)), ‖w‖ ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) =
+          ∫ (w : EuclideanSpace ℝ (Fin d)), ∑ i ∈ Finset.univ, ‖w.ofLp i‖ ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+        refine integral_congr_ae ?_
+        filter_upwards with w
+        simp [EuclideanSpace.norm_sq_eq]
+      _ = ∑ i ∈ Finset.univ, ∫ (w : EuclideanSpace ℝ (Fin d)), ‖w.ofLp i‖ ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+        rw [integral_finsetSum]
+        intro i hi
+        have h_mem : MemLp (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖) 2 (stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+          (IsGaussian.memLp_two_id (μ := stdGaussian (EuclideanSpace ℝ (Fin d)))).norm
+        have h_int_sq : Integrable (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖ ^ 2) (stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+          h_mem.integrable_sq
+        have h_ae_meas : AEStronglyMeasurable (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w.ofLp i‖ ^ 2)
+            (stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+          have h_cont : Continuous (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w.ofLp i‖) := by
+            have h_proj : Continuous (fun (w : EuclideanSpace ℝ (Fin d)) => w.ofLp i) := by
+              simpa [EuclideanSpace] using PiLp.continuous_apply (p := 2) (β := fun _ : Fin d => ℝ) i
+            exact Continuous.comp continuous_norm h_proj
+          have h_ae : AEStronglyMeasurable (fun (w : EuclideanSpace ℝ (Fin d)) => ‖w.ofLp i‖)
+              (stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+            h_cont.aestronglyMeasurable (μ := stdGaussian (EuclideanSpace ℝ (Fin d)))
+          exact h_ae.pow 2
+        have h_bound : ∀ᵐ (w : EuclideanSpace ℝ (Fin d)) ∂(stdGaussian (EuclideanSpace ℝ (Fin d))),
+            ‖(fun (w : EuclideanSpace ℝ (Fin d)) => ‖w.ofLp i‖ ^ 2) w‖ ≤
+            ‖(fun (w : EuclideanSpace ℝ (Fin d)) => ‖w‖ ^ 2) w‖ := by
+          filter_upwards with w
+          have h := PiLp.norm_apply_le (p := 2) (x := w) (i := i)
+          have h_nonneg_ofLp : 0 ≤ ‖w.ofLp i‖ := norm_nonneg _
+          have h_nonneg_w : 0 ≤ ‖w‖ := norm_nonneg _
+          have h_sq : ‖w.ofLp i‖ ^ 2 ≤ ‖w‖ ^ 2 := by nlinarith
+          simpa using h_sq
+        exact h_int_sq.mono h_ae_meas h_bound
+      _ = ∑ i ∈ Finset.univ, 1 := by
+        refine Finset.sum_congr rfl fun i hi => ?_
+        have h_int_coord_sq : ∫ (w : EuclideanSpace ℝ (Fin d)), ((EuclideanSpace.proj (𝕜 := ℝ) i) w) ^ 2
+            ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) = 1 := by
+          have h_int : (stdGaussian (EuclideanSpace ℝ (Fin d)))[(EuclideanSpace.proj (𝕜 := ℝ) i)] = 0 :=
+            integral_strongDual_stdGaussian (EuclideanSpace.proj (𝕜 := ℝ) i)
+          have h_var : Var[(EuclideanSpace.proj (𝕜 := ℝ) i); stdGaussian (EuclideanSpace ℝ (Fin d))] =
+              ‖EuclideanSpace.proj (𝕜 := ℝ) i‖ ^ 2 :=
+            variance_dual_stdGaussian (EuclideanSpace.proj (𝕜 := ℝ) i)
+          have h_norm : ‖EuclideanSpace.proj (𝕜 := ℝ) i‖ = 1 := by
+            apply le_antisymm
+            · rw [ContinuousLinearMap.opNorm_le_iff (by norm_num : 0 ≤ (1 : ℝ))]
+              intro x
+              have h := PiLp.norm_apply_le (p := 2) (x := x) (i := i)
+              simpa [EuclideanSpace.coe_proj] using h
+            · have h_single : (EuclideanSpace.proj (𝕜 := ℝ) i) (EuclideanSpace.single i (1 : ℝ)) = (1 : ℝ) := by
+                simp
+              have h_norm_single : ‖EuclideanSpace.single i (1 : ℝ)‖ = 1 := by
+                simpa using PiLp.norm_single (p := 2) (i := i) (b := (1 : ℝ))
+              have h_le := ContinuousLinearMap.le_opNorm (EuclideanSpace.proj (𝕜 := ℝ) i)
+                (EuclideanSpace.single i (1 : ℝ))
+              rw [h_single, h_norm_single, mul_one, norm_one] at h_le
+              exact h_le
+          have h_meas : AEMeasurable (EuclideanSpace.proj (𝕜 := ℝ) i) (stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+            (EuclideanSpace.proj (𝕜 := ℝ) i).continuous.aemeasurable
+          have h_var_eq : Var[(EuclideanSpace.proj (𝕜 := ℝ) i); stdGaussian (EuclideanSpace ℝ (Fin d))] =
+              ∫ (w : EuclideanSpace ℝ (Fin d)), ((EuclideanSpace.proj (𝕜 := ℝ) i) w) ^ 2
+              ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) := by
+            rw [variance_of_integral_eq_zero h_meas h_int]
+          rw [← h_var_eq, h_var, h_norm]
+          norm_num
+        simpa [EuclideanSpace.coe_proj] using h_int_coord_sq
+      _ = (d : ℝ) := by simp
+  -- Now h_jensen gives (∫ ‖w‖)^2 ≤ ∫ ‖w‖^2 = d
+  -- So (∫ ‖w‖)^2 ≤ d, and taking square roots gives ∫ ‖w‖ ≤ √d
+  have h_sq_nonneg : 0 ≤ ∫ (w : EuclideanSpace ℝ (Fin d)), ‖w‖ ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) :=
+    integral_nonneg (fun w => norm_nonneg _)
+  have h_d_nonneg : 0 ≤ (d : ℝ) := by exact Nat.cast_nonneg _
+  rw [h_norm_sq_int] at h_jensen
+  -- h_jensen : (∫ w, ‖w‖) ^ 2 ≤ (d : ℝ)
+  -- Using: a ≤ √b ↔ a^2 ≤ b when a ≥ 0, b ≥ 0
+  exact ((Real.le_sqrt h_sq_nonneg h_d_nonneg).2 h_jensen)

@@ -12,14 +12,14 @@ public import AdversarialBco.StatementBody
 @[expose] public section
 
 /-!
-# Theorem 1.1 and Corollary 1.2 on the interface `BodyHExplicit`
+# Theorem 1.5 and Corollary 1.6 on the interface `BodyHExplicit`
 
 `theoremExplicit_of_bodyH` proves `TheoremExplicit` and `corollaryExplicit_of_bodyH` proves `CorollaryExplicit`
 (`AdversarialBco/StatementExplicit.lean`), each from `BodySpec.BodyHExplicit` (`AdversarialBco/StatementBody.lean`,
 hypothesis (H) of Proposition 2.2 on the inner body, proved in `AdversarialBco/Body2/PropBody.lean`). The net of Algorithm 7.1
 (`ex_net_facts`, `ex_net_card`, `ex_net_two`), step 1 (`ex_solver_exists`, `ex_round_value`), the tree bound with
 history-dependent losses (`ex_tree_adapt`), the comparator (`ex_comparator`), the regret against an adaptive
-adversary (`ex_pseudo_main`) and the constants (`ex_const`, `ex_CX`). Corollary 1.2 uses Lemma 7.13
+adversary (`ex_pseudo_main`) and the constants (`ex_const`, `ex_CX`). Corollary 1.6 uses Lemma 7.13
 (`AdversarialBco/Explicit/Marg.lean`).
 -/
 
@@ -1464,7 +1464,7 @@ theorem ex_pseudo_main {d : ℕ} (K : Set (E d)) (hK : Convex ℝ K) (hKc : IsCo
         field_simp
         ring
 
-/-! ## Theorem 1.1 -/
+/-! ## Theorem 1.5 -/
 
 theorem theoremExplicit_of_bodyH (hB : BodySpec.BodyHExplicit) : TheoremExplicit := by
   intro d hd n hn K hKc hK x0 hx0 D hD β ε hβ hε
@@ -1565,7 +1565,7 @@ theorem theoremExplicit_of_bodyH (hB : BodySpec.BodyHExplicit) : TheoremExplicit
     have hn' := ex_pseudo_le_n K Subtype.val hpt (exoKernel η sol) hker A n hA x hx
     exact ⟨h1, h1.trans hsec, hthird _ hn' (h1.trans hsec)⟩
 
-/-! ## Corollary 1.2 -/
+/-! ## Corollary 1.6 -/
 
 theorem ex_playLaw_sum {d : ℕ} (K : Set (E d)) (C : Finset (E d)) (pol : (t : ℕ) → (Fin t → E d × ℝ) → C → ℝ)
     (hpol : IsCPolicy K C pol) (f : ℕ → E d → ℝ) (n : ℕ) (hf : f ∈ Advs K n) :
@@ -1825,7 +1825,7 @@ theorem corollaryExplicit_of_bodyH (hB : BodySpec.BodyHExplicit) : CorollaryExpl
   have hCK : ↑(net ε D ord) ⊆ K := hCJ.trans hJK
   have hCne : (net ε D ord).Nonempty := Finset.card_pos.1 (by omega)
   have : Nonempty (net ε D ord) := hCne.coe_sort
-  -- the policy of Lemma 7.13 for the learner of Theorem 1.1
+  -- the policy of Lemma 7.13 for the learner of Theorem 1.5
   have hP := ex_exoKernel_prob (Subtype.val : net ε D ord → E d) n _ (1 / n) sol hsol
   obtain ⟨hpol, -, hlaw⟩ := lemmaMarg d K (net ε D ord) hCK hCne _ hP
   have hlog : 0 ≤ Real.log (n * D) := Real.log_nonneg (by nlinarith)

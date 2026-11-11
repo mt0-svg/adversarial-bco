@@ -17,7 +17,7 @@ public import AdversarialBco.Explicit.DilAll
 The solution module of the challenge `AdversarialBco.ChallengeBody` (`config-body.json`):
 
 * `dilTheorem`: Theorem 3.1 with `K_S = 2 (32/κ)^2 (13/4 + 2 κ_2)` and `K_D = 1.6·10^6`, from its regular case
-  (`AdversarialBco.Body2.dilRegExplicit`, `AdversarialBco.Body2.ecReg`) through Appendix D
+  (`AdversarialBco.Body2.dilRegExplicit`, `AdversarialBco.Body2.ecReg`) through Appendix C
   (`AdversarialBco.DilAll.dilTheorem_of_reg`);
 * `bodyExplicit`: Proposition 2.2 with `C_0 = 1.2·10^9` (`AdversarialBco.Body2.bodyExplicit_of_dil`);
 * `bodyHExplicit`: Proposition 2.2 on the inner body of a convex body containing a unit ball

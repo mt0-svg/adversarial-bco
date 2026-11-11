@@ -4,26 +4,39 @@ version: "v0.4"
 project:
   name: "adversarial-bco"
   description: >-
-    Adversarial bandit convex optimisation: on a convex body of R^d containing a unit ball, an explicit learner has
-    regret at most 1.9e5 d^(3/2) sqrt(n) log^(3/2)(n D) against convex losses with values in [0, 1] fixed in
-    advance, and the minimax regret over n rounds obeys the same bound; the one-round inequality behind them holds
-    with beta = 1.2e9 d^2 log(n d D) log(2n).
+    Adversarial bandit convex optimisation, Conjecture 1 of Bubeck, Eldan and Lee in their game, where each loss may
+    depend on the earlier plays. On their polytopes, given by rational constraints, one program of a real RAM with
+    exact square root, exponential and logarithm, Gaussian draws and spectral functions, with no membership
+    question, makes each play within a number of steps polynomial in d, the number of constraints and log n (and log(1/delta) for the bound in
+    probability), the first also in the logarithm of the height of the coefficients, and has regret at most a constant times
+    d^(3/2) sqrt(n) log^5(2dn(n+1)) + 1 in upper expectation, and at most a constant times d^(3/2) sqrt(n)
+    log^5(2dn/delta) with probability 1 - delta; Theorem 1.1 and Remark 1.2 are the same
+    bounds on a convex body between two balls, with a membership oracle. On the unit ball, for d >= 4e6 and n >= d^10, every learner has expected regret at least
+    7e-9 d^(3/2) sqrt(n)/log d against some adversary. Against losses fixed in advance, on a body that contains a unit ball and has diameter at most D,
+    an explicit learner has regret at most 1.9e5 d^(3/2) sqrt(n) log^(3/2)(n D).
   authors: [mt0-svg]
   license: "Apache-2.0"
 
 sources:
+  - title: "Kernel-based methods for bandit convex optimization"
+    authors: ["Sébastien Bubeck", "Ronen Eldan", "Yin Tat Lee"]
+    id: "https://doi.org/10.1145/3453721"
+    type: article
+    location: "Conjecture 1 (arXiv:1607.03084): its first sentence on their polytopes with time on a real RAM (Theorem 1.3 of the original proof), its second on the unit ball (Theorem 1.4)"
+    relationship: background
+    author_endorsement: not-contacted
   - title: "Improved regret for zeroth-order adversarial bandit convex optimisation"
     authors: ["Tor Lattimore"]
     id: "https://doi.org/10.4171/MSL/17"
     type: article
-    location: "Theorem 1: the bound C d^(5/2) sqrt(n) log(nD) that Theorem 1.1 and Corollary 1.2 of the original proof improve (arXiv:2006.00475)"
+    location: "Theorem 1: the bound C d^(5/2) sqrt(n) log(nD) that Theorem 1.5 and Corollary 1.6 of the original proof improve (arXiv:2006.00475)"
     relationship: background
     author_endorsement: not-contacted
-  - title: "Adversarial bandit convex optimisation with regret d^(3/2) sqrt(n) up to logarithms"
+  - title: "Adversarial bandit convex optimisation: regret d^(3/2) sqrt(n) with polynomial-time steps on a real RAM, and a matching lower bound"
     authors: [mt0-svg]
     id: "https://github.com/mt0-svg/adversarial-bco"
     type: original-proof
-    location: "paper/main.tex, Theorem 1.1, Corollary 1.2, Proposition 2.2, Theorem 3.1 and Lemma 7.13, in the form of Section 9.1"
+    location: "paper/main.tex, Theorems 1.1, 1.3, 1.4 and 1.5, Remark 1.2, Corollaries 1.6 and 8.6, Proposition 2.2, Theorem 3.1 and Lemma 7.13, in the form of Section 11.1"
     relationship: formalizes
     author_endorsement: n/a
 
@@ -34,11 +47,71 @@ classification:
   msc2020: ["68Q32", "90C25", "62L05", "03B35"]
 
 status:
-  scope: "Theorem 1.1, Lemma 7.13, Corollary 1.2, Theorem 3.1 and Proposition 2.2 with their constants, and Corollary 1.2 for measurable learners, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, as the paper states them, except four remarks outside the formal proof (alignment)"
+  scope: "Theorems 1.1, 1.3 and 1.4, Remark 1.2 and Corollary 8.6, Theorem 1.5, Lemma 7.13, Corollary 1.6, Theorem 3.1 and Proposition 2.2 with their constants, and Corollary 1.6 for measurable learners, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, in the form the paper states them except where Section 11.2 of the paper says otherwise (alignment)"
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: [propext, Classical.choice, Quot.sound]
   main_results:
+    - declaration: "AdversarialBco.theoremConj1UpperExp"
+      file: "AdversarialBco/Conj1Exp/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-exp.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1UpperExp_of_conj1"
+      file: "AdversarialBco/Conj1Exp/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-exp.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1Upper"
+      file: "AdversarialBco/Conj1/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremPoly32O_of_conj1"
+      file: "AdversarialBco/Conj1/Poly32O.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremPoly32O_holds"
+      file: "AdversarialBco/Poly/Poly32OFinal.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-poly.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1UpperPoly"
+      file: "AdversarialBco/Conj1Poly/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-poly.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1UpperPoly_of_conj1"
+      file: "AdversarialBco/Conj1Poly/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-poly.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1UpperPolyExp"
+      file: "AdversarialBco/Conj1PolyExp/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-poly-exp.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1UpperPolyExp_of_poly"
+      file: "AdversarialBco/Conj1PolyExp/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-poly-exp.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.theoremConj1Lower"
+      file: "AdversarialBco/Conj1Lower/Main.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-conj1-lower.json"
+      literature_dependencies: []
     - declaration: "AdversarialBco.Explicit.theoremExplicit"
       file: "AdversarialBco/Explicit.lean"
       sorry_count: 0
@@ -46,7 +119,7 @@ status:
       comparator_config: "config-explicit.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.Explicit.lemmaMarg"
-      file: "AdversarialBco/Explicit.lean"
+      file: "AdversarialBco/Explicit/Marg.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: "config-explicit.json"
@@ -88,33 +161,57 @@ automation:
 
 fidelity:
   divergences: >-
-    Theorem 1.1 takes the scan order of the net and the procedure of step 1 of Algorithm 7.1 as arguments, holds for
-    every order and every procedure that meets step 1 at every positive probability vector, and states that both
-    exist; its probability space is the finite set of histories of actions and coins with the product law, and
-    rounds are indexed from 0. Theorem 3.1 states its conclusions for every entropic Gaussian at the temperature,
-    with the existence of one. corollaryADV states Corollary 1.2 with no value of the constant, n >= 2, and the
-    infimum over learners that are a probability space of seeds and, for each round, a jointly measurable map from
-    the seed and the past observations to the body, whose regret is integrable against every sequence of losses
-    (Section 9.1 of the paper). The other statements are proved as steps, in places in the form the proofs use
-    (Section 9.2 of the paper).
+    Theorems 1.1 and 1.3, Remark 1.2 and Corollary 8.6 state the program as a list of instructions of the machine of
+    Definition 8.1, number the rounds from 0, ask a strategy for a loss convex on the body with values in [0, 1] and
+    Borel in the history, and measure the probability by the outer measure of the product law; Theorems 1.1 and 1.3 (b)
+    give a measurable function above the regret on every run and bound its expectation. Theorem 1.4 asks the learner to be jointly
+    measurable and states that the regret is integrable. Theorem 1.5 takes the scan order of the net and the
+    procedure of step 1 of Algorithm 7.1 as arguments, holds for every order and every procedure that meets step 1 at
+    every positive probability vector, and states that both exist; its probability space is the finite set of
+    histories of actions and coins with the product law. Theorem 3.1 states its conclusions for every entropic
+    Gaussian at the temperature, with the existence of one. corollaryADV states Corollary 1.6 with no value of the
+    constant, n >= 2, and the infimum over learners that are a probability space of seeds and, for each round, a
+    jointly measurable map from the seed and the past observations to the body, whose regret is integrable against
+    every sequence of losses (Section 11.1 of the paper). The other statements are proved as steps, in places in
+    the form the proofs use (Section 11.2 of the paper).
 
 review:
   status: agent-reviewed
-  notes: "the proof was refereed by agents with fresh context; Comparator checks the seven main statements against three statement files that import only Mathlib."
+  notes: "the proof was refereed by agents with fresh context; Comparator checks the seventeen main statements against nine statement files that import only Mathlib."
 
 alignment:
   namespace: "AdversarialBco"
   statements:
     - source: "Theorem 1.1"
+      lean: "AdversarialBco.theoremConj1UpperExp"
+      module: "AdversarialBco/Conj1Exp/Main.lean"
+      status: proved
+      note: "AdversarialBco.theoremConj1UpperExp (AdversarialBco/Conj1Exp/Main.lean), the statement TheoremConj1UpperExp of AdversarialBco/StatementConj1Exp.lean, with the machine of AdversarialBco/StatementPoly.lean; from Remark 1.2 by AdversarialBco.theoremConj1UpperExp_of_conj1"
+    - source: "Remark 1.2"
+      lean: "AdversarialBco.theoremConj1Upper"
+      module: "AdversarialBco/Conj1/Main.lean"
+      status: proved
+      note: "AdversarialBco.theoremConj1Upper (AdversarialBco/Conj1/Main.lean), the statement TheoremConj1Upper of AdversarialBco/StatementConj1.lean, with the machine of AdversarialBco/StatementPoly.lean"
+    - source: "Theorem 1.3"
+      lean: "AdversarialBco.theoremConj1UpperPoly"
+      module: "AdversarialBco/Conj1Poly/Main.lean"
+      status: proved
+      note: "part (a): AdversarialBco.theoremConj1UpperPoly (AdversarialBco/Conj1Poly/Main.lean), of the statement TheoremConj1UpperPoly of AdversarialBco/StatementConj1Poly.lean; from Remark 1.2 by AdversarialBco.theoremConj1UpperPoly_of_conj1; part (b): AdversarialBco.theoremConj1UpperPolyExp (AdversarialBco/Conj1PolyExp/Main.lean), of the statement TheoremConj1UpperPolyExp of AdversarialBco/StatementConj1PolyExp.lean, from part (a) by AdversarialBco.theoremConj1UpperPolyExp_of_poly"
+    - source: "Theorem 1.4"
+      lean: "AdversarialBco.theoremConj1Lower"
+      module: "AdversarialBco/Conj1Lower/Main.lean"
+      status: proved
+      note: "AdversarialBco.theoremConj1Lower (AdversarialBco/Conj1Lower/Main.lean), of the statement TheoremConj1Lower of AdversarialBco/StatementConj1Lower.lean"
+    - source: "Theorem 1.5"
       lean: "AdversarialBco.Explicit.theoremExplicit"
       module: "AdversarialBco/Explicit.lean"
       status: proved
-      note: "AdversarialBco.Explicit.theoremExplicit (AdversarialBco/Explicit.lean), the statement TheoremExplicit of AdversarialBco/StatementExplicit.lean, Algorithm 7.1 written out (Section 9.1); from AdversarialBco.Explicit.theoremExplicit_of_bodyH (AdversarialBco/Explicit/Main.lean) and AdversarialBco.BodySpec.bodyHExplicit; the numerical inequalities of the proof: AdversarialBco.Explicit.ex_params, ex_const, ex_CX_beta, ex_CX_log, ex_CX_final and ex_CX, and AdversarialBco.thmC_c_large"
-    - source: "Corollary 1.2"
+      note: "AdversarialBco.Explicit.theoremExplicit (AdversarialBco/Explicit.lean), the statement TheoremExplicit of AdversarialBco/StatementExplicit.lean, Algorithm 7.1 written out (Section 11.1); from AdversarialBco.Explicit.theoremExplicit_of_bodyH (AdversarialBco/Explicit/Main.lean) and AdversarialBco.BodySpec.bodyHExplicit; the numerical inequalities of the proof: AdversarialBco.Explicit.ex_params, ex_const, ex_CX_beta, ex_CX_log, ex_CX_final and ex_CX, and AdversarialBco.thmC_c_large"
+    - source: "Corollary 1.6"
       lean: "AdversarialBco.Explicit.corollaryExplicit"
       module: "AdversarialBco/Explicit.lean"
       status: proved
-      note: "AdversarialBco.Explicit.corollaryExplicit (AdversarialBco/Explicit.lean), the statement CorollaryExplicit of AdversarialBco/StatementExplicit.lean, from AdversarialBco.Explicit.corollaryExplicit_of_bodyH and AdversarialBco.Explicit.lemmaMarg; for measurable learners, with a constant that is not computed and n >= 2: AdversarialBco.corollaryADV (AdversarialBco/Main.lean, Section 9.1)"
+      note: "AdversarialBco.Explicit.corollaryExplicit (AdversarialBco/Explicit.lean), the statement CorollaryExplicit of AdversarialBco/StatementExplicit.lean, from AdversarialBco.Explicit.corollaryExplicit_of_bodyH and AdversarialBco.Explicit.lemmaMarg; for measurable learners, with a constant that is not computed and n >= 2: AdversarialBco.corollaryADV (AdversarialBco/Main.lean, Section 11.1)"
     - source: "Lemma 2.1"
       lean: "AdversarialBco.convex_inner"
       module: "AdversarialBco/Lemmas.lean"
@@ -179,7 +276,7 @@ alignment:
       lean: "AdversarialBco.Explicit.net"
       module: "AdversarialBco/StatementExplicit.lean"
       status: proved
-      note: "AdversarialBco.Explicit.net, IsStep1, IsSolver, weights, exoKernel and coinLaw (AdversarialBco/StatementExplicit.lean): rounds from 0, the scan order and the procedure of step 1 given as arguments (Section 9.1)"
+      note: "AdversarialBco.Explicit.net, IsStep1, IsSolver, weights, exoKernel and coinLaw (AdversarialBco/StatementExplicit.lean): rounds from 0, the scan order and the procedure of step 1 given as arguments (Section 11.1)"
     - source: "Theorem 7.2"
       lean: "AdversarialBco.Explicit.ex_pseudo_main"
       module: "AdversarialBco/Explicit/Main.lean"
@@ -240,9 +337,126 @@ alignment:
       module: "AdversarialBco/Explicit/Marg.lean"
       status: proved
       note: "AdversarialBco.Explicit.lemmaMarg (AdversarialBco/Explicit/Marg.lean), the statement LemmaMarg of AdversarialBco/StatementExplicit.lean, for every learner with coins whose laws are probability vectors on C"
-    - source: "Remark 7.14"
-      status: not-formalized
-      note: "the cost of a round only; not in the formal proof"
+    - source: "Algorithm 8.2"
+      lean: "AdversarialBco.Poly.df2oPlay"
+      module: "AdversarialBco/Poly/Df2Run.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2oPlay and df2oPar (AdversarialBco/Poly/Df2Run.lean), the round df2Round and df2Next, with AP = apCall of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Theorem 8.3"
+      lean: "AdversarialBco.Poly.pgThm"
+      module: "AdversarialBco/Poly/PgProcProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.pgThm (AdversarialBco/Poly/PgProcProof.lean), the statement PgThm of AdversarialBco/Poly/PgProc.lean"
+    - source: "Proposition 8.4"
+      lean: "AdversarialBco.Poly.Mach.VL.df2oMachineL"
+      module: "AdversarialBco/Conj1/MachL.lean"
+      status: proved
+      note: "AdversarialBco.Poly.Mach.VL.df2oMachineL (AdversarialBco/Conj1/MachL.lean), the statement Df2OMachineL"
+    - source: "Proposition 8.5"
+      lean: "AdversarialBco.Poly.df2ORegretMeasAd_holds"
+      module: "AdversarialBco/Conj1/ChainAd.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2ORegretMeasAd_holds (AdversarialBco/Conj1/ChainAd.lean), the statement Df2ORegretMeasAd of AdversarialBco/Conj1/Top.lean; the witness C = 10^22 in Poly.Conj1.df2ORegretMeasAd_of (AdversarialBco/Conj1/CompAd.lean)"
+    - source: "Corollary 8.6"
+      lean: "AdversarialBco.theoremPoly32O_holds"
+      module: "AdversarialBco/Poly/Poly32OFinal.lean"
+      status: proved
+      note: "AdversarialBco.theoremPoly32O_holds (AdversarialBco/Poly/Poly32OFinal.lean), the statement TheoremPoly32O of AdversarialBco/StatementPoly.lean; also from TheoremConj1Upper: AdversarialBco.theoremPoly32O_of_conj1 (AdversarialBco/Conj1/Poly32O.lean)"
+    - source: "Lemma 8.8"
+      lean: "AdversarialBco.Poly.Conj1.df2VEWorldAdOf_holds"
+      module: "AdversarialBco/Conj1/WorldVEAd.lean"
+      status: proved
+      note: "AdversarialBco.Poly.Conj1.df2VEWorldAdOf_holds (AdversarialBco/Conj1/WorldVEAd.lean), the statement Df2VEWorldAd of AdversarialBco/Conj1/WorldAd.lean"
+    - source: "Lemma 8.9"
+      lean: "AdversarialBco.Poly.Conj1.df2AzWorldAdOf_holds"
+      module: "AdversarialBco/Conj1/WorldAzAd.lean"
+      status: proved
+      note: "AdversarialBco.Poly.Conj1.df2AzWorldAdOf_holds (AdversarialBco/Conj1/WorldAzAd.lean), the statement Df2AzWorldAd of AdversarialBco/Conj1/WorldAd.lean"
+    - source: "Lemma 8.10"
+      lean: "AdversarialBco.Poly.Layer2.df2WorldDet_of"
+      module: "AdversarialBco/Poly/Df2WorldDetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.Layer2.df2WorldDet_of with SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2WorldDetProof.lean, Df2SIFactsProof.lean), the statement Df2WorldDet of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Proposition 8.11"
+      lean: "AdversarialBco.Poly.PropGAd.df2PropGAd"
+      module: "AdversarialBco/Poly/Df2PropGAdProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.PropGAd.df2PropGAd (AdversarialBco/Poly/Df2PropGAdProof.lean), the statement Df2PropGAd of AdversarialBco/Poly/Df2PropGAd.lean"
+    - source: "Lemma 8.12"
+      lean: "AdversarialBco.Conj1Poly.polytope_sub_ball"
+      module: "AdversarialBco/Conj1Poly/Geom.lean"
+      status: proved
+      note: "AdversarialBco.Conj1Poly.polytope_sub_ball (AdversarialBco/Conj1Poly/Geom.lean), from extreme_ker, clear_den, gram_det_ne_zero, cramer_int_bound and extreme_norm_le"
+    - source: "Lemma 8.13"
+      lean: "AdversarialBco.Conj1Poly.centreRun_sound"
+      module: "AdversarialBco/Conj1Poly/Centre.lean"
+      status: proved
+      note: "AdversarialBco.Conj1Poly.centreRun_sound, rowOK_ball and centreCap_some (AdversarialBco/Conj1Poly/Centre.lean), the cut cutUpdate with cutUpdate_spec"
+    - source: "Lemma 8.14"
+      lean: "AdversarialBco.Conj1Poly.lockstep"
+      module: "AdversarialBco/Conj1Poly/Sim.lean"
+      status: proved
+      note: "AdversarialBco.Conj1Poly.lockstep (AdversarialBco/Conj1Poly/Sim.lean), with SimRel, Framed, blockSteps and the lemmas sim_rconst to sim_query of the blocks; the code polyProg and polyProg_queryFree"
+    - source: "Lemma 8.15"
+      lean: "AdversarialBco.Conj1Poly.exists_pre"
+      module: "AdversarialBco/Conj1Poly/Pre.lean"
+      status: proved
+      note: "AdversarialBco.Conj1Poly.exists_pre with PreOK and preK_le (AdversarialBco/Conj1Poly/Pre.lean), from setup_exec, outer_exec and frame_exec (AdversarialBco/Conj1Poly/PreProof.lean), the stages by AdversarialBco.Conj1Poly.stage_some and AdversarialBco.Conj1Poly.stages_count (AdversarialBco/Conj1Poly/Centre.lean)"
+    - source: "Lemma 9.1"
+      lean: "AdversarialBco.Lower.dent_convexOn"
+      module: "AdversarialBco/Conj1Lower/Dent.lean"
+      status: proved
+      note: "AdversarialBco.Lower.dent_convexOn, AdversarialBco.Lower.dent_nonneg, AdversarialBco.Lower.dent_le_bowl, AdversarialBco.Lower.dent_self, AdversarialBco.Lower.dent_lipschitz, AdversarialBco.Lower.dent_closed_form, AdversarialBco.Lower.devq_bounds, AdversarialBco.Lower.dent_tangent, AdversarialBco.Lower.hgen_le_two_k, AdversarialBco.Lower.hgen_tail (AdversarialBco/Conj1Lower/Dent.lean), on a real inner product space, with M = A*A for a bounded operator A"
+    - source: "Lemma 9.2"
+      lean: "AdversarialBco.Lower.smul_clipM_le_one"
+      module: "AdversarialBco/Conj1Lower/Frame.lean"
+      status: proved
+      note: "AdversarialBco.Lower.smul_clipM_le_one, AdversarialBco.Lower.norm_frameA_le, AdversarialBco.Lower.frameW_inv_le_clipM, AdversarialBco.Lower.clipM_le_two_frameW_inv, AdversarialBco.Lower.frameW_le_two_clipM_inv, AdversarialBco.Lower.dLive_le_DM, AdversarialBco.Lower.DM_le (AdversarialBco/Conj1Lower/Frame.lean)"
+    - source: "Lemma 9.3"
+      lean: "AdversarialBco.Lower.Bayes.ruleS_meas"
+      module: "AdversarialBco/Conj1Lower/RuleS.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Bayes.ruleS_meas, AdversarialBco.Lower.Bayes.measurable_stratOf (AdversarialBco/Conj1Lower/RuleS.lean), AdversarialBco.Lower.Bayes.measurable_dens, AdversarialBco.Lower.Bayes.measurable_hist (AdversarialBco/Conj1Lower/Bayes.lean)"
+    - source: "Lemma 9.4"
+      lean: "AdversarialBco.Lower.Top.stratOf_mem"
+      module: "AdversarialBco/Conj1Lower/Top.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Top.stratOf_mem, AdversarialBco.Lower.Top.regretAd_stratOf, AdversarialBco.Lower.Top.dentS_convexOn, AdversarialBco.Lower.Top.dentS_lipschitz, AdversarialBco.Lower.Top.dentS_nonneg, AdversarialBco.Lower.Top.dentS_le (AdversarialBco/Conj1Lower/Top.lean)"
+    - source: "Lemma 9.5"
+      lean: "AdversarialBco.Lower.Bayes.post_disintegrates"
+      module: "AdversarialBco/Conj1Lower/Bayes.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Bayes.post_disintegrates (AdversarialBco/Conj1Lower/Bayes.lean), from AdversarialBco.Lower.Bayes.bayes_step (AdversarialBco/Conj1Lower/BayesRound.lean)"
+    - source: "Lemma 9.6"
+      lean: "AdversarialBco.Lower.infoJ_chain"
+      module: "AdversarialBco/Conj1Lower/Info.lean"
+      status: proved
+      note: "AdversarialBco.Lower.infoJ_chain, AdversarialBco.Lower.kl_round (AdversarialBco/Conj1Lower/Info.lean)"
+    - source: "Lemma 9.7"
+      lean: "AdversarialBco.Lower.cells_floor"
+      module: "AdversarialBco/Conj1Lower/CellsRound.lean"
+      status: proved
+      note: "AdversarialBco.Lower.cells_floor, AdversarialBco.Lower.cells_reg, AdversarialBco.Lower.cells_price (AdversarialBco/Conj1Lower/CellsRound.lean), from AdversarialBco.Lower.regular_closed, AdversarialBco.Lower.regular_dev, AdversarialBco.Lower.regular_half, AdversarialBco.Lower.gap_sq_regular, AdversarialBco.Lower.gap_sq_tail, AdversarialBco.Lower.gap_nontail (AdversarialBco/Conj1Lower/Cells.lean), with any operator in place of the square root of M and any real in place of DM, and cells_price with the square of T integrable on the tail, which holds for a law on the ball"
+    - source: "Lemma 9.8"
+      lean: "AdversarialBco.Lower.ledger_identity"
+      module: "AdversarialBco/Conj1Lower/Ledger.lean"
+      status: proved
+      note: "AdversarialBco.Lower.ledger_identity, AdversarialBco.Lower.ledger_round, AdversarialBco.Lower.pay_tail, AdversarialBco.Lower.pay_inner, AdversarialBco.Lower.pay_outer, AdversarialBco.Lower.ledger_game (AdversarialBco/Conj1Lower/Ledger.lean), AdversarialBco.Lower.cells_leak (AdversarialBco/Conj1Lower/CellsRound.lean)"
+    - source: "Lemma 9.9"
+      lean: "AdversarialBco.Lower.count_b"
+      module: "AdversarialBco/Conj1Lower/Info.lean"
+      status: proved
+      note: "AdversarialBco.Lower.count_b, AdversarialBco.Lower.count_game (AdversarialBco/Conj1Lower/Info.lean)"
+    - source: "Proposition 9.10"
+      lean: "AdversarialBco.Lower.ripe_balance"
+      module: "AdversarialBco/Conj1Lower/Balance.lean"
+      status: proved
+      note: "AdversarialBco.Lower.ripe_balance, AdversarialBco.Lower.ripe_rate (AdversarialBco/Conj1Lower/Balance.lean)"
+    - source: "Proposition 9.11"
+      lean: "AdversarialBco.Lower.Top.gameFacts"
+      module: "AdversarialBco/Conj1Lower/Top.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Top.gameFacts, AdversarialBco.Lower.Top.sum_Df_eq, AdversarialBco.Lower.Top.good_pB (AdversarialBco/Conj1Lower/Top.lean), AdversarialBco.Lower.ripeB_params, AdversarialBco.Lower.R2_ripe, AdversarialBco.Lower.round_bound (AdversarialBco/Conj1Lower/Balance.lean), with the inputs AdversarialBco.lowerTopInputs (AdversarialBco/Conj1Lower/Main.lean)"
     - source: "Theorem A.1"
       lean: "AdversarialBco.Gauss.gaussConcAt"
       module: "AdversarialBco/Gauss/Concentration.lean"
@@ -257,33 +471,174 @@ alignment:
       lean: "AdversarialBco.Body.stein_coord"
       module: "AdversarialBco/Body/Basic.lean"
       status: proved
-      note: "AdversarialBco.Body.stein_coord, on the standard Gaussian of R^d for Phi with a derivative of at most exponential growth, with AdversarialBco.gaussian_ibp_1d, gaussian_ibp_pi and hasDerivAt_gaussianPDFReal_0_1"
-    - source: "Remark B.1"
-      status: not-formalized
-      note: "the formal proof of Lemma 7.5 (AdversarialBco.mm1) rests on the minimax theorem of Sion in Mathlib"
-    - source: "Remark C.1"
-      status: not-formalized
-      note: "the formal proof uses the case of two Bernoulli laws, AdversarialBco.pinsker_bern, the only case Lemma 7.9 uses"
-    - source: "Lemma D.1"
+      note: "AdversarialBco.Body.stein_coord (AdversarialBco/Body/Basic.lean), on the standard Gaussian of R^d for Phi with a derivative of at most exponential growth, with AdversarialBco.gaussian_ibp_1d, gaussian_ibp_pi and hasDerivAt_gaussianPDFReal_0_1 (AdversarialBco/Lemmas.lean)"
+    - source: "Lemma B.1"
+      lean: "AdversarialBco.pinsker_bern"
+      module: "AdversarialBco/Lemmas.lean"
+      status: proved
+      note: "AdversarialBco.pinsker_bern (AdversarialBco/Lemmas.lean), used in AdversarialBco.pinsker_var"
+    - source: "Lemma C.1"
       lean: "AdversarialBco.Body.smooth_convex"
       module: "AdversarialBco/Body/Smooth.lean"
       status: proved
       note: "AdversarialBco.Body.smooth_convex (AdversarialBco/Body/Smooth.lean)"
-    - source: "Lemma D.2"
+    - source: "Lemma C.2"
       lean: "AdversarialBco.DilAll.entropic_unique"
       module: "AdversarialBco/Explicit/DilAll.lean"
       status: proved
       note: "AdversarialBco.DilAll.entropic_unique (AdversarialBco/Explicit/DilAll.lean)"
-    - source: "Lemma D.3"
+    - source: "Lemma C.3"
       lean: "AdversarialBco.DilAll.limit_isMinInv"
       module: "AdversarialBco/Explicit/DilAll.lean"
       status: proved
       note: "AdversarialBco.DilAll.limit_isMinInv, uniform_bounds and tendsto_integral_cloud (AdversarialBco/Explicit/DilAll.lean), for minimisers over the invertible S"
-    - source: "Remark D.4"
-      status: not-formalized
-      note: "the formal proof passes (S3) to the limit only in the proof of Lemma D.5 (AdversarialBco.DilAll.dilTheorem_of_reg)"
-    - source: "Lemma D.5"
+    - source: "Lemma C.4"
       lean: "AdversarialBco.DilAll.dilTheorem_of_reg"
       module: "AdversarialBco/Explicit/DilAll.lean"
       status: proved
       note: "AdversarialBco.DilAll.dilTheorem_of_reg (AdversarialBco/Explicit/DilAll.lean), from the regular case AdversarialBco.Body2.dilRegExplicit (minimisers over the invertible S), the regular families from AdversarialBco.DilAll.approx_family"
+    - source: "Proposition D.1"
+      lean: "AdversarialBco.Poly.df2E1LocAd_holds"
+      module: "AdversarialBco/Poly/Df2EvAd.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2E1LocAd_holds (AdversarialBco/Poly/Df2EvAd.lean), the statement Df2E1LocAd of AdversarialBco/Poly/Df2SetEAd.lean"
+    - source: "Lemma D.2"
+      lean: "AdversarialBco.Poly.lemmaR1i"
+      module: "AdversarialBco/Poly/Df2R1Proof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaR1i, lemmaR1ii, lemmaR1iii, lemmaR1iv, lemmaR1v (AdversarialBco/Poly/Df2R1Proof.lean), the statements LemmaR1i to LemmaR1v of AdversarialBco/Poly/Df2R1.lean"
+    - source: "Lemma D.3"
+      lean: "AdversarialBco.Poly.lemmaUBPrime_holds"
+      module: "AdversarialBco/Poly/Df2PlayProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaUBPrime_holds (AdversarialBco/Poly/Df2PlayProof.lean), the statement LemmaUBPrime of AdversarialBco/Poly/Df2.lean"
+    - source: "Proposition D.4"
+      lean: "AdversarialBco.Poly.SIF.df2SIFacts_holds"
+      module: "AdversarialBco/Poly/Df2SIFactsProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2SIFactsProof.lean), the statement Df2SIFacts of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Lemma D.5"
+      lean: "AdversarialBco.Poly.df2EvBudgetsAd"
+      module: "AdversarialBco/Poly/Df2EvAd.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2EvBudgetsAd (AdversarialBco/Poly/Df2EvAd.lean), the statements Df2EvGPropAd, Df2EvYPropAd, Df2EvLQPropAd, Df2EvSDFPropAd and Df2EvDQPropAd of AdversarialBco/Poly/Df2SetEAd.lean on the events EvG, EvY, EvLQ, EvSDF and EvDQ of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Lemma D.6"
+      lean: "AdversarialBco.Poly.lemmaDFI_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaDFI_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaDFI of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma D.7"
+      lean: "AdversarialBco.Poly.lemmaMON_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaMON_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaMON of AdversarialBco/Poly/Df2.lean"
+    - source: "Proposition D.8"
+      lean: "AdversarialBco.Poly.propINC2_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.propINC2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement PropINC2 of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma D.9"
+      lean: "AdversarialBco/Poly/Df2Layer2.lean"
+      module: "AdversarialBco/Poly/Df2Layer2.lean"
+      status: proved
+      note: "the last two clauses of Df2SIFacts (AdversarialBco/Poly/Df2Layer2.lean), proved in AdversarialBco.Poly.SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2SIFactsProof.lean); the sums in AdversarialBco/Poly/Df2DetSand.lean"
+    - source: "Lemma D.10"
+      lean: "AdversarialBco.Poly.lemmaD2_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaD2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaD2 of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma D.11"
+      lean: "AdversarialBco/Poly/Df2DetRound.lean"
+      module: "AdversarialBco/Poly/Df2DetRound.lean"
+      status: proved
+      note: "c3_tau and aq (AdversarialBco/Poly/Df2DetRound.lean), inside AdversarialBco.Poly.df2DetOf_holds"
+    - source: "Lemma D.12"
+      lean: "AdversarialBco/Poly/Df2DetTools.lean"
+      module: "AdversarialBco/Poly/Df2DetTools.lean"
+      status: proved
+      note: "ld_core (AdversarialBco/Poly/Df2DetTools.lean); in the epoch ld_sum and trace_sum (AdversarialBco/Poly/Df2DetW1.lean), inside AdversarialBco.Poly.df2DetOf_holds"
+    - source: "Lemma D.13"
+      lean: "AdversarialBco.Poly.lemmaONS2Core_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaONS2Core_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaONS2Core of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma D.14"
+      lean: "AdversarialBco.Poly.lemmaW"
+      module: "AdversarialBco/Poly/WrapperProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaW (AdversarialBco/Poly/WrapperProof.lean), the statement LemmaW of AdversarialBco/Poly/Wrapper.lean"
+    - source: "Lemma D.15"
+      lean: "AdversarialBco.Poly.df2RowsHold"
+      module: "AdversarialBco/Poly/Df2RowsProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2RowsHold (AdversarialBco/Poly/Df2RowsProof.lean), the statement Df2RowsHold over the structure Df2Rows of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Lemma D.16"
+      lean: "AdversarialBco/Poly/Df2DetTools.lean"
+      module: "AdversarialBco/Poly/Df2DetTools.lean"
+      status: proved
+      note: "ib_geo (AdversarialBco/Poly/Df2DetTools.lean), inside AdversarialBco.Poly.df2DetOf_holds"
+    - source: "Lemma D.17"
+      lean: "AdversarialBco/Poly/Df2DetAcc.lean"
+      module: "AdversarialBco/Poly/Df2DetAcc.lean"
+      status: proved
+      note: "ib2_level and ib2 (AdversarialBco/Poly/Df2DetAcc.lean), grad_le (AdversarialBco/Poly/Df2DetGuard.lean), inside AdversarialBco.Poly.df2DetOf_holds"
+    - source: "Lemma D.18"
+      lean: "AdversarialBco.Poly.lemmaZCore_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaZCore_holds and AdversarialBco.Poly.df2RowZ_holds (AdversarialBco/Poly/Df2DetProof.lean), the statements LemmaZCore and Df2RowZ of AdversarialBco/Poly/Df2.lean"
+    - source: "Proposition D.19"
+      lean: "AdversarialBco.Poly.df2DetOf_holds"
+      module: "AdversarialBco/Poly/Df2Layer2Proof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2DetOf_holds (AdversarialBco/Poly/Df2Layer2Proof.lean), the statement Df2Det of AdversarialBco/Poly/Df2Layer2.lean, applied to df2LayerOne_holds, lemmaW, SIF.df2SIFacts_holds and df2RowsHold"
+    - source: "Lemma E.1"
+      lean: "AdversarialBco.Poly.LeanAp.fd_exact"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.fd_exact (AdversarialBco/Poly/Df2OracleProof.lean), the case of exact values; the proof of AdversarialBco.Poly.lemmaSEP adds the errors"
+    - source: "Lemma E.2"
+      lean: "AdversarialBco.Poly.lemmaLINE"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaLINE (AdversarialBco/Poly/Df2OracleProof.lean), the statement LemmaLINE of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma E.3"
+      lean: "AdversarialBco.Poly.lemmaSEP"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaSEP (AdversarialBco/Poly/Df2OracleProof.lean), the statement LemmaSEP of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma E.4"
+      lean: "AdversarialBco.Poly.lemmaCC"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaCC (AdversarialBco/Poly/Df2OracleProof.lean), the statement LemmaCC of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma E.5"
+      lean: "AdversarialBco.Poly.lemmaBALL"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaBALL (AdversarialBco/Poly/Df2OracleProof.lean), the statement LemmaBALL of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Proposition E.6"
+      lean: "AdversarialBco.Poly.propELL"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.propELL and AdversarialBco.Poly.propELLcap (AdversarialBco/Poly/Df2OracleProof.lean), the statements PropELL and PropELLcap of AdversarialBco/Poly/Df2Oracle.lean, with lemmaGAUGE, lemmaGVAL and lemmaGCAP"
+    - source: "Proposition E.7"
+      lean: "AdversarialBco.Poly.propAP"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.propAP and AdversarialBco.Poly.propELL1 (AdversarialBco/Poly/Df2OracleProof.lean), the statements PropAP and PropELL1 of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma F.1"
+      lean: "AdversarialBco.Poly.lemmaL"
+      module: "AdversarialBco/Poly/PosGaussProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaL, lemmaLOfMin and lemmaLRadii (AdversarialBco/Poly/PosGaussProof.lean), the statements LemmaL, LemmaLOfMin and LemmaLRadii of AdversarialBco/Poly/PosGauss.lean; the symmetric minimiser: lemmaLSym (AdversarialBco/Poly/PgLemmasProof.lean)"
+    - source: "Proposition F.2"
+      lean: "AdversarialBco.Poly.propCa"
+      module: "AdversarialBco/Poly/PosGaussProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.propCa, propCaBound, propCb and propCc (AdversarialBco/Poly/PosGaussProof.lean), the statements PropCa, PropCaBound, PropCb and PropCc of AdversarialBco/Poly/PosGauss.lean"
+    - source: "Theorem F.3"
+      lean: "AdversarialBco.Poly.pgCoreThm"
+      module: "AdversarialBco/Poly/PgProcProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.pgCoreThm (AdversarialBco/Poly/PgProcProof.lean), the statement PgCoreThm of AdversarialBco/Poly/PgProc.lean"

@@ -10,9 +10,9 @@ public import AdversarialBco.Statement
 @[expose] public section
 
 /-!
-# Frozen statements: Theorem 1.1, Lemma 7.13 and Corollary 1.2 of the paper with explicit constants
+# Frozen statements: Theorem 1.5, Lemma 7.13 and Corollary 1.6 of the paper with explicit constants
 
-The statements of the paper: Theorem 1.1, Lemma 7.13 and Corollary 1.2 in the policy class of Section 1.
+The statements of the paper: Theorem 1.5, Lemma 7.13 and Corollary 1.6 in the policy class of Section 1.
 The definitions `E`, `AdmLoss` and `Advs` are those of `AdversarialBco/Statement.lean` (the losses of `G(K)` are the
 functions convex on `K` with values in `[0, 1]` on `K`; a sequence fixed in advance is an element of `Advs K n`).
 Rounds are indexed from `0`: the paper's round `t` is round `t - 1` here.
@@ -195,13 +195,13 @@ noncomputable def coinReg {d : ℕ} {C : Type*} [Fintype C] (K : Set (E d)) (pt 
   ∑ h : Fin n → C × Bool, coinLaw pt P (fun t _ => f t) n h * ∑ t : Fin n, f t (pt (h t).1) -
     sInf ((fun x => ∑ t ∈ Finset.range n, f t x) '' K)
 
-/-- The three bounds of Theorem 1.1 on a quantity `r`, for the net size `m`. -/
+/-- The three bounds of Theorem 1.5 on a quantity `r`, for the net size `m`. -/
 def Bounds (d n : ℕ) (β D : ℝ) (m : ℕ) (r : ℝ) : Prop :=
   r ≤ 671 / 100 + √(β * n * Real.log m / 2) ∧
     r ≤ 671 / 100 + √(β * n * d * Real.log (5 * n ^ 2 * √(2 * β) * D) / 2) ∧
     r ≤ 190000 * (d : ℝ) ^ (3 / 2 : ℝ) * √(n : ℝ) * Real.log (n * D) ^ (3 / 2 : ℝ)
 
-/-- Theorem 1.1. Let `d ≥ 1`, `n ≥ 2`, `K` a convex body containing `B(x0, 1)`, `D ≥ diam K`,
+/-- Theorem 1.5. Let `d ≥ 1`, `n ≥ 2`, `K` a convex body containing `B(x0, 1)`, `D ≥ diam K`,
 `β = 1.2 · 10^9 d^2 ln(n d D) ln(2n)` and `ε = 1/(n^2 (2β)^{1/2})`. For every scan order (one exists) the net of
 Algorithm 7.1 has `2 ≤ m ≤ (5 n^2 (2β)^{1/2} D)^d`; with `η = (8 ln m/(n β))^{1/2}`, `tol = 1/n` and `L = n`, step 1
 can be carried out, and for every procedure that carries it out the learner has, against every sequence fixed in
@@ -278,7 +278,7 @@ def LemmaMarg : Prop :=
           ∑ b : Fin n → Bool, coinLaw Subtype.val P (fun t _ => f t) n fun t => (x t, b t)) ∧
         policyReg K C (margPolicy C P) f n = coinReg K Subtype.val P f n
 
-/-- Corollary 1.2 for the policies of Section 1: for a convex body `K ⊆ ℝ^d` containing a ball of
+/-- Corollary 1.6 for the policies of Section 1: for a convex body `K ⊆ ℝ^d` containing a ball of
 radius `1` and every `n ≥ 1`, `Reg_n^⋆(G(K)) ≤ C_X d^{3/2} n^{1/2} ln^{3/2}(n diam K)` with `C_X = 1.9 · 10^5`. -/
 def CorollaryExplicit : Prop :=
   ∀ d : ℕ, 1 ≤ d → ∀ K : Set (E d), IsCompact K → Convex ℝ K → (∃ c : E d, Metric.closedBall c 1 ⊆ K) →

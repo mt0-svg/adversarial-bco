@@ -154,7 +154,7 @@ def BodyExplicit : Prop :=
     (∃ c, Metric.closedBall c (1 / 2) ⊆ J) →
       HypH J n 0 1 (1 / n) (1200000000 * (d : ℝ) ^ 2 * Real.log (n * d * Metric.diam J) * Real.log (2 * n))
 
-/-- The form that Theorem 1.1 and Corollary 1.2 use: (H)[1/n, 1.2 * 10^9 d^2 ln(n d D) ln(2n)] on the inner body
+/-- The form that Theorem 1.5 and Corollary 1.6 use: (H)[1/n, 1.2 * 10^9 d^2 ln(n d D) ln(2n)] on the inner body
 `{y | closedBall y (1/n) ⊆ K}` of a convex body `K` containing a unit ball, for every `D ≥ diam K` (Proposition 2.2
 on the body `J` of Lemma 2.1). -/
 def BodyHExplicit : Prop :=

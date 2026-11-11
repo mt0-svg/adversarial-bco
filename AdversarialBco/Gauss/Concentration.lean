@@ -12,7 +12,7 @@ public import AdversarialBco.Gauss.MaureyPisier
 /-!
 # Gaussian concentration for Lipschitz functions
 
-The weaker form of Theorem A.1 of the paper proved in Lean (Section 9.2 of the paper), with the constant `2 / π^2`
+The weaker form of Theorem A.1 of the paper proved in Lean (Section 11.2 of the paper), with the constant `2 / π^2`
 in place of `1/2` in the exponent.
 
 * `cloud b S`: the law of `b + S g` on `ℝ^d`, `g` standard Gaussian on `ℝ^k` (Mathlib's `stdGaussian` on

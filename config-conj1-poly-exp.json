@@ -1,0 +1,8 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeConj1PolyExp",
+  "solution_module": "AdversarialBco.Conj1PolyExp.Main",
+  "theorem_names": ["AdversarialBco.theoremConj1UpperPolyExp", "AdversarialBco.theoremConj1UpperPolyExp_of_poly"],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

@@ -1,6 +1,6 @@
 name = "adversarial-bco"
-version = "1.0.0"
-description = "Adversarial bandit convex optimisation: minimax regret at most a constant times d^(3/2) sqrt(n) log^(3/2)(n diam K)"
+version = "2.0.0"
+description = "Adversarial bandit convex optimisation: regret d^(3/2) sqrt(n) up to logarithms with polynomial-time steps on a real RAM, and a matching lower bound"
 keywords = ["math", "formal verification", "bandit convex optimisation", "online learning", "minimax regret"]
 license = "Apache-2.0"
 licenseFiles = ["LICENSE", "NOTICE"]
@@ -18,24 +18,41 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.34.1"
 
-# The frozen statements: Corollary 1.2 (Statement), Theorem 1.1, Lemma 7.13 and Corollary 1.2 with their constants
-# (StatementExplicit), Theorem 3.1 and Proposition 2.2 with their constants (StatementBody).
+# The frozen statements: Corollary 1.6 for measurable learners (Statement), Theorem 1.5, Lemma 7.13 and Corollary 1.6
+# with their constants (StatementExplicit), Theorem 3.1 and Proposition 2.2 with their constants (StatementBody),
+# Corollary 8.6 (StatementPoly), Remark 1.2 (StatementConj1), Theorem 1.1 (StatementConj1Exp), Theorem 1.4
+# (StatementConj1Lower), Theorem 1.3 (a) (StatementConj1Poly) and Theorem 1.3 (b) (StatementConj1PolyExp).
 [[lean_lib]]
 name = "Statement"
-roots = ["AdversarialBco.Statement", "AdversarialBco.StatementExplicit", "AdversarialBco.StatementBody"]
+roots = ["AdversarialBco.Statement", "AdversarialBco.StatementExplicit", "AdversarialBco.StatementBody",
+  "AdversarialBco.StatementPoly", "AdversarialBco.StatementConj1", "AdversarialBco.StatementConj1Exp",
+  "AdversarialBco.StatementConj1Lower", "AdversarialBco.StatementConj1Poly", "AdversarialBco.StatementConj1PolyExp"]
 
 # The development and the theorems.
 [[lean_lib]]
 name = "Main"
-roots = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Body2.Main"]
-globs = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Explicit.+", "AdversarialBco.Body2.+", "AdversarialBco.Lemmas", "AdversarialBco.Body", "AdversarialBco.Body.+", "AdversarialBco.Gauss.+"]
+roots = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Body2.Main", "AdversarialBco.Poly.Poly32OFinal",
+  "AdversarialBco.Conj1.Main", "AdversarialBco.Conj1Exp.Main", "AdversarialBco.Conj1Lower.Main",
+  "AdversarialBco.Conj1Poly.Main", "AdversarialBco.Conj1PolyExp.Main"]
+globs = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Explicit.+", "AdversarialBco.Body2.+", "AdversarialBco.Lemmas", "AdversarialBco.Body", "AdversarialBco.Body.+", "AdversarialBco.Gauss.+",
+  "AdversarialBco.Poly.+", "AdversarialBco.Conj1.+", "AdversarialBco.Conj1Exp.+", "AdversarialBco.Conj1Lower.+",
+  "AdversarialBco.Conj1Poly.+", "AdversarialBco.Conj1PolyExp.+"]
 
 # The statements with `sorry`, which nothing imports, and the modules that prove them: the pairs Comparator checks
 # (config.json: Challenge and Solution; config-explicit.json: ChallengeExplicit and AdversarialBco.Explicit;
-# config-body.json: ChallengeBody and AdversarialBco.Body2.Main).
+# config-body.json: ChallengeBody and AdversarialBco.Body2.Main; config-poly.json, config-conj1.json,
+# config-conj1-exp.json, config-conj1-lower.json, config-conj1-poly.json and config-conj1-poly-exp.json: ChallengePoly,
+# ChallengeConj1, ChallengeConj1Exp, ChallengeConj1Lower, ChallengeConj1Poly and ChallengeConj1PolyExp, over the copies
+# in ChallengeBase, and the modules their configurations name).
 [[lean_lib]]
 name = "Challenge"
-roots = ["AdversarialBco.Challenge", "AdversarialBco.ChallengeExplicit", "AdversarialBco.ChallengeBody"]
+roots = ["AdversarialBco.Challenge", "AdversarialBco.ChallengeExplicit", "AdversarialBco.ChallengeBody",
+  "AdversarialBco.ChallengePoly", "AdversarialBco.ChallengeConj1", "AdversarialBco.ChallengeConj1Exp",
+  "AdversarialBco.ChallengeConj1Lower", "AdversarialBco.ChallengeConj1Poly", "AdversarialBco.ChallengeConj1PolyExp"]
+globs = ["AdversarialBco.Challenge", "AdversarialBco.ChallengeExplicit", "AdversarialBco.ChallengeBody",
+  "AdversarialBco.ChallengePoly", "AdversarialBco.ChallengeConj1", "AdversarialBco.ChallengeConj1Exp",
+  "AdversarialBco.ChallengeConj1Lower", "AdversarialBco.ChallengeConj1Poly", "AdversarialBco.ChallengeConj1PolyExp",
+  "AdversarialBco.ChallengeBase.+"]
 
 [[lean_lib]]
 name = "Solution"
