@@ -26,7 +26,7 @@ sources:
     authors: [mt0-svg]
     id: "https://github.com/mt0-svg/adversarial-bco"
     type: original-proof
-    location: "paper/main.tex, Theorems 1.1 and 1.3 and Corollary 1.2, in the form of Section 5.1"
+    location: "paper/main.tex, Theorems 1.1 and 1.3 and Corollary 1.2, in the form of Section 6.1"
     relationship: formalizes
     author_endorsement: n/a
 
@@ -37,7 +37,7 @@ classification:
   msc2020: ["68Q32", "90C25", "62L05", "03B35"]
 
 status:
-  scope: "Theorems 1.1 and 1.3 and Corollary 1.2 with their constants, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, in the form the paper states them except where Section 5.2 of the paper says otherwise (alignment)"
+  scope: "Theorems 1.1 and 1.3 and Corollary 1.2 with their constants, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, in the form the paper states them except where Section 6.2 of the paper says otherwise (alignment)"
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: [propext, Classical.choice, Quot.sound]
@@ -124,13 +124,13 @@ fidelity:
     Theorems 1.1 and 1.3 number the rounds from 0, give the polytope by a rational matrix and vector, bound the
     numerator and denominator of each entry in lowest terms by the height, allow any centre for the unit ball and
     write the diameter hypothesis as |x - y| <= n on the polytope. Theorem 1.1 states the program as a list of
-    instructions of Definition 2.1, asks the loss of a randomised adversary on every sequence of rational points to be
+    instructions of Definition 3.1, asks the loss of a randomised adversary on every sequence of rational points to be
     convex with values in [0, 1] on the polytope for every seed and measurable in the seed, and gives a measurable
     function above the regret whose lower integral is at most the bound; Corollary 1.2 states that the regret is
     integrable and bounds its integral. Theorem 1.3 asks a learner to be jointly measurable and a strategy to be
     a function of the earlier points alone, 1/4-Lipschitz and Borel in the history, asks the regret to be integrable, and asserts a polytope of the
     class without naming it. The other statements are proved as steps, in places in the form the proofs use (Section
-    5.2 of the paper).
+    6.2 of the paper).
 
 review:
   status: agent-reviewed
@@ -154,422 +154,432 @@ alignment:
       module: "AdversarialBco/Conj1LowerPoly/Main.lean"
       status: proved
       note: "AdversarialBco.theoremConj1LowerPoly_holds (AdversarialBco/Conj1LowerPoly/Main.lean), of the statement TheoremConj1LowerPoly of AdversarialBco/StatementConj1LowerPoly.lean"
-    - source: "Algorithm 2.2"
+    - source: "Algorithm 2.1"
       lean: "AdversarialBco.Poly.df2RoundGa"
       module: "AdversarialBco/Poly/Df2Layer2.lean"
       status: proved
       note: "AdversarialBco.Poly.df2RoundGa (AdversarialBco/Poly/Df2Layer2.lean) at the exact gauge, with the parameters df2oPar (AdversarialBco/Poly/Df2Run.lean); on the coupled world: AdversarialBco.Bit.Cpl.Run.mode and Run.refPlay (AdversarialBco/Bit/ShadowIface.lean), the routine of round t apAdv of the advice"
-    - source: "Lemma 2.3"
-      lean: "AdversarialBco.Bit.tv_gauss"
-      module: "AdversarialBco/Bit/TV.lean"
+    - source: "Algorithm 2.2"
+      lean: "AdversarialBco.Poly.apCall"
+      module: "AdversarialBco/Poly/Df2Oracle.lean"
       status: proved
-      note: "AdversarialBco.Bit.tv_gauss (AdversarialBco/Bit/TV.lean); AdversarialBco.Bit.Cpl.coupLaw_coupMax and coupTV_coupMax on the map coupMax (AdversarialBco/Bit/ShadowCoup.lean)"
-    - source: "Lemma 2.4"
-      lean: "AdversarialBco.Bit.Cpl.wevProp_holds"
-      module: "AdversarialBco/Bit/ShadowWEv.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Cpl.wevProp_holds (AdversarialBco/Bit/ShadowWEv.lean), the statement WEvProp of AdversarialBco/Bit/ShadowRef.lean, from AdversarialBco.Poly.df2EvBudgetsAdV (AdversarialBco/Poly/Df2EvAdV.lean)"
-    - source: "Lemma 2.5"
-      lean: "AdversarialBco.Bit.Cpl.Run.waz"
-      module: "AdversarialBco/Bit/ShadowAz.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Cpl.Run.waz (AdversarialBco/Bit/ShadowAz.lean), on the event Run.Az of AdversarialBco/Bit/ShadowIface.lean"
-    - source: "Lemma 2.6"
-      lean: "AdversarialBco.Bit.Cpl.Run.wdet"
-      module: "AdversarialBco/Bit/ShadowWDet.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Cpl.Run.wdet (AdversarialBco/Bit/ShadowWDet.lean), on the event Run.Good of AdversarialBco/Bit/ShadowIface.lean, with apAdv_spec for the checked routine"
-    - source: "Proposition 2.7"
-      lean: "AdversarialBco.Bit.Cpl.refProp_of_wev"
-      module: "AdversarialBco/Bit/ShadowRef.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Cpl.refProp_of_wev (AdversarialBco/Bit/ShadowRef.lean) at AdversarialBco.Bit.Cpl.wevProp_holds, the statement RefProp of AdversarialBco/Bit/ShadowIface.lean; from Run.refProb (AdversarialBco/Bit/ShadowRef.lean), Run.waz, Run.wdet and apAdv_spec"
-    - source: "Proposition 2.8"
-      lean: "AdversarialBco.Bit.Cpl.shadowProp_holds"
-      module: "AdversarialBco/Bit/ShadowWEv.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Cpl.shadowProp_holds : ShadowProp (AdversarialBco/Bit/ShadowWEv.lean), from shadowProp_of, bad_subset (AdversarialBco/Bit/ShadowIface.lean) and coupStepProp_holds"
-    - source: "Lemma 2.9"
-      lean: "AdversarialBco.Conj1Poly.polytope_sub_ball"
-      module: "AdversarialBco/Conj1Poly/Geom.lean"
-      status: proved
-      note: "AdversarialBco.Conj1Poly.polytope_sub_ball (AdversarialBco/Conj1Poly/Geom.lean), from extreme_ker, clear_den, gram_det_ne_zero, cramer_int_bound and extreme_norm_le"
-    - source: "Theorem 2.10"
-      lean: "AdversarialBco.Bit.ApQ.frameQ_ball"
-      module: "AdversarialBco/Bit/ApQ/FrameB.lean"
-      status: proved
-      note: "the frame: AdversarialBco.Bit.ApQ.frameQ_ball, from frameQ_d1 and frameQ_d2 (AdversarialBco/Bit/ApQ/FrameB.lean), on the procedure frameQ of AdversarialBco/Bit/RoutQ.lean. The program: AdversarialBco.Bit.Transfer.frameRule : FrameRule (AdversarialBco/Bit/Transfer/XFrameRule.lean; FrameRule of AdversarialBco/Bit/RoutM.lean), with C = 10^8 and k = 11"
-    - source: "Theorem 2.11"
-      lean: "AdversarialBco.Bit.gsSpec_err"
-      module: "AdversarialBco/Bit/GsSpec.lean"
-      status: proved
-      note: "AdversarialBco.Bit.gsSpec_err on the integer function gsSpec (AdversarialBco/Bit/GsSpec.lean), with the lemmas gsm_mercq_log_err, gsm_radius_err, gsm_half_angle of AdversarialBco/Bit/GsM.lean"
-    - source: "Lemma 2.12"
-      lean: "AdversarialBco.Bit.boxMuller_law2"
-      module: "AdversarialBco/Bit/BoxMuller.lean"
-      status: proved
-      note: "AdversarialBco.Bit.boxMuller_law2 and dyadic_law (AdversarialBco/Bit/BoxMuller.lean), gsm_readCoins_law (AdversarialBco/Bit/GsSpec.lean)"
-    - source: "Corollary 2.13"
-      lean: "AdversarialBco.Bit.boxMuller_pair"
-      module: "AdversarialBco/Bit/BoxMuller.lean"
-      status: proved
-      note: "the coupling of the rounded pair: AdversarialBco.Bit.boxMuller_pair, from boxMuller_radius and boxMuller_path (AdversarialBco/Bit/BoxMuller.lean); with Theorem BM-INT, inside the proof of AdversarialBco.Bit.triCoreRows (AdversarialBco/Bit/TriStage.lean)"
-    - source: "Theorem 2.14"
-      lean: "AdversarialBco.Bit.triPos_bad"
-      module: "AdversarialBco/Bit/TriStage.lean"
-      status: proved
-      note: "AdversarialBco.Bit.triPos_bad and triStages (AdversarialBco/Bit/TriStage.lean); in the coupled world, AdversarialBco.Bit.triPos_posHyp"
-    - source: "Theorem 2.15"
-      lean: "AdversarialBco.Bit.ApQ.ellRI_spec'"
-      module: "AdversarialBco/Bit/ApQ/Ell.lean"
-      status: proved
-      note: "(a), (b): AdversarialBco.Bit.ApQ.ellRI_spec' with ellR_spec, bisR_spec, ellLoop_main, bisLoop_main and ellTest_spec (AdversarialBco/Bit/ApQ/Ell.lean), on the procedure ellRI of AdversarialBco/Bit/RoutQ.lean; for the calls of BL, AdversarialBco.Bit.ApQ.o3SpecQ_apQ (AdversarialBco/Bit/ApQ/Spec.lean). (c): AdversarialBco.Bit.Transfer.ellRule : EllRule (AdversarialBco/Bit/Transfer/XEllRoute.lean; EllRule of AdversarialBco/Bit/RoutM.lean), with C = 10^9 and k = 5"
-    - source: "Lemma 2.16"
-      lean: "AdversarialBco.Bit.BLP.RC.PnAn_eq"
-      module: "AdversarialBco/Bit/BLRoundAlg.lean"
-      status: proved
-      note: "AdversarialBco.Bit.BLP.RC.PnAn_eq, An_eq_mul and coef_eq (AdversarialBco/Bit/BLRoundAlg.lean)"
-    - source: "Lemma 2.17"
-      lean: "AdversarialBco.Bit.Transfer.BLM.drv_main"
-      module: "AdversarialBco/Bit/Transfer/XDrvMain.lean"
-      status: proved
-      note: "for the compiled program: AdversarialBco.Bit.Transfer.BLM.drv_main and drv_machOK (AdversarialBco/Bit/Transfer/XDrvMain.lean) at AdversarialBco.Bit.Transfer.BLM.roundBL_of (AdversarialBco/Bit/Transfer/XBLRoundP.lean)"
-    - source: "Lemma 2.18"
-      lean: "AdversarialBco.Bit.Sched.w0Law_beta"
-      module: "AdversarialBco/Bit/CoinSchedLaw.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Sched.w0Law_beta, w0Sched, grp_odd and meas_comp_beta (AdversarialBco/Bit/CoinSchedLaw.lean) on the schedule of AdversarialBco/Bit/CoinSched.lean, for BL by AdversarialBco.Bit.Asm.w0Law_blInst (AdversarialBco/Bit/Assembly.lean)"
-    - source: "Proposition 2.19"
-      lean: "AdversarialBco.Bit.BLP.runOK_of"
-      module: "AdversarialBco/Bit/BLRunOK.lean"
-      status: proved
-      note: "the link runOK_of reads, that the program plays the points of BL: AdversarialBco.Bit.Transfer.BLM.drv_link (AdversarialBco/Bit/Transfer/XDrvMain.lean) at AdversarialBco.Bit.Transfer.BLM.roundBL_of (AdversarialBco/Bit/Transfer/XBLRoundP.lean)"
-    - source: "Proposition 2.20"
-      lean: "AdversarialBco.Bit.Transfer.prog_ok_frozenR"
-      module: "AdversarialBco/Bit/Transfer/XDrvReach.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Transfer.prog_ok_frozenR (AdversarialBco/Bit/Transfer/XDrvReach.lean), from xtransfer (AdversarialBco/Bit/Transfer/XTrans.lean), XExecB.clean, space_checkpoint and space_step_le (AdversarialBco/Bit/Transfer/XSpace.lean), driver_bit"
-    - source: "Proposition 2.21"
-      lean: "AdversarialBco.Bit.Transfer.BLM.roundBL_of"
-      module: "AdversarialBco/Bit/Transfer/XBLRoundP.lean"
-      status: proved
-      note: "(d) the round: AdversarialBco.Bit.Transfer.BLM.roundBL_of : TailBL -> MagBL -> ExpBL -> RoundBL (AdversarialBco/Bit/Transfer/XBLRoundP.lean; RoundBL of AdversarialBco/Bit/Transfer/XBLRound.lean), at AdversarialBco.Bit.Transfer.BLM.tailBL_of (AdversarialBco/Bit/Transfer/XBLTailRe.lean), magBL and expBL"
-    - source: "Lemma 2.22"
-      lean: "AdversarialBco.Bit.Asm.thr_add_one_le"
-      module: "AdversarialBco/Bit/Assembly.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Asm.thr_add_one_le, n_le_thr, bReg_le_thr, n_deltaRef_le and n_mul_deltaBL_le (AdversarialBco/Bit/Assembly.lean), from AdversarialBco.Poly.Layer2.comp_thresh and log_inv_de_le (AdversarialBco/Poly/Df2CompProof.lean)"
-    - source: "Lemma 2.23"
-      lean: "AdversarialBco.Bit.Asm.regMeasOK"
-      module: "AdversarialBco/Bit/Assembly.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Asm.regMeasOK (AdversarialBco/Bit/Assembly.lean), from AdversarialBco.Bit.RegMeas.measurable_regret (AdversarialBco/Bit/RegMeas.lean)"
-    - source: "Lemma 3.1"
-      lean: "AdversarialBco.Lower.dent_convexOn"
-      module: "AdversarialBco/Conj1Lower/Dent.lean"
-      status: proved
-      note: "AdversarialBco.Lower.dent_convexOn, AdversarialBco.Lower.dent_nonneg, AdversarialBco.Lower.dent_le_bowl, AdversarialBco.Lower.dent_self, AdversarialBco.Lower.dent_lipschitz, AdversarialBco.Lower.dent_closed_form, AdversarialBco.Lower.devq_bounds, AdversarialBco.Lower.dent_tangent, AdversarialBco.Lower.hgen_le_two_k, AdversarialBco.Lower.hgen_tail (AdversarialBco/Conj1Lower/Dent.lean), on a real inner product space, with M = A*A for a bounded operator A"
-    - source: "Lemma 3.2"
-      lean: "AdversarialBco.Lower.smul_clipM_le_one"
-      module: "AdversarialBco/Conj1Lower/Frame.lean"
-      status: proved
-      note: "AdversarialBco.Lower.smul_clipM_le_one, AdversarialBco.Lower.norm_frameA_le, AdversarialBco.Lower.frameW_inv_le_clipM, AdversarialBco.Lower.clipM_le_two_frameW_inv, AdversarialBco.Lower.frameW_le_two_clipM_inv, AdversarialBco.Lower.dLive_le_DM, AdversarialBco.Lower.DM_le (AdversarialBco/Conj1Lower/Frame.lean)"
-    - source: "Algorithm 3.3"
-      lean: "AdversarialBco.Lower.Bayes.stratOf"
-      module: "AdversarialBco/Conj1Lower/RuleS.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Bayes.stratOf with the rule AdversarialBco.Lower.Bayes.ruleS (AdversarialBco/Conj1Lower/RuleS.lean)"
-    - source: "Lemma 3.4"
-      lean: "AdversarialBco.Lower.Bayes.ruleS_meas"
-      module: "AdversarialBco/Conj1Lower/RuleS.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Bayes.ruleS_meas, AdversarialBco.Lower.Bayes.measurable_stratOf (AdversarialBco/Conj1Lower/RuleS.lean), AdversarialBco.Lower.Bayes.measurable_dens, AdversarialBco.Lower.Bayes.measurable_hist (AdversarialBco/Conj1Lower/Bayes.lean)"
-    - source: "Lemma 3.5"
-      lean: "AdversarialBco.Lower.Top.stratOf_mem"
-      module: "AdversarialBco/Conj1Lower/Top.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Top.stratOf_mem, AdversarialBco.Lower.Top.regretAd_stratOf, AdversarialBco.Lower.Top.dentS_convexOn, AdversarialBco.Lower.Top.dentS_lipschitz, AdversarialBco.Lower.Top.dentS_nonneg, AdversarialBco.Lower.Top.dentS_le (AdversarialBco/Conj1Lower/Top.lean)"
-    - source: "Lemma 3.6"
-      lean: "AdversarialBco.Lower.Bayes.post_disintegrates"
-      module: "AdversarialBco/Conj1Lower/Bayes.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Bayes.post_disintegrates (AdversarialBco/Conj1Lower/Bayes.lean), from AdversarialBco.Lower.Bayes.bayes_step (AdversarialBco/Conj1Lower/BayesRound.lean)"
-    - source: "Lemma 3.7"
-      lean: "AdversarialBco.Lower.infoJ_chain"
-      module: "AdversarialBco/Conj1Lower/Info.lean"
-      status: proved
-      note: "AdversarialBco.Lower.infoJ_chain, AdversarialBco.Lower.kl_round (AdversarialBco/Conj1Lower/Info.lean)"
-    - source: "Lemma 3.8"
-      lean: "AdversarialBco.Lower.cells_floor"
-      module: "AdversarialBco/Conj1Lower/CellsRound.lean"
-      status: proved
-      note: "AdversarialBco.Lower.cells_floor, AdversarialBco.Lower.cells_reg, AdversarialBco.Lower.cells_price (AdversarialBco/Conj1Lower/CellsRound.lean), from AdversarialBco.Lower.regular_closed, AdversarialBco.Lower.regular_dev, AdversarialBco.Lower.regular_half, AdversarialBco.Lower.gap_sq_regular, AdversarialBco.Lower.gap_sq_tail, AdversarialBco.Lower.gap_nontail (AdversarialBco/Conj1Lower/Cells.lean), with any operator in place of the square root of M and any real in place of DM, and cells_price with the square of T integrable on the tail, which holds for a law on the ball"
-    - source: "Lemma 3.9"
-      lean: "AdversarialBco.Lower.ledger_identity"
-      module: "AdversarialBco/Conj1Lower/Ledger.lean"
-      status: proved
-      note: "AdversarialBco.Lower.ledger_identity, AdversarialBco.Lower.ledger_round, AdversarialBco.Lower.pay_tail, AdversarialBco.Lower.pay_inner, AdversarialBco.Lower.pay_outer, AdversarialBco.Lower.ledger_game (AdversarialBco/Conj1Lower/Ledger.lean), AdversarialBco.Lower.cells_leak (AdversarialBco/Conj1Lower/CellsRound.lean)"
-    - source: "Lemma 3.10"
-      lean: "AdversarialBco.Lower.count_b"
-      module: "AdversarialBco/Conj1Lower/Info.lean"
-      status: proved
-      note: "AdversarialBco.Lower.count_b, AdversarialBco.Lower.count_game (AdversarialBco/Conj1Lower/Info.lean)"
-    - source: "Proposition 3.11"
-      lean: "AdversarialBco.Lower.ripe_balance"
-      module: "AdversarialBco/Conj1Lower/Balance.lean"
-      status: proved
-      note: "AdversarialBco.Lower.ripe_balance (AdversarialBco/Conj1Lower/Balance.lean), AdversarialBco.Lower.ripe_rate_K, from AdversarialBco.Lower.R2_ripe_K, AdversarialBco.Lower.log_R0_le, AdversarialBco.Lower.log_x_ripe_ge_K and AdversarialBco.Lower.log_x_ripe_le_K (AdversarialBco/Conj1Lower/BalanceK.lean)"
-    - source: "Proposition 3.12"
-      lean: "AdversarialBco.Lower.Top.gameFacts"
-      module: "AdversarialBco/Conj1Lower/Top.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Top.gameFacts, AdversarialBco.Lower.Top.sum_Df_eq, AdversarialBco.Lower.Top.good_pK (AdversarialBco/Conj1Lower/Top.lean), AdversarialBco.Lower.ripeK_params, AdversarialBco.Lower.R2_ripe_K (AdversarialBco/Conj1Lower/BalanceK.lean), AdversarialBco.Lower.ripeB_params, AdversarialBco.Lower.round_bound (AdversarialBco/Conj1Lower/Balance.lean), with the inputs AdversarialBco.lowerTopInputs (AdversarialBco/Conj1Lower/Main.lean)"
-    - source: "Theorem 3.13"
-      lean: "AdversarialBco.Lower.Top.lowerBody_of_inputs"
-      module: "AdversarialBco/Conj1Lower/Top.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Top.lowerBody_of_inputs (AdversarialBco/Conj1Lower/Top.lean), with the inputs AdversarialBco.lowerTopInputs (AdversarialBco/Conj1Lower/Main.lean), from AdversarialBco.Lower.Top.coupling, AdversarialBco.Lower.Top.exists_good_point, AdversarialBco.Lower.Top.integrable_regretAd_stratOf and AdversarialBco.Lower.ripeK_balance (AdversarialBco/Conj1Lower/BalanceK.lean)"
-    - source: "Lemma A.1"
-      lean: "AdversarialBco.Bit.PieceA.encOK"
-      module: "AdversarialBco/Bit/PieceA/BudA.lean"
-      status: proved
-      note: "AdversarialBco.Bit.PieceA.encOK and encR_ok (AdversarialBco/Bit/PieceA/BudA.lean, AdversarialBco/Bit/PieceA/Enc.lean), the relative errors EncR.OK.eps_rel, lam_rel, eta_rel, rho_rel, kapc_rel, nu_rel, R_rel, sb_rel, W_rel, A0_rel, B0_rel (AdversarialBco/Bit/PieceA/EncMaj.lean)"
-    - source: "Lemma A.2"
-      lean: "AdversarialBco.Bit.Transfer.BLM.hzero_of"
-      module: "AdversarialBco/Bit/Transfer/XBLMag.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Transfer.BLM.hzero_of (AdversarialBco/Bit/Transfer/XBLMag.lean), AdversarialBco.Bit.RQ.polytope_rows (AdversarialBco/Bit/BLPosQ.lean), AdversarialBco.Bit.BLP.rows_iff, row_pos, beta_pos_of_good, gauge_rows and gaugeQ_eq_of_good (AdversarialBco/Bit/BLRows.lean)"
-    - source: "Algorithm A.3"
-      lean: "AdversarialBco.Bit.Transfer.BLM.roundBL_of"
-      module: "AdversarialBco/Bit/Transfer/XBLRoundP.lean"
-      status: proved
-      note: "the command of a round: AdversarialBco.Bit.Transfer.BLM.roundBL_of : TailBL -> MagBL -> ExpBL -> RoundBL (AdversarialBco/Bit/Transfer/XBLRoundP.lean; RoundBL of AdversarialBco/Bit/Transfer/XBLRound.lean), with AdversarialBco.Bit.Transfer.BLM.tailBL_of (AdversarialBco/Bit/Transfer/XBLTailRe.lean) at callBL, AdversarialBco.Bit.Transfer.BLM.DataM.dataT (AdversarialBco/Bit/Transfer/XBLDataTF.lean), AdversarialBco.Bit.Transfer.BLM.DataM.dataL (AdversarialBco/Bit/Transfer/XBLDataLF.lean), AdversarialBco.Bit.Transfer.BLM.commitBL (AdversarialBco/Bit/Transfer/XBLCommit.lean), AdversarialBco.Bit.Transfer.BLM.fireBL (AdversarialBco/Bit/Transfer/XBLFire.lean) and AdversarialBco.Bit.Transfer.BLM.expBL"
-    - source: "Lemma C.1"
-      lean: "AdversarialBco.Poly.lemmaR1i"
-      module: "AdversarialBco/Poly/Df2R1Proof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaR1i, lemmaR1ii, lemmaR1iii, lemmaR1iv, lemmaR1v (AdversarialBco/Poly/Df2R1Proof.lean), the statements LemmaR1i to LemmaR1v of AdversarialBco/Poly/Df2R1.lean"
-    - source: "Lemma C.2"
-      lean: "AdversarialBco.Poly.lemmaUBPrime_holds"
-      module: "AdversarialBco/Poly/Df2PlayProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaUBPrime_holds (AdversarialBco/Poly/Df2PlayProof.lean), the statement LemmaUBPrime of AdversarialBco/Poly/Df2.lean"
-    - source: "Proposition C.3"
-      lean: "AdversarialBco.Poly.SIF.df2SIFacts_holds"
-      module: "AdversarialBco/Poly/Df2SIFactsProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2SIFactsProof.lean), the statement Df2SIFacts of AdversarialBco/Poly/Df2Layer2.lean"
-    - source: "Lemma C.4"
-      lean: "AdversarialBco.Poly.df2EvBudgetsAdV"
-      module: "AdversarialBco/Poly/Df2EvAdV.lean"
-      status: proved
-      note: "AdversarialBco.Poly.df2EvBudgetsAdV (AdversarialBco/Poly/Df2EvAdV.lean), on the events EvG, EvY, EvLQ, EvSDF and EvDQ of AdversarialBco/Poly/Df2Layer2.lean"
-    - source: "Lemma C.5"
-      lean: "AdversarialBco.Poly.lemmaDFI_holds"
-      module: "AdversarialBco/Poly/Df2DetProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaDFI_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaDFI of AdversarialBco/Poly/Df2.lean"
-    - source: "Lemma C.6"
-      lean: "AdversarialBco.Poly.lemmaMON_holds"
-      module: "AdversarialBco/Poly/Df2DetProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaMON_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaMON of AdversarialBco/Poly/Df2.lean"
-    - source: "Proposition C.7"
-      lean: "AdversarialBco.Poly.propINC2_holds"
-      module: "AdversarialBco/Poly/Df2DetProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.propINC2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement PropINC2 of AdversarialBco/Poly/Df2.lean"
-    - source: "Lemma C.8"
-      lean: "AdversarialBco.Poly.SIF.df2SIFacts_holds"
-      module: "AdversarialBco/Poly/Df2SIFactsProof.lean"
-      status: proved
-      note: "the last two clauses of Df2SIFacts (AdversarialBco/Poly/Df2Layer2.lean), proved in AdversarialBco.Poly.SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2SIFactsProof.lean); the sums in AdversarialBco/Poly/Df2DetSand.lean"
-    - source: "Lemma C.9"
-      lean: "AdversarialBco.Poly.lemmaD2_holds"
-      module: "AdversarialBco/Poly/Df2DetProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaD2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaD2 of AdversarialBco/Poly/Df2.lean"
-    - source: "Lemma C.10"
-      lean: "AdversarialBco.Poly.DetHyp.c3_tau"
-      module: "AdversarialBco/Poly/Df2DetRound.lean"
-      status: proved
-      note: "c3_tau and aq (AdversarialBco/Poly/Df2DetRound.lean)"
-    - source: "Lemma C.11"
-      lean: "AdversarialBco.Poly.Layer2.ld_core"
-      module: "AdversarialBco/Poly/Df2DetTools.lean"
-      status: proved
-      note: "ld_core (AdversarialBco/Poly/Df2DetTools.lean); in the epoch ld_sum and trace_sum (AdversarialBco/Poly/Df2DetW1.lean)"
-    - source: "Lemma C.12"
-      lean: "AdversarialBco.Poly.lemmaONS2Core_holds"
-      module: "AdversarialBco/Poly/Df2DetProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaONS2Core_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaONS2Core of AdversarialBco/Poly/Df2.lean"
-    - source: "Lemma C.13"
-      lean: "AdversarialBco.Poly.lemmaW"
-      module: "AdversarialBco/Poly/WrapperProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaW (AdversarialBco/Poly/WrapperProof.lean), the statement LemmaW of AdversarialBco/Poly/Wrapper.lean"
-    - source: "Lemma C.14"
-      lean: "AdversarialBco.Poly.df2RowsHold"
-      module: "AdversarialBco/Poly/Df2RowsProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.df2RowsHold (AdversarialBco/Poly/Df2RowsProof.lean), the statement Df2RowsHold over the structure Df2Rows of AdversarialBco/Poly/Df2Layer2.lean"
-    - source: "Lemma C.15"
-      lean: "AdversarialBco.Poly.Layer2.ib_geo"
-      module: "AdversarialBco/Poly/Df2DetTools.lean"
-      status: proved
-      note: "ib_geo (AdversarialBco/Poly/Df2DetTools.lean)"
-    - source: "Lemma C.16"
-      lean: "AdversarialBco.Poly.DetHyp.ib2_level"
-      module: "AdversarialBco/Poly/Df2DetAcc.lean"
-      status: proved
-      note: "ib2_level and ib2 (AdversarialBco/Poly/Df2DetAcc.lean), grad_le (AdversarialBco/Poly/Df2DetGuard.lean)"
-    - source: "Lemma C.17"
-      lean: "AdversarialBco.Poly.lemmaZCore_holds"
-      module: "AdversarialBco/Poly/Df2DetProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.lemmaZCore_holds and AdversarialBco.Poly.df2RowZ_holds (AdversarialBco/Poly/Df2DetProof.lean), the statements LemmaZCore and Df2RowZ of AdversarialBco/Poly/Df2.lean"
-    - source: "Proposition C.18"
-      lean: "AdversarialBco.Bit.Cpl.df2DetF_holds"
-      module: "AdversarialBco/Bit/ShadowDet.lean"
-      status: proved
-      note: "AdversarialBco.Bit.Cpl.df2DetF_holds (AdversarialBco/Bit/ShadowDet.lean), used on the run record by AdversarialBco.Bit.Cpl.Run.epochOK_of_good (AdversarialBco/Bit/ShadowWDet.lean); from AdversarialBco.Poly.df2LayerOne_holds, lemmaW, SIF.df2SIFacts_holds and df2RowsHold"
-    - source: "Lemma D.1"
-      lean: "AdversarialBco.Poly.LeanAp.fd_exact"
-      module: "AdversarialBco/Poly/Df2OracleProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.LeanAp.fd_exact (AdversarialBco/Poly/Df2OracleProof.lean), the case of exact values"
-    - source: "Lemma D.2"
-      lean: "AdversarialBco.Poly.LeanAp.lemmaLINE"
-      module: "AdversarialBco/Poly/Df2OracleProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.LeanAp.lemmaLINE (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaLINE of AdversarialBco/Poly/Df2Oracle.lean"
-    - source: "Lemma D.3"
-      lean: "AdversarialBco.Poly.LeanAp.lemmaSEP"
-      module: "AdversarialBco/Poly/Df2OracleProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.LeanAp.lemmaSEP (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaSEP of AdversarialBco/Poly/Df2Oracle.lean"
-    - source: "Lemma D.4"
-      lean: "AdversarialBco.Poly.LeanAp.lemmaCC"
-      module: "AdversarialBco/Poly/Df2OracleProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.LeanAp.lemmaCC (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaCC of AdversarialBco/Poly/Df2Oracle.lean"
-    - source: "Lemma D.5"
-      lean: "AdversarialBco.Poly.LeanAp.lemmaBALL"
-      module: "AdversarialBco/Poly/Df2OracleProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.LeanAp.lemmaBALL (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaBALL of AdversarialBco/Poly/Df2Oracle.lean"
-    - source: "Proposition D.6"
-      lean: "AdversarialBco.Poly.LeanAp.propELL"
-      module: "AdversarialBco/Poly/Df2OracleProof.lean"
-      status: proved
-      note: "AdversarialBco.Poly.LeanAp.propELL and AdversarialBco.Poly.LeanAp.propELLcap (AdversarialBco/Poly/Df2OracleProof.lean), of the statements AdversarialBco.Poly.PropELL and PropELLcap of AdversarialBco/Poly/Df2Oracle.lean"
-    - source: "Proposition D.7"
+      note: "AdversarialBco.Poly.apCall (AdversarialBco/Poly/Df2Oracle.lean)"
+    - source: "Proposition 2.3"
       lean: "AdversarialBco.Poly.propAP"
       module: "AdversarialBco/Poly/Df2OracleProof.lean"
       status: proved
       note: "AdversarialBco.Poly.propAP (AdversarialBco/Poly/Df2OracleProof.lean), the statements PropAP and PropELL1 of AdversarialBco/Poly/Df2Oracle.lean"
-    - source: "Lemma E.1"
+    - source: "Theorem 2.4"
+      lean: "AdversarialBco.Bit.Cpl.refProp_of_wev"
+      module: "AdversarialBco/Bit/ShadowRef.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Cpl.refProp_of_wev (AdversarialBco/Bit/ShadowRef.lean) at AdversarialBco.Bit.Cpl.wevProp_holds, the statement RefProp of AdversarialBco/Bit/ShadowIface.lean; from Run.refProb (AdversarialBco/Bit/ShadowRef.lean), Run.waz, Run.wdet and apAdv_spec"
+    - source: "Lemma 2.5"
+      lean: "AdversarialBco.Bit.Cpl.wevProp_holds"
+      module: "AdversarialBco/Bit/ShadowWEv.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Cpl.wevProp_holds (AdversarialBco/Bit/ShadowWEv.lean), the statement WEvProp of AdversarialBco/Bit/ShadowRef.lean, from AdversarialBco.Poly.df2EvBudgetsAdV (AdversarialBco/Poly/Df2EvAdV.lean)"
+    - source: "Lemma 2.6"
+      lean: "AdversarialBco.Bit.Cpl.Run.waz"
+      module: "AdversarialBco/Bit/ShadowAz.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Cpl.Run.waz (AdversarialBco/Bit/ShadowAz.lean), on the event Run.Az of AdversarialBco/Bit/ShadowIface.lean"
+    - source: "Lemma 2.7"
+      lean: "AdversarialBco.Bit.Cpl.Run.wdet"
+      module: "AdversarialBco/Bit/ShadowWDet.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Cpl.Run.wdet (AdversarialBco/Bit/ShadowWDet.lean), on the event Run.Good of AdversarialBco/Bit/ShadowIface.lean, with apAdv_spec for the checked routine"
+    - source: "Theorem 3.2"
+      lean: "AdversarialBco.Bit.gsSpec_err"
+      module: "AdversarialBco/Bit/GsSpec.lean"
+      status: proved
+      note: "AdversarialBco.Bit.gsSpec_err on the integer function gsSpec (AdversarialBco/Bit/GsSpec.lean), with the lemmas gsm_mercq_log_err, gsm_radius_err, gsm_half_angle of AdversarialBco/Bit/GsM.lean"
+    - source: "Lemma 3.3"
+      lean: "AdversarialBco.Bit.boxMuller_law2"
+      module: "AdversarialBco/Bit/BoxMuller.lean"
+      status: proved
+      note: "AdversarialBco.Bit.boxMuller_law2 and dyadic_law (AdversarialBco/Bit/BoxMuller.lean), gsm_readCoins_law (AdversarialBco/Bit/GsSpec.lean)"
+    - source: "Corollary 3.4"
+      lean: "AdversarialBco.Bit.boxMuller_pair"
+      module: "AdversarialBco/Bit/BoxMuller.lean"
+      status: proved
+      note: "the coupling of the rounded pair: AdversarialBco.Bit.boxMuller_pair, from boxMuller_radius and boxMuller_path (AdversarialBco/Bit/BoxMuller.lean); with Theorem BM-INT, inside the proof of AdversarialBco.Bit.triCoreRows (AdversarialBco/Bit/TriStage.lean)"
+    - source: "Algorithm 3.5"
+      lean: "AdversarialBco.Poly.df2RoundGa"
+      module: "AdversarialBco/Poly/Df2Layer2.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2RoundGa (AdversarialBco/Poly/Df2Layer2.lean) at the exact gauge, with the parameters df2oPar (AdversarialBco/Poly/Df2Run.lean); on the coupled world: AdversarialBco.Bit.Cpl.Run.mode and Run.refPlay (AdversarialBco/Bit/ShadowIface.lean), the routine of round t apAdv of the advice"
+    - source: "Lemma 3.6"
+      lean: "AdversarialBco.Conj1Poly.polytope_sub_ball"
+      module: "AdversarialBco/Conj1Poly/Geom.lean"
+      status: proved
+      note: "AdversarialBco.Conj1Poly.polytope_sub_ball (AdversarialBco/Conj1Poly/Geom.lean), from extreme_ker, clear_den, gram_det_ne_zero, cramer_int_bound and extreme_norm_le"
+    - source: "Theorem 3.7"
+      lean: "AdversarialBco.Bit.ApQ.frameQ_ball"
+      module: "AdversarialBco/Bit/ApQ/FrameB.lean"
+      status: proved
+      note: "the frame: AdversarialBco.Bit.ApQ.frameQ_ball, from frameQ_d1 and frameQ_d2 (AdversarialBco/Bit/ApQ/FrameB.lean), on the procedure frameQ of AdversarialBco/Bit/RoutQ.lean. The program: AdversarialBco.Bit.Transfer.frameRule : FrameRule (AdversarialBco/Bit/Transfer/XFrameRule.lean; FrameRule of AdversarialBco/Bit/RoutM.lean), with C = 10^8 and k = 11"
+    - source: "Theorem 3.8"
+      lean: "AdversarialBco.Bit.triPos_bad"
+      module: "AdversarialBco/Bit/TriStage.lean"
+      status: proved
+      note: "AdversarialBco.Bit.triPos_bad and triStages (AdversarialBco/Bit/TriStage.lean); in the coupled world, AdversarialBco.Bit.triPos_posHyp"
+    - source: "Theorem 3.9"
+      lean: "AdversarialBco.Bit.ApQ.ellRI_spec'"
+      module: "AdversarialBco/Bit/ApQ/Ell.lean"
+      status: proved
+      note: "(a), (b): AdversarialBco.Bit.ApQ.ellRI_spec' with ellR_spec, bisR_spec, ellLoop_main, bisLoop_main and ellTest_spec (AdversarialBco/Bit/ApQ/Ell.lean), on the procedure ellRI of AdversarialBco/Bit/RoutQ.lean; for the calls of BL, AdversarialBco.Bit.ApQ.o3SpecQ_apQ (AdversarialBco/Bit/ApQ/Spec.lean). (c): AdversarialBco.Bit.Transfer.ellRule : EllRule (AdversarialBco/Bit/Transfer/XEllRoute.lean; EllRule of AdversarialBco/Bit/RoutM.lean), with C = 10^9 and k = 5"
+    - source: "Lemma 3.10"
+      lean: "AdversarialBco.Bit.BLP.RC.PnAn_eq"
+      module: "AdversarialBco/Bit/BLRoundAlg.lean"
+      status: proved
+      note: "AdversarialBco.Bit.BLP.RC.PnAn_eq, An_eq_mul and coef_eq (AdversarialBco/Bit/BLRoundAlg.lean)"
+    - source: "Lemma 3.11"
+      lean: "AdversarialBco.Bit.Transfer.BLM.drv_main"
+      module: "AdversarialBco/Bit/Transfer/XDrvMain.lean"
+      status: proved
+      note: "for the compiled program: AdversarialBco.Bit.Transfer.BLM.drv_main and drv_machOK (AdversarialBco/Bit/Transfer/XDrvMain.lean) at AdversarialBco.Bit.Transfer.BLM.roundBL_of (AdversarialBco/Bit/Transfer/XBLRoundP.lean)"
+    - source: "Lemma 3.12"
+      lean: "AdversarialBco.Bit.tv_gauss"
+      module: "AdversarialBco/Bit/TV.lean"
+      status: proved
+      note: "AdversarialBco.Bit.tv_gauss (AdversarialBco/Bit/TV.lean); AdversarialBco.Bit.Cpl.coupLaw_coupMax and coupTV_coupMax on the map coupMax (AdversarialBco/Bit/ShadowCoup.lean)"
+    - source: "Proposition 3.13"
+      lean: "AdversarialBco.Bit.Cpl.shadowProp_holds"
+      module: "AdversarialBco/Bit/ShadowWEv.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Cpl.shadowProp_holds : ShadowProp (AdversarialBco/Bit/ShadowWEv.lean), from shadowProp_of, bad_subset (AdversarialBco/Bit/ShadowIface.lean) and coupStepProp_holds"
+    - source: "Lemma 3.14"
+      lean: "AdversarialBco.Bit.Sched.w0Law_beta"
+      module: "AdversarialBco/Bit/CoinSchedLaw.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Sched.w0Law_beta, w0Sched, grp_odd and meas_comp_beta (AdversarialBco/Bit/CoinSchedLaw.lean) on the schedule of AdversarialBco/Bit/CoinSched.lean, for BL by AdversarialBco.Bit.Asm.w0Law_blInst (AdversarialBco/Bit/Assembly.lean)"
+    - source: "Proposition 3.15"
+      lean: "AdversarialBco.Bit.BLP.runOK_of"
+      module: "AdversarialBco/Bit/BLRunOK.lean"
+      status: proved
+      note: "the link runOK_of reads, that the program plays the points of BL: AdversarialBco.Bit.Transfer.BLM.drv_link (AdversarialBco/Bit/Transfer/XDrvMain.lean) at AdversarialBco.Bit.Transfer.BLM.roundBL_of (AdversarialBco/Bit/Transfer/XBLRoundP.lean)"
+    - source: "Proposition 3.16"
+      lean: "AdversarialBco.Bit.Transfer.prog_ok_frozenR"
+      module: "AdversarialBco/Bit/Transfer/XDrvReach.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Transfer.prog_ok_frozenR (AdversarialBco/Bit/Transfer/XDrvReach.lean), from xtransfer (AdversarialBco/Bit/Transfer/XTrans.lean), XExecB.clean, space_checkpoint and space_step_le (AdversarialBco/Bit/Transfer/XSpace.lean), driver_bit"
+    - source: "Proposition 3.17"
+      lean: "AdversarialBco.Bit.Transfer.BLM.roundBL_of"
+      module: "AdversarialBco/Bit/Transfer/XBLRoundP.lean"
+      status: proved
+      note: "(d) the round: AdversarialBco.Bit.Transfer.BLM.roundBL_of : TailBL -> MagBL -> ExpBL -> RoundBL (AdversarialBco/Bit/Transfer/XBLRoundP.lean; RoundBL of AdversarialBco/Bit/Transfer/XBLRound.lean), at AdversarialBco.Bit.Transfer.BLM.tailBL_of (AdversarialBco/Bit/Transfer/XBLTailRe.lean), magBL and expBL"
+    - source: "Lemma 3.18"
+      lean: "AdversarialBco.Bit.Asm.thr_add_one_le"
+      module: "AdversarialBco/Bit/Assembly.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Asm.thr_add_one_le, n_le_thr, bReg_le_thr, n_deltaRef_le and n_mul_deltaBL_le (AdversarialBco/Bit/Assembly.lean), from AdversarialBco.Poly.Layer2.comp_thresh and log_inv_de_le (AdversarialBco/Poly/Df2CompProof.lean)"
+    - source: "Lemma 3.19"
+      lean: "AdversarialBco.Bit.Asm.regMeasOK"
+      module: "AdversarialBco/Bit/Assembly.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Asm.regMeasOK (AdversarialBco/Bit/Assembly.lean), from AdversarialBco.Bit.RegMeas.measurable_regret (AdversarialBco/Bit/RegMeas.lean)"
+    - source: "Lemma 4.1"
+      lean: "AdversarialBco.Lower.dent_convexOn"
+      module: "AdversarialBco/Conj1Lower/Dent.lean"
+      status: proved
+      note: "AdversarialBco.Lower.dent_convexOn, AdversarialBco.Lower.dent_nonneg, AdversarialBco.Lower.dent_le_bowl, AdversarialBco.Lower.dent_self, AdversarialBco.Lower.dent_lipschitz, AdversarialBco.Lower.dent_closed_form, AdversarialBco.Lower.devq_bounds, AdversarialBco.Lower.dent_tangent, AdversarialBco.Lower.hgen_le_two_k, AdversarialBco.Lower.hgen_tail (AdversarialBco/Conj1Lower/Dent.lean), on a real inner product space, with M = A*A for a bounded operator A"
+    - source: "Lemma 4.2"
+      lean: "AdversarialBco.Lower.smul_clipM_le_one"
+      module: "AdversarialBco/Conj1Lower/Frame.lean"
+      status: proved
+      note: "AdversarialBco.Lower.smul_clipM_le_one, AdversarialBco.Lower.norm_frameA_le, AdversarialBco.Lower.frameW_inv_le_clipM, AdversarialBco.Lower.clipM_le_two_frameW_inv, AdversarialBco.Lower.frameW_le_two_clipM_inv, AdversarialBco.Lower.dLive_le_DM, AdversarialBco.Lower.DM_le (AdversarialBco/Conj1Lower/Frame.lean)"
+    - source: "Algorithm 4.3"
+      lean: "AdversarialBco.Lower.Bayes.stratOf"
+      module: "AdversarialBco/Conj1Lower/RuleS.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Bayes.stratOf with the rule AdversarialBco.Lower.Bayes.ruleS (AdversarialBco/Conj1Lower/RuleS.lean)"
+    - source: "Lemma 4.4"
+      lean: "AdversarialBco.Lower.Bayes.ruleS_meas"
+      module: "AdversarialBco/Conj1Lower/RuleS.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Bayes.ruleS_meas, AdversarialBco.Lower.Bayes.measurable_stratOf (AdversarialBco/Conj1Lower/RuleS.lean), AdversarialBco.Lower.Bayes.measurable_dens, AdversarialBco.Lower.Bayes.measurable_hist (AdversarialBco/Conj1Lower/Bayes.lean)"
+    - source: "Lemma 4.5"
+      lean: "AdversarialBco.Lower.Top.stratOf_mem"
+      module: "AdversarialBco/Conj1Lower/Top.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Top.stratOf_mem, AdversarialBco.Lower.Top.regretAd_stratOf, AdversarialBco.Lower.Top.dentS_convexOn, AdversarialBco.Lower.Top.dentS_lipschitz, AdversarialBco.Lower.Top.dentS_nonneg, AdversarialBco.Lower.Top.dentS_le (AdversarialBco/Conj1Lower/Top.lean)"
+    - source: "Lemma 4.6"
+      lean: "AdversarialBco.Lower.Bayes.post_disintegrates"
+      module: "AdversarialBco/Conj1Lower/Bayes.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Bayes.post_disintegrates (AdversarialBco/Conj1Lower/Bayes.lean), from AdversarialBco.Lower.Bayes.bayes_step (AdversarialBco/Conj1Lower/BayesRound.lean)"
+    - source: "Lemma 4.7"
+      lean: "AdversarialBco.Lower.infoJ_chain"
+      module: "AdversarialBco/Conj1Lower/Info.lean"
+      status: proved
+      note: "AdversarialBco.Lower.infoJ_chain, AdversarialBco.Lower.kl_round (AdversarialBco/Conj1Lower/Info.lean)"
+    - source: "Lemma 4.8"
+      lean: "AdversarialBco.Lower.cells_floor"
+      module: "AdversarialBco/Conj1Lower/CellsRound.lean"
+      status: proved
+      note: "AdversarialBco.Lower.cells_floor, AdversarialBco.Lower.cells_reg, AdversarialBco.Lower.cells_price (AdversarialBco/Conj1Lower/CellsRound.lean), from AdversarialBco.Lower.regular_closed, AdversarialBco.Lower.regular_dev, AdversarialBco.Lower.regular_half, AdversarialBco.Lower.gap_sq_regular, AdversarialBco.Lower.gap_sq_tail, AdversarialBco.Lower.gap_nontail (AdversarialBco/Conj1Lower/Cells.lean), with any operator in place of the square root of M and any real in place of DM, and cells_price with the square of T integrable on the tail, which holds for a law on the ball"
+    - source: "Lemma 4.9"
+      lean: "AdversarialBco.Lower.ledger_identity"
+      module: "AdversarialBco/Conj1Lower/Ledger.lean"
+      status: proved
+      note: "AdversarialBco.Lower.ledger_identity, AdversarialBco.Lower.ledger_round, AdversarialBco.Lower.pay_tail, AdversarialBco.Lower.pay_inner, AdversarialBco.Lower.pay_outer, AdversarialBco.Lower.ledger_game (AdversarialBco/Conj1Lower/Ledger.lean), AdversarialBco.Lower.cells_leak (AdversarialBco/Conj1Lower/CellsRound.lean)"
+    - source: "Lemma 4.10"
+      lean: "AdversarialBco.Lower.count_b"
+      module: "AdversarialBco/Conj1Lower/Info.lean"
+      status: proved
+      note: "AdversarialBco.Lower.count_b, AdversarialBco.Lower.count_game (AdversarialBco/Conj1Lower/Info.lean)"
+    - source: "Proposition 4.11"
+      lean: "AdversarialBco.Lower.ripe_balance"
+      module: "AdversarialBco/Conj1Lower/Balance.lean"
+      status: proved
+      note: "AdversarialBco.Lower.ripe_balance (AdversarialBco/Conj1Lower/Balance.lean), AdversarialBco.Lower.ripe_rate_K, from AdversarialBco.Lower.R2_ripe_K, AdversarialBco.Lower.log_R0_le, AdversarialBco.Lower.log_x_ripe_ge_K and AdversarialBco.Lower.log_x_ripe_le_K (AdversarialBco/Conj1Lower/BalanceK.lean)"
+    - source: "Proposition 4.12"
+      lean: "AdversarialBco.Lower.Top.gameFacts"
+      module: "AdversarialBco/Conj1Lower/Top.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Top.gameFacts, AdversarialBco.Lower.Top.sum_Df_eq, AdversarialBco.Lower.Top.good_pK (AdversarialBco/Conj1Lower/Top.lean), AdversarialBco.Lower.ripeK_params, AdversarialBco.Lower.R2_ripe_K (AdversarialBco/Conj1Lower/BalanceK.lean), AdversarialBco.Lower.ripeB_params, AdversarialBco.Lower.round_bound (AdversarialBco/Conj1Lower/Balance.lean), with the inputs AdversarialBco.lowerTopInputs (AdversarialBco/Conj1Lower/Main.lean)"
+    - source: "Theorem 4.13"
+      lean: "AdversarialBco.Lower.Top.lowerBody_of_inputs"
+      module: "AdversarialBco/Conj1Lower/Top.lean"
+      status: proved
+      note: "AdversarialBco.Lower.Top.lowerBody_of_inputs (AdversarialBco/Conj1Lower/Top.lean), with the inputs AdversarialBco.lowerTopInputs (AdversarialBco/Conj1Lower/Main.lean), from AdversarialBco.Lower.Top.coupling, AdversarialBco.Lower.Top.exists_good_point, AdversarialBco.Lower.Top.integrable_regretAd_stratOf and AdversarialBco.Lower.ripeK_balance (AdversarialBco/Conj1Lower/BalanceK.lean)"
+    - source: "Lemma B.1"
+      lean: "AdversarialBco.Poly.lemmaR1i"
+      module: "AdversarialBco/Poly/Df2R1Proof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaR1i, lemmaR1ii, lemmaR1iii, lemmaR1iv, lemmaR1v (AdversarialBco/Poly/Df2R1Proof.lean), the statements LemmaR1i to LemmaR1v of AdversarialBco/Poly/Df2R1.lean"
+    - source: "Lemma B.2"
+      lean: "AdversarialBco.Poly.lemmaUBPrime_holds"
+      module: "AdversarialBco/Poly/Df2PlayProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaUBPrime_holds (AdversarialBco/Poly/Df2PlayProof.lean), the statement LemmaUBPrime of AdversarialBco/Poly/Df2.lean"
+    - source: "Proposition B.3"
+      lean: "AdversarialBco.Poly.SIF.df2SIFacts_holds"
+      module: "AdversarialBco/Poly/Df2SIFactsProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2SIFactsProof.lean), the statement Df2SIFacts of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Lemma B.4"
+      lean: "AdversarialBco.Poly.df2EvBudgetsAdV"
+      module: "AdversarialBco/Poly/Df2EvAdV.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2EvBudgetsAdV (AdversarialBco/Poly/Df2EvAdV.lean), on the events EvG, EvY, EvLQ, EvSDF and EvDQ of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Lemma B.5"
+      lean: "AdversarialBco.Poly.lemmaDFI_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaDFI_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaDFI of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma B.6"
+      lean: "AdversarialBco.Poly.lemmaMON_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaMON_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaMON of AdversarialBco/Poly/Df2.lean"
+    - source: "Proposition B.7"
+      lean: "AdversarialBco.Poly.propINC2_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.propINC2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement PropINC2 of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma B.8"
+      lean: "AdversarialBco.Poly.SIF.df2SIFacts_holds"
+      module: "AdversarialBco/Poly/Df2SIFactsProof.lean"
+      status: proved
+      note: "the last two clauses of Df2SIFacts (AdversarialBco/Poly/Df2Layer2.lean), proved in AdversarialBco.Poly.SIF.df2SIFacts_holds (AdversarialBco/Poly/Df2SIFactsProof.lean); the sums in AdversarialBco/Poly/Df2DetSand.lean"
+    - source: "Lemma B.9"
+      lean: "AdversarialBco.Poly.lemmaD2_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaD2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaD2 of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma B.10"
+      lean: "AdversarialBco.Poly.DetHyp.c3_tau"
+      module: "AdversarialBco/Poly/Df2DetRound.lean"
+      status: proved
+      note: "c3_tau and aq (AdversarialBco/Poly/Df2DetRound.lean)"
+    - source: "Lemma B.11"
+      lean: "AdversarialBco.Poly.Layer2.ld_core"
+      module: "AdversarialBco/Poly/Df2DetTools.lean"
+      status: proved
+      note: "ld_core (AdversarialBco/Poly/Df2DetTools.lean); in the epoch ld_sum and trace_sum (AdversarialBco/Poly/Df2DetW1.lean)"
+    - source: "Lemma B.12"
+      lean: "AdversarialBco.Poly.lemmaONS2Core_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaONS2Core_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaONS2Core of AdversarialBco/Poly/Df2.lean"
+    - source: "Lemma B.13"
+      lean: "AdversarialBco.Poly.lemmaW"
+      module: "AdversarialBco/Poly/WrapperProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaW (AdversarialBco/Poly/WrapperProof.lean), the statement LemmaW of AdversarialBco/Poly/Wrapper.lean"
+    - source: "Lemma B.14"
+      lean: "AdversarialBco.Poly.df2RowsHold"
+      module: "AdversarialBco/Poly/Df2RowsProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.df2RowsHold (AdversarialBco/Poly/Df2RowsProof.lean), the statement Df2RowsHold over the structure Df2Rows of AdversarialBco/Poly/Df2Layer2.lean"
+    - source: "Lemma B.15"
+      lean: "AdversarialBco.Poly.Layer2.ib_geo"
+      module: "AdversarialBco/Poly/Df2DetTools.lean"
+      status: proved
+      note: "ib_geo (AdversarialBco/Poly/Df2DetTools.lean)"
+    - source: "Lemma B.16"
+      lean: "AdversarialBco.Poly.DetHyp.ib2_level"
+      module: "AdversarialBco/Poly/Df2DetAcc.lean"
+      status: proved
+      note: "ib2_level and ib2 (AdversarialBco/Poly/Df2DetAcc.lean), grad_le (AdversarialBco/Poly/Df2DetGuard.lean)"
+    - source: "Lemma B.17"
+      lean: "AdversarialBco.Poly.lemmaZCore_holds"
+      module: "AdversarialBco/Poly/Df2DetProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.lemmaZCore_holds and AdversarialBco.Poly.df2RowZ_holds (AdversarialBco/Poly/Df2DetProof.lean), the statements LemmaZCore and Df2RowZ of AdversarialBco/Poly/Df2.lean"
+    - source: "Proposition B.18"
+      lean: "AdversarialBco.Bit.Cpl.df2DetF_holds"
+      module: "AdversarialBco/Bit/ShadowDet.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Cpl.df2DetF_holds (AdversarialBco/Bit/ShadowDet.lean), used on the run record by AdversarialBco.Bit.Cpl.Run.epochOK_of_good (AdversarialBco/Bit/ShadowWDet.lean); from AdversarialBco.Poly.df2LayerOne_holds, lemmaW, SIF.df2SIFacts_holds and df2RowsHold"
+    - source: "Lemma C.1"
+      lean: "AdversarialBco.Poly.LeanAp.fd_exact"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.fd_exact (AdversarialBco/Poly/Df2OracleProof.lean), the case of exact values"
+    - source: "Lemma C.2"
+      lean: "AdversarialBco.Poly.LeanAp.lemmaLINE"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.lemmaLINE (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaLINE of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma C.3"
+      lean: "AdversarialBco.Poly.LeanAp.lemmaSEP"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.lemmaSEP (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaSEP of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma C.4"
+      lean: "AdversarialBco.Poly.LeanAp.lemmaCC"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.lemmaCC (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaCC of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma C.5"
+      lean: "AdversarialBco.Poly.LeanAp.lemmaBALL"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.lemmaBALL (AdversarialBco/Poly/Df2OracleProof.lean), of the statement AdversarialBco.Poly.LemmaBALL of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Proposition C.6"
+      lean: "AdversarialBco.Poly.LeanAp.propELL"
+      module: "AdversarialBco/Poly/Df2OracleProof.lean"
+      status: proved
+      note: "AdversarialBco.Poly.LeanAp.propELL and AdversarialBco.Poly.LeanAp.propELLcap (AdversarialBco/Poly/Df2OracleProof.lean), of the statements AdversarialBco.Poly.PropELL and PropELLcap of AdversarialBco/Poly/Df2Oracle.lean"
+    - source: "Lemma D.1"
       lean: "AdversarialBco.Poly.lemmaL"
       module: "AdversarialBco/Poly/PosGaussProof.lean"
       status: proved
       note: "AdversarialBco.Poly.lemmaL, lemmaLOfMin and lemmaLRadii (AdversarialBco/Poly/PosGaussProof.lean), the statements LemmaL, LemmaLOfMin and LemmaLRadii of AdversarialBco/Poly/PosGauss.lean; the symmetric minimiser: lemmaLSym (AdversarialBco/Poly/PgLemmasProof.lean)"
-    - source: "Proposition E.2"
+    - source: "Proposition D.2"
       lean: "AdversarialBco.Poly.propCaBound"
       module: "AdversarialBco/Poly/PosGaussProof.lean"
       status: proved
       note: "AdversarialBco.Poly.propCaBound, propCb and propCc (AdversarialBco/Poly/PosGaussProof.lean), the statements PropCa, PropCaBound, PropCb and PropCc of AdversarialBco/Poly/PosGauss.lean"
-    - source: "Theorem E.3"
+    - source: "Theorem D.3"
       lean: "AdversarialBco.Bit.pgGood_of_nearMin_gen"
       module: "AdversarialBco/Bit/NearMin.lean"
       status: proved
       note: "AdversarialBco.Bit.pgGood_of_nearMin_gen, with pgCorA_gen and pgSound_good_gen (AdversarialBco/Bit/NearMin.lean), on propAi, propAii, propAiii, d1Bounds, normMeanLower (AdversarialBco/Poly/PgLemmasProof.lean) and propCaBound, propCb, propCc"
-    - source: "Lemma E.4"
+    - source: "Lemma D.4"
       lean: "AdversarialBco.Poly.pgMin_exists"
       module: "AdversarialBco/Poly/PgProcProof.lean"
       status: proved
       note: "AdversarialBco.Poly.pgMin_exists (AdversarialBco/Poly/PgProcProof.lean), with lemmaLSym (AdversarialBco/Poly/PgLemmasProof.lean)"
-    - source: "Lemma E.5"
+    - source: "Lemma D.5"
       lean: "AdversarialBco.Bit.triCore"
       module: "AdversarialBco/Bit/TriCore.lean"
       status: proved
       note: "the box and its conditions in AdversarialBco.Bit.triCore (AdversarialBco/Bit/TriCore.lean)"
-    - source: "Lemma E.6"
+    - source: "Lemma D.6"
       lean: "AdversarialBco.Bit.tri_subgrad"
       module: "AdversarialBco/Bit/TriLeaves.lean"
       status: proved
       note: "AdversarialBco.Bit.tri_subgrad, tri_V_bound and triU_spec (AdversarialBco/Bit/TriLeaves.lean)"
-    - source: "Lemma E.7"
+    - source: "Lemma D.7"
       lean: "AdversarialBco.Bit.hpSgd"
       module: "AdversarialBco/Bit/HpSgd.lean"
       status: proved
       note: "AdversarialBco.Bit.hpSgd (AdversarialBco/Bit/HpSgd.lean), from sgdPathwise (AdversarialBco/Poly/PgLemmasProof.lean) and azumaHoeffding (AdversarialBco/Poly/Df2AzumaProof.lean)"
-    - source: "Lemma E.8"
+    - source: "Lemma D.8"
       lean: "AdversarialBco.Bit.tri_par_box"
       module: "AdversarialBco/Bit/TriSamp.lean"
       status: proved
       note: "AdversarialBco.Bit.tri_par_box, tri_par_Gu and tri_par_row (AdversarialBco/Bit/TriSamp.lean), with pg_par_exists and tri_elo_le"
-    - source: "Theorem E.9"
+    - source: "Theorem D.9"
       lean: "AdversarialBco.Bit.triCoreRows"
       module: "AdversarialBco/Bit/TriStage.lean"
       status: proved
       note: "AdversarialBco.Bit.triCoreRows (AdversarialBco/Bit/TriStage.lean), from triCore (AdversarialBco/Bit/TriCore.lean)"
-    - source: "Lemma F.1"
+    - source: "Lemma E.1"
       lean: "AdversarialBco.Bit.pb_abs_posDef"
       module: "AdversarialBco/Bit/ProjBit.lean"
       status: proved
       note: "AdversarialBco.Bit.pb_abs_posDef, pb_abs_incl and pb_abs_det (AdversarialBco/Bit/ProjBit.lean), in the step AdversarialBco.Bit.ApQ.ellUpd_step (AdversarialBco/Bit/ApQ/Step.lean)"
-    - source: "Lemma F.2"
+    - source: "Lemma E.2"
       lean: "AdversarialBco.Bit.pb_sq_main"
       module: "AdversarialBco/Bit/ProjBit.lean"
       status: proved
       note: "AdversarialBco.Bit.pb_sq_main (AdversarialBco/Bit/ProjBit.lean), with AdversarialBco.Bit.ApQ.tQ_eq in the step ellUpd_step (AdversarialBco/Bit/ApQ/Step.lean)"
-    - source: "Lemma F.3"
+    - source: "Lemma E.3"
       lean: "AdversarialBco.Bit.pb_cap_general"
       module: "AdversarialBco/Bit/ProjBit.lean"
       status: proved
       note: "AdversarialBco.Bit.pb_cap_general and pb_cap_lam (AdversarialBco/Bit/ProjBit.lean), at the caps of the procedures AdversarialBco.Bit.ApQ.cap_F (AdversarialBco/Bit/ApQ/FrameB.lean) and cap_gam (AdversarialBco/Bit/ApQ/Ell.lean)"
-    - source: "Theorem F.4"
+    - source: "Theorem E.4"
       lean: "AdversarialBco.Bit.ApQ.rowPass_iff"
       module: "AdversarialBco/Bit/ApQ/FrameB.lean"
       status: proved
       note: "(a): AdversarialBco.Bit.ApQ.rowPass_iff (AdversarialBco/Bit/ApQ/FrameB.lean) on the procedure frameQ of AdversarialBco/Bit/RoutQ.lean; (b): AdversarialBco.Bit.ApQ.frEll_spec and frLoop_main (AdversarialBco/Bit/ApQ/FrameB.lean) with ellUpd_step (AdversarialBco/Bit/ApQ/Step.lean)"
-    - source: "Lemma H.1"
+    - source: "Lemma E.5"
+      lean: "AdversarialBco.Bit.PieceA.encOK"
+      module: "AdversarialBco/Bit/PieceA/BudA.lean"
+      status: proved
+      note: "AdversarialBco.Bit.PieceA.encOK and encR_ok (AdversarialBco/Bit/PieceA/BudA.lean, AdversarialBco/Bit/PieceA/Enc.lean), the relative errors EncR.OK.eps_rel, lam_rel, eta_rel, rho_rel, kapc_rel, nu_rel, R_rel, sb_rel, W_rel, A0_rel, B0_rel (AdversarialBco/Bit/PieceA/EncMaj.lean)"
+    - source: "Lemma E.6"
+      lean: "AdversarialBco.Bit.Transfer.BLM.hzero_of"
+      module: "AdversarialBco/Bit/Transfer/XBLMag.lean"
+      status: proved
+      note: "AdversarialBco.Bit.Transfer.BLM.hzero_of (AdversarialBco/Bit/Transfer/XBLMag.lean), AdversarialBco.Bit.RQ.polytope_rows (AdversarialBco/Bit/BLPosQ.lean), AdversarialBco.Bit.BLP.rows_iff, row_pos, beta_pos_of_good, gauge_rows and gaugeQ_eq_of_good (AdversarialBco/Bit/BLRows.lean)"
+    - source: "Algorithm E.7"
+      lean: "AdversarialBco.Bit.Transfer.BLM.roundBL_of"
+      module: "AdversarialBco/Bit/Transfer/XBLRoundP.lean"
+      status: proved
+      note: "the command of a round: AdversarialBco.Bit.Transfer.BLM.roundBL_of : TailBL -> MagBL -> ExpBL -> RoundBL (AdversarialBco/Bit/Transfer/XBLRoundP.lean; RoundBL of AdversarialBco/Bit/Transfer/XBLRound.lean), with AdversarialBco.Bit.Transfer.BLM.tailBL_of (AdversarialBco/Bit/Transfer/XBLTailRe.lean) at callBL, AdversarialBco.Bit.Transfer.BLM.DataM.dataT (AdversarialBco/Bit/Transfer/XBLDataTF.lean), AdversarialBco.Bit.Transfer.BLM.DataM.dataL (AdversarialBco/Bit/Transfer/XBLDataLF.lean), AdversarialBco.Bit.Transfer.BLM.commitBL (AdversarialBco/Bit/Transfer/XBLCommit.lean), AdversarialBco.Bit.Transfer.BLM.fireBL (AdversarialBco/Bit/Transfer/XBLFire.lean) and AdversarialBco.Bit.Transfer.BLM.expBL"
+    - source: "Lemma E.8"
       lean: "AdversarialBco.Bit.PieceB.bitsB"
       module: "AdversarialBco/Bit/PieceB.lean"
       status: proved
       note: "AdversarialBco.Bit.PieceB.bitsB with ebits_compl_subset and AdversarialBco.Bit.PieceB.coins_le (AdversarialBco/Bit/PieceB.lean), AdversarialBco.Bit.boxMuller_pair (AdversarialBco/Bit/BoxMuller.lean), gsSpec_err (AdversarialBco/Bit/GsSpec.lean); the two error bounds: AdversarialBco.Bit.PieceA.Reg.OK.ezt_exi (AdversarialBco/Bit/PieceA/Maj.lean)"
-    - source: "Lemma H.2"
+    - source: "Lemma E.9"
       lean: "AdversarialBco.Bit.Cpl.tau_or_fire"
       module: "AdversarialBco/Bit/ShadowHor.lean"
       status: proved
       note: "AdversarialBco.Bit.Cpl.tau_or_fire for (a); tau_mono, evG_mono, evY_mono, evLQ_mono, evSDF_mono, evDQ_mono and detBase_mono for (b); hor_step for (c) (AdversarialBco/Bit/ShadowHor.lean), the facts of a round: AdversarialBco.Poly.DetHyp.mode_run, not_gdA, not_gdT, not_gdZ, not_gdW, accT_le, Pn_le, grad_le, ib2_level, ib2, accM, cont_tau"
-    - source: "Lemma H.3"
+    - source: "Lemma E.10"
       lean: "AdversarialBco.Bit.BLP.RC.track_step"
       module: "AdversarialBco/Bit/BLRoundBasic.lean"
       status: proved
       note: "AdversarialBco.Bit.BLP.RC.track_step and track_norm for one round, hTr_step for the iteration (AdversarialBco/Bit/BLRoundBasic.lean), applied to the pair of BL in RC.RCHyp.trackA and RC.RCHyp.trackB (AdversarialBco/Bit/BLRoundC1.lean)"
-    - source: "Lemma H.4"
+    - source: "Lemma E.11"
       lean: "AdversarialBco.Bit.BLP.RC.selT_spec"
       module: "AdversarialBco/Bit/BLRoundC2Alg.lean"
       status: proved
       note: "AdversarialBco.Bit.BLP.RC.selT_spec (AdversarialBco/Bit/BLRoundC2Alg.lean) for the selection AdversarialBco.Bit.BLP.selT (AdversarialBco/Bit/BLRun.lean), AdversarialBco.Bit.BLP.selT_meas (AdversarialBco/Bit/BLRecMeas.lean); at the test of BL: RC.RCHyp.sel (AdversarialBco/Bit/BLRoundC2.lean)"
-    - source: "Lemma H.5"
+    - source: "Lemma E.12"
       lean: "AdversarialBco.Bit.BLP.RC.gap_map"
       module: "AdversarialBco/Bit/BLRoundC2Alg.lean"
       status: proved
       note: "AdversarialBco.Bit.BLP.RC.gap_map and gap_ball (AdversarialBco/Bit/BLRoundC2Alg.lean); at the regions of BL: RC.RCHyp.gapT and RC.RCHyp.gapM (AdversarialBco/Bit/BLRoundC2.lean)"
-    - source: "Lemma H.6"
+    - source: "Lemma E.13"
       lean: "AdversarialBco.Bit.BLP.RC.RCHyp.mcall_eq"
       module: "AdversarialBco/Bit/BLRoundC2.lean"
       status: proved
       note: "inside AdversarialBco.Bit.BLP.RC.RCHyp.mcall_eq (AdversarialBco/Bit/BLRoundC2.lean), with ellF_lip and ellF_err (AdversarialBco/Bit/BLRoundC2Alg.lean)"
-    - source: "Lemma H.7"
+    - source: "Lemma E.14"
       lean: "AdversarialBco.Bit.BLP.RC.c1"
       module: "AdversarialBco/Bit/BLRoundC1.lean"
       status: proved
       note: "E1 to E16 and E18: AdversarialBco.Bit.BLP.RC.c1 (AdversarialBco/Bit/BLRoundC1.lean) and AdversarialBco.Bit.BLP.RC.c2 (AdversarialBco/Bit/BLRoundC2.lean), giving RC.roundC; E17: round_bound (AdversarialBco/Bit/BLEngine.lean) with RC.playC (AdversarialBco/Bit/BLRoundPlay.lean), pt_eps, ext_eps, mpar_le and tv_le (AdversarialBco/Bit/BLEngLeaves.lean); the constants are those of the namespace AdversarialBco.Bit.BLP.Bud (AdversarialBco/Bit/BLRun.lean)"
-    - source: "Theorem H.8"
+    - source: "Theorem E.15"
       lean: "AdversarialBco.Bit.PieceA.budA"
       module: "AdversarialBco/Bit/PieceA/BudA.lean"
       status: proved
