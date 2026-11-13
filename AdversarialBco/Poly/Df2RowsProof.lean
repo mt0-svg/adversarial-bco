@@ -15,7 +15,7 @@ public import AdversarialBco.Poly.Df2Layer2
 `df2RowsHold : Df2RowsHold`. `RowHyp p d n` lists what the rows read of `p = df2oPar d n δ` in the regime
 `ε ≤ 1/2`: the closed forms of the parameters, `L ≥ 504`, the condition `x ≥ 14 + 3 log(d n)` on
 `x = log(1/δ_e)`, `δ_e (d n)³ n ≤ e^{-14}`, and the regime in the form `29000 d^{3/2} L⁵ ≤ n^{1/2}`
-(Lemma D.15 of the paper). Each row is then a lemma on `RowHyp`; the rows
+(the paper's rows lemma of the epoch). Each row is then a lemma on `RowHyp`; the rows
 main, margin, negative, bonus and ball follow from bounds of their terms against `ρ` (the trace term `d L/λ` is
 `ρ/2`, the others are below `ρ/300`).
 -/

@@ -13,9 +13,8 @@ public import AdversarialBco.Poly.Df2Azuma
 /-!
 # DF2, the event Azuma: proofs
 
-Proves the four statements of `Df2Azuma.lean`: `azumaHoeffding : AzumaHoeffding`,
-`azumaHoeffdingAbs : AzumaHoeffdingAbs`, `azumaMartingale : AzumaMartingale` (the source's thm:azuma) and
-`df2AzumaEvent : Df2AzumaEvent` (the event Azuma of DF2 at the level `δ/7`), on any probability space.
+Proves the two statements of `Df2Azuma.lean`: `azumaHoeffding : AzumaHoeffding` and `df2AzumaEvent : Df2AzumaEvent`
+(the event Azuma of DF2 at the level `δ/7`), on any probability space.
 
 Route. Mathlib's Azuma-Hoeffding (`measure_sum_ge_le_of_hasCondSubgaussianMGF`) needs a standard Borel space and the
 conditional sub-Gaussian property through the conditional expectation kernel; the statements here take any `Ω`, so the
@@ -27,7 +26,7 @@ proof goes through `condExp` directly:
 * `integral_exp_azS_succ_le`, `integral_exp_azS_le`: the tower step and its induction for
   `S_n = Σ_{t<n} (Z_t - E[Z_t | ℱ_t])`; `hasSubgaussianMGF_azS`, then Mathlib's Chernoff bound
   (`HasSubgaussianMGF.measure_ge_le`) in `azuma_tail`;
-* the two-sided form by `-Z`, the martingale form with the increments `M_{t+1} - M_t`, the event of DF2 with `[0, 1]`.
+* the event of DF2, for `Z_t ∈ [0, 1]` (`df2AzumaEvent_of`).
 -/
 open MeasureTheory ProbabilityTheory
 
@@ -178,31 +177,6 @@ theorem AdversarialBco.Poly.Azuma.azuma_event_arith (n : ℕ) (δ : ℝ) (hn : 0
       have h_pow : (δ / 7) ^ (4 : ℕ) ≤ (δ / 7) ^ (1 : ℕ) :=
         pow_le_pow_of_le_one hxpos hxle1 (by omega)
       simpa [pow_one] using h_pow
-
-/-- The arithmetic of the martingale form: `exp (-2 ε²/(4 C)) = δ` at `ε = (2 C log(1/δ))^{1/2}`. -/
-theorem AdversarialBco.Poly.Azuma.azuma_mart_arith (C δ : ℝ) (hC : 0 < C) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
-    Real.exp (-2 * Real.sqrt (2 * C * Real.log (1 / δ)) ^ 2 / (4 * C)) ≤ δ := by
-  have hδinv_ge_one : 1 ≤ 1 / δ :=
-    one_le_one_div hδ hδ1
-  have hL_nonneg : 0 ≤ Real.log (1 / δ) :=
-    Real.log_nonneg hδinv_ge_one
-  have h_sq_sqrt : Real.sqrt (2 * C * Real.log (1 / δ)) ^ 2 = 2 * C * Real.log (1 / δ) := by
-    apply Real.sq_sqrt
-    nlinarith
-  have h_log_eq : Real.log (1 / δ) = -Real.log δ := by
-    rw [Real.log_div (by norm_num : (1 : ℝ) ≠ 0) hδ.ne.symm, Real.log_one]
-    simp
-  have h_eq : Real.exp (-2 * Real.sqrt (2 * C * Real.log (1 / δ)) ^ 2 / (4 * C)) = δ := by
-    calc
-      Real.exp (-2 * Real.sqrt (2 * C * Real.log (1 / δ)) ^ 2 / (4 * C))
-          = Real.exp (-2 * (2 * C * Real.log (1 / δ)) / (4 * C)) := by rw [h_sq_sqrt]
-      _ = Real.exp (-Real.log (1 / δ)) := by
-        field_simp [hC.ne.symm]
-        ring_nf
-      _ = Real.exp (-(-Real.log δ)) := by rw [h_log_eq]
-      _ = Real.exp (Real.log δ) := by rw [neg_neg]
-      _ = δ := Real.exp_log hδ
-  rw [h_eq]
 
 /-- The conditional expectation of a variable with values in `[a, b]` a.e. has values in `[a, b]` a.e. -/
 theorem AdversarialBco.Poly.Azuma.condExp_mem_Icc {Ω : Type*} {m m0 : MeasurableSpace Ω} (μ : Measure Ω)
@@ -505,161 +479,6 @@ theorem AdversarialBco.Poly.Azuma.azuma_tail {Ω : Type*} {m0 : MeasurableSpace 
   congr 1
   ring
 
-/-- The two-sided form from the upper tail, applied to `Z` and `-Z`. -/
-theorem AdversarialBco.Poly.azumaHoeffdingAbs_of (h : AdversarialBco.Poly.AzumaHoeffding.{u}) :
-    AdversarialBco.Poly.AzumaHoeffdingAbs.{u} := by
-  intro Ω m0 μ _ ℱ Z a b hZm hZ n ε hε
-  set S := fun ω => ∑ t ∈ Finset.range n, (Z t ω - μ[Z t | ℱ t] ω) with hS
-  set C := ∑ t ∈ Finset.range n, (b t - a t) ^ 2 with hC
-  -- apply h to Z, a, b (upper tail)
-  have hS_upper : μ {ω | ε ≤ S ω} ≤ ENNReal.ofReal (Real.exp (-2 * ε ^ 2 / C)) := by
-    have h_apply := h μ ℱ Z a b hZm hZ n ε hε
-    simpa [hS, hC] using h_apply
-  -- define Z' = -Z
-  set Z' := fun t ω => -Z t ω with hZ'
-  have hZm' : ∀ t, StronglyMeasurable[ℱ (t + 1)] (Z' t) := by
-    intro t
-    have h_eq : Z' t = -Z t := by
-      ext ω; simp [Z']
-    simpa [h_eq] using (hZm t).neg
-  have hZ' : ∀ t, ∀ᵐ ω ∂μ, Z' t ω ∈ Set.Icc (-b t) (-a t) := by
-    intro t
-    filter_upwards [hZ t] with ω hω
-    rcases hω with ⟨hlo, hhi⟩
-    constructor <;> linarith
-  have h_cond_exp : ∀ t, μ[Z' t | ℱ t] =ᵐ[μ] -μ[Z t | ℱ t] := by
-    intro t
-    have h_eq : Z' t = -Z t := by
-      ext ω; simp [Z']
-    simpa [h_eq] using MeasureTheory.condExp_neg (Z t) (ℱ t)
-  -- combine the a.e. equalities using ae_all_iff
-  have h_all : ∀ᵐ ω ∂μ, ∀ t, μ[Z' t | ℱ t] ω = -μ[Z t | ℱ t] ω := by
-    rw [MeasureTheory.ae_all_iff]
-    intro t
-    exact h_cond_exp t
-  have h_S_eq : (fun ω => ∑ t ∈ Finset.range n, (Z' t ω - μ[Z' t | ℱ t] ω)) =ᵐ[μ]
-      (fun ω => -S ω) := by
-    filter_upwards [h_all] with ω hω
-    calc
-      ∑ t ∈ Finset.range n, (Z' t ω - μ[Z' t | ℱ t] ω)
-          = ∑ t ∈ Finset.range n, (-Z t ω - μ[Z' t | ℱ t] ω) := by simp [Z']
-      _ = ∑ t ∈ Finset.range n, (-Z t ω - (-μ[Z t | ℱ t] ω)) := by
-        refine Finset.sum_congr rfl (fun t ht => ?_)
-        rw [hω t]
-      _ = ∑ t ∈ Finset.range n, (-(Z t ω - μ[Z t | ℱ t] ω)) := by
-        refine Finset.sum_congr rfl (fun t ht => ?_)
-        ring_nf
-      _ = -∑ t ∈ Finset.range n, (Z t ω - μ[Z t | ℱ t] ω) := by
-        rw [Finset.sum_neg_distrib]
-      _ = -S ω := rfl
-  -- apply h to Z', -b, -a (upper tail for -Z)
-  have h_S'_upper : μ {ω | ε ≤ -S ω} ≤ ENNReal.ofReal (Real.exp (-2 * ε ^ 2 / C)) := by
-    have h_apply := h μ ℱ Z' (-b) (-a) hZm' hZ' n ε hε
-    have h_sq_eq : ∀ t, ((-a) t - (-b) t) ^ 2 = (b t - a t) ^ 2 := by
-      intro t
-      have h : (-a) t - (-b) t = b t - a t := by
-        simp [sub_eq_add_neg, add_comm]
-      rw [h]
-    have h_denom : ∑ t ∈ Finset.range n, ((-a) t - (-b) t) ^ 2 = C := by
-      calc
-        ∑ t ∈ Finset.range n, ((-a) t - (-b) t) ^ 2
-            = ∑ t ∈ Finset.range n, (b t - a t) ^ 2 := by
-          refine Finset.sum_congr rfl (fun t ht => ?_)
-          rw [h_sq_eq t]
-        _ = C := by rw [hC]
-    have h_set_eq : {ω | ε ≤ ∑ t ∈ Finset.range n, (Z' t ω - μ[Z' t | ℱ t] ω)} =ᵐ[μ]
-        {ω | ε ≤ -S ω} := by
-      filter_upwards [h_S_eq] with ω hω
-      simp [hω]
-    have h_measure_eq : μ {ω | ε ≤ ∑ t ∈ Finset.range n, (Z' t ω - μ[Z' t | ℱ t] ω)} =
-        μ {ω | ε ≤ -S ω} := by
-      rw [MeasureTheory.measure_congr h_set_eq]
-    rw [h_measure_eq, h_denom] at h_apply
-    exact h_apply
-  -- combine: {ε ≤ |S|} = {ε ≤ S} ∪ {ε ≤ -S}
-  have h_union : {ω | ε ≤ |S ω|} = {ω | ε ≤ S ω} ∪ {ω | ε ≤ -S ω} := by
-    ext ω; simp [le_abs, Set.mem_union]
-  rw [h_union]
-  calc
-    μ ({ω | ε ≤ S ω} ∪ {ω | ε ≤ -S ω}) ≤ μ {ω | ε ≤ S ω} + μ {ω | ε ≤ -S ω} :=
-      MeasureTheory.measure_union_le _ _
-    _ ≤ ENNReal.ofReal (Real.exp (-2 * ε ^ 2 / C)) + ENNReal.ofReal (Real.exp (-2 * ε ^ 2 / C)) :=
-      add_le_add hS_upper h_S'_upper
-    _ = ENNReal.ofReal (Real.exp (-2 * ε ^ 2 / C) + Real.exp (-2 * ε ^ 2 / C)) := by
-      rw [ENNReal.ofReal_add (Real.exp_nonneg _) (Real.exp_nonneg _)]
-    _ = ENNReal.ofReal (2 * Real.exp (-2 * ε ^ 2 / C)) := by ring_nf
-
-/-- The source's thm:azuma from the upper tail, applied to the increments `M_{t+1} - M_t`. -/
-theorem AdversarialBco.Poly.azumaMartingale_of (h : AdversarialBco.Poly.AzumaHoeffding.{u}) :
-    AdversarialBco.Poly.AzumaMartingale.{u} := by
-  intro Ω m0 μ _ ℱ M c hM hc n δ hδ
-  set C := ∑ t ∈ Finset.range n, c t ^ 2 with hCdef
-  set ε := Real.sqrt (2 * C * Real.log (1 / δ)) with hε
-  rcases le_or_gt 1 δ with hδ1 | hδ1
-  · exact prob_le_one.trans (ENNReal.one_le_ofReal.2 hδ1)
-  set Z : ℕ → Ω → ℝ := fun t ω => M (t + 1) ω - M t ω with hZ
-  have hZm : ∀ t, StronglyMeasurable[ℱ (t + 1)] (Z t) := fun t =>
-    (hM.1 (t + 1)).sub ((hM.1 t).mono (ℱ.mono (Nat.le_succ t)))
-  have hZI : ∀ t, ∀ᵐ ω ∂μ, Z t ω ∈ Set.Icc (-c t) (c t) := fun t => by
-    filter_upwards [hc t] with ω hω
-    exact abs_le.1 hω
-  have hcond : ∀ t, μ[Z t | ℱ t] =ᵐ[μ] 0 := by
-    intro t
-    have h1 := condExp_sub (hM.integrable (t + 1)) (hM.integrable t) (ℱ t) (μ := μ)
-    have h2 := hM.2 t (t + 1) (Nat.le_succ t)
-    have h3 : μ[M t | ℱ t] = M t := condExp_of_stronglyMeasurable (ℱ.le t) (hM.1 t) (hM.integrable t)
-    filter_upwards [h1, h2] with ω h1 h2
-    change μ[M (t + 1) - M t | ℱ t] ω = 0
-    rw [h1, Pi.sub_apply, h2, h3, sub_self]
-  have hsum : ∀ᵐ ω ∂μ, ∑ t ∈ Finset.range n, (Z t ω - μ[Z t | ℱ t] ω) = M n ω - M 0 ω := by
-    have hall : ∀ᵐ ω ∂μ, ∀ t, μ[Z t | ℱ t] ω = 0 := ae_all_iff.2 hcond
-    filter_upwards [hall] with ω hω
-    calc ∑ t ∈ Finset.range n, (Z t ω - μ[Z t | ℱ t] ω) = ∑ t ∈ Finset.range n, (M (t + 1) ω - M t ω) :=
-          Finset.sum_congr rfl fun t _ => by rw [hω t, sub_zero]
-      _ = M n ω - M 0 ω := Finset.sum_range_sub (fun t => M t ω) n
-  rcases (show 0 ≤ C from Finset.sum_nonneg fun t _ => sq_nonneg (c t)).lt_or_eq with hC | hC
-  · have hsub : {ω | M 0 ω + ε < M n ω} ≤ᵐ[μ]
-        {ω | ε ≤ ∑ t ∈ Finset.range n, (Z t ω - μ[Z t | ℱ t] ω)} := by
-      filter_upwards [hsum] with ω hω hmem
-      have hlt : M 0 ω + ε < M n ω := hmem
-      show ε ≤ _
-      rw [hω]
-      linarith
-    refine (measure_mono_ae hsub).trans ((h μ ℱ Z (fun t => -c t) c hZm hZI n ε (Real.sqrt_nonneg _)).trans ?_)
-    apply ENNReal.ofReal_le_ofReal
-    have h4 : ∑ t ∈ Finset.range n, (c t - -c t) ^ 2 = 4 * C := by
-      rw [hCdef, Finset.mul_sum]
-      exact Finset.sum_congr rfl fun t _ => by ring
-    rw [h4]
-    exact AdversarialBco.Poly.Azuma.azuma_mart_arith C δ hC hδ hδ1.le
-  · have hc0 : ∀ t ∈ Finset.range n, c t = 0 := by
-      intro t ht
-      have := (Finset.sum_eq_zero_iff_of_nonneg fun t _ => sq_nonneg (c t)).1 hC.symm t ht
-      exact pow_eq_zero_iff two_ne_zero |>.1 this
-    have hZ0 : ∀ᵐ ω ∂μ, ∀ t, t < n → Z t ω = 0 := by
-      rw [ae_all_iff]
-      intro t
-      by_cases ht : t < n
-      · filter_upwards [hZI t] with ω hω _
-        rw [hc0 t (Finset.mem_range.2 ht)] at hω
-        exact le_antisymm (by linarith [hω.2]) (by linarith [hω.1])
-      · exact ae_of_all _ fun ω h => absurd h ht
-    have hMn : ∀ᵐ ω ∂μ, M n ω = M 0 ω := by
-      filter_upwards [hZ0] with ω hω
-      have h1 := Finset.sum_range_sub (fun t => M t ω) n
-      have h0 : ∑ t ∈ Finset.range n, (M (t + 1) ω - M t ω) = 0 :=
-        Finset.sum_eq_zero fun t ht => hω t (Finset.mem_range.1 ht)
-      linarith
-    have hε0 : ε = 0 := by rw [hε, ← hC]; simp
-    calc μ {ω | M 0 ω + ε < M n ω} ≤ μ ∅ := by
-          refine measure_mono_ae ?_
-          filter_upwards [hMn] with ω hω hmem
-          have hlt : M 0 ω + ε < M n ω := hmem
-          rw [hε0, hω, add_zero] at hlt
-          exact (lt_irrefl _ hlt).elim
-      _ = 0 := measure_empty
-      _ ≤ ENNReal.ofReal δ := zero_le
-
 /-- The event Azuma of DF2 from the upper tail, with `[a_t, b_t] = [0, 1]`. -/
 theorem AdversarialBco.Poly.df2AzumaEvent_of (h : AdversarialBco.Poly.AzumaHoeffding.{u}) :
     AdversarialBco.Poly.Df2AzumaEvent.{u} := by
@@ -714,14 +533,6 @@ theorem AdversarialBco.Poly.df2AzumaEvent_of (h : AdversarialBco.Poly.AzumaHoeff
 theorem AdversarialBco.Poly.azumaHoeffding : AdversarialBco.Poly.AzumaHoeffding.{u} := by
   intro Ω m0 μ _ ℱ Z a b hZm hZ n ε hε
   exact AdversarialBco.Poly.Azuma.azuma_tail μ ℱ Z a b hZm hZ n ε hε
-
-/-- Azuma-Hoeffding, two-sided. -/
-theorem AdversarialBco.Poly.azumaHoeffdingAbs : AdversarialBco.Poly.AzumaHoeffdingAbs.{u} :=
-  AdversarialBco.Poly.azumaHoeffdingAbs_of AdversarialBco.Poly.azumaHoeffding
-
-/-- The source's thm:azuma. -/
-theorem AdversarialBco.Poly.azumaMartingale : AdversarialBco.Poly.AzumaMartingale.{u} :=
-  AdversarialBco.Poly.azumaMartingale_of AdversarialBco.Poly.azumaHoeffding
 
 /-- The event Azuma of DF2 at the level `δ/7`. -/
 theorem AdversarialBco.Poly.df2AzumaEvent : AdversarialBco.Poly.Df2AzumaEvent.{u} :=

@@ -10,25 +10,35 @@ public import AdversarialBco.Conj1Lower.CellsRound
 public import AdversarialBco.Conj1Lower.Geom
 public import AdversarialBco.Conj1Lower.Sanity
 
+public import AdversarialBco.Conj1Lower.BalanceK
+
 @[expose] public section
 
 /-!
-# The game and the top of the lower bound
+# The game and the top of the lower bound, on a body between two balls
 
-Theorem 1.4 from Proposition 9.11 (Section 9 of the paper), composed from the other modules:
-`TheoremConj1Lower` (StatementConj1Lower.lean) from the hypotheses `Inputs`, the statements used from Moments.lean,
-Ledger.lean and Info.lean, each a copy of its statement there; Main.lean discharges every field of `Inputs` with those
-theorems (`lowerTopInputs`). The other modules (Bayes, BayesRound, Cells, CellMeas, CellsRound, Dent, Frame, Geom,
-Balance, RuleS, Sanity) are used directly.
+The paper's lower bound on a body between two balls (the proof of the lower bound on a polytope), composed from the
+other modules, on a convex body
+`K` with `B(0, 1/2) ⊆ K ⊆ B(0, R0)`, `1 ≤ R0 ≤ d`: `lowerBody_of_inputs` from the hypotheses `Inputs`, the statements
+used from Moments.lean, Ledger.lean and Info.lean, each a copy of its statement there; Main.lean discharges every field
+of `Inputs` with those theorems (`lowerTopInputs`). `TheoremConj1LowerPoly` (StatementConj1LowerPoly.lean) is the
+instance of the cube (AdversarialBco/Conj1LowerPoly/Main.lean). The other modules (Bayes, BayesRound, Cells, CellMeas,
+CellsRound, Dent, Frame, Geom, Balance, BalanceK, RuleS, Sanity) are used directly.
 
-* Parameters (`pB`): the strategy `S'(g, k, L, σ)` with `σ = L = sigB n`, `k = kRipe d`, `g = gRipe d n σ` and the
-  offset `b = 1/4`; the prior `prior d (1/2)`; the clamp `clampZ ℓ` at `ℓ = (6 ln n)^{1/2}`, where `σ ℓ = 1/8`.
-* Lemma 9.4 (`stratOf_mem`): the deterministic strategy of a tip and a clamped noise sequence is in `StratsLip`.
-* The regret identity (`regretAd_stratOf`): against it, the regret is the sum of the dents at the tip (`regG`).
+* Parameters (`pK`): the strategy `S'(g, k, L_K, σ)` with `σ = sigB n`, `L_K = σ/R0`, `k = kRipe d`,
+  `g = gRipe d n σ` and the offset `b = 1/4`; the prior `prior d (1/2)`; the clamp `clampZ ℓ` at
+  `ℓ = (6 ln n)^{1/2}`, where `σ ℓ = 1/8`. The plays of the round and game lemmas are in `B(0, R0)`, where the dent is
+  at most `L_K (R0 + 1/2) + g` (`dentS_le`, the range of `Good`).
+* The legality lemma (`stratOf_mem`): the deterministic strategy of a tip and a clamped noise sequence is in
+  `StratsLip K`.
+* The regret identity (`regretAd_stratOf`): against it, the regret over `K` is the sum of the dents at the tip
+  (`regG`), the tip in `B(0, 1/2) ⊆ K`.
 * The coupling (S6) (`coupling`): clamping the noise costs at most `1/n` in mean.
-* The game (`gameFacts`): `GameFacts` (Balance.lean) at the parameters of Proposition 9.11, from the per-round facts
+* The game (`gameFacts`): `GameFacts` (Balance.lean) at the parameters of the lower bound on a body between two balls,
+  from the per-round facts
   (`roundFacts_at`) integrated over the live event of each round, the payment and the count.
-* The derandomisation (`exists_good_point`) and the composition (`theoremConj1Lower_of_inputs`).
+* The derandomisation (`exists_good_point`), the integrability of the regret from the identity
+  (`integrable_regretAd_stratOf`), and the composition (`lowerBody_of_inputs`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -77,7 +87,7 @@ structure Inputs : Prop where
           (R.ans (post (prior d r₀) R sc t (hist (prior d r₀) R sc pol t s))
             (play pol t s.2.2 (hist (prior d r₀) R sc pol t s))) ∂gameLaw (prior d r₀) μ ≤
         ledgerBudget d r₀ w
-  /-- Info.lean, Lemma 9.6 with the channel bound (S1). -/
+  /-- Info.lean, the chain-rule lemma with the channel bound (S1). -/
   infoJ_chain : ∀ {d : ℕ} (π : Measure (E d)) [IsProbabilityMeasure π] {c : E d → Option Cell}, Measurable c →
     ∀ {s : E d → ℝ}, Measurable s → ∀ {S₀ : ℝ}, (∀ θ, |s θ| ≤ S₀) → ∀ {sc : ℝ}, sc ≠ 0 →
     ∀ (ĉ : Option Cell → ℝ),
@@ -92,7 +102,7 @@ structure Inputs : Prop where
     (∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2) → ∀ {S₀ : ℝ},
     (∀ t < n, ∀ h θ ω, |R.sig (post π0 R sc t h) (play pol t ω h) θ| ≤ S₀) → ∀ {t : ℕ}, t < n →
     Integrable (infoRound π0 R sc pol t) (gameLaw π0 μ)
-  /-- Info.lean, Lemma 9.6 and Lemma 9.9 (b) over the game. -/
+  /-- Info.lean, the chain-rule lemma and the count lemma (b) over the game. -/
   count_game : ∀ {d : ℕ} {Ω : Type} [MeasurableSpace Ω], 1 ≤ d → ∀ (μ : Measure Ω) [IsProbabilityMeasure μ]
     (R : Rule d (Option Cell)), R.Meas (prior d (1 / 2)) → ∀ {sc : ℝ}, sc ≠ 0 → ∀ {pol : Learner Ω d} {n : ℕ},
     (∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2) → ∀ {S₀ : ℝ},
@@ -104,8 +114,10 @@ structure Inputs : Prop where
 
 /-! ## Parameters -/
 
-/-- The parameters of Proposition 9.11: `g = gRipe d n σ`, `k = kRipe d`, `L = σ = sigB n`, `b = 1/4`. -/
-noncomputable def pB (d n : ℕ) : SParams := ⟨gRipe d n (sigB n), kRipe d, sigB n, sigB n, 1 / 4⟩
+/-- The parameters of the lower bound on a body between two balls on a body inside `B(0, R0)`: `g = gRipe d n σ`,
+`k = kRipe d`,
+`L = σ/R0`, `σ = sigB n`, `b = 1/4`. -/
+noncomputable def pK (d n : ℕ) (R0 : ℝ) : SParams := ⟨gRipe d n (sigB n), kRipe d, sigB n / R0, sigB n, 1 / 4⟩
 
 /-- The clamp level `ℓ = (6 ln n)^{1/2}`. -/
 noncomputable def ellB (n : ℕ) : ℝ := Real.sqrt (6 * Real.log n)
@@ -113,37 +125,38 @@ noncomputable def ellB (n : ℕ) : ℝ := Real.sqrt (6 * Real.log n)
 /-- The noise sequence clamped to `[-ℓ, ℓ]` (route (S6)). -/
 noncomputable def clampZ (ℓ : ℝ) (z : ℕ → ℝ) : ℕ → ℝ := fun i => max (-ℓ) (min ℓ (z i))
 
-/-- What the one-round lemmas read of the parameters. -/
-structure Good (P : SParams) (d : ℕ) : Prop where
+/-- What the one-round lemmas read of the parameters, for plays in `B(0, R0)`: the range of the dent there is at most
+`L (R0 + 1/2) + g` (`dentS_le`), and this range is at most `1/2`. -/
+structure Good (P : SParams) (d : ℕ) (R0 : ℝ) : Prop where
   g_pos : 0 < P.g
   k_ge : 240 ≤ P.k
   L_pos : 0 < P.L
   sc_pos : 0 < P.sc
   L_le : P.L ≤ 1 / 4
   dim : 2048 * P.k ≤ d
-  rng : 3 * P.L / 2 + P.g ≤ 1 / 2
+  rng : P.L * (R0 + 1 / 2) + P.g ≤ 1 / 2
   b_eq : P.b = 1 / 4
 
-theorem good_pB {d n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) : Good (pB d n) d := by
-  obtain ⟨h1, h2, h3, -, h5, h6, h7, -⟩ := ripeB_params hd hn
-  exact ⟨h3, h6, h1, h1, h2, h7, h5, rfl⟩
+theorem good_pK {d n : ℕ} {R0 : ℝ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) (hR : 1 ≤ R0) (hRd : R0 ≤ d) :
+    Good (pK d n R0) d R0 := by
+  obtain ⟨h1, -, h3, -, -, h6, h7, -⟩ := ripeB_params hd hn
+  obtain ⟨k1, k2, k3, -⟩ := ripeK_params hd hn hR hRd
+  exact ⟨h3, h6, k1, h1, k2, h7, k3, rfl⟩
 
-theorem Good.d_pos {P : SParams} {d : ℕ} (hP : Good P d) : 0 < d := by
+theorem Good.d_pos {P : SParams} {d : ℕ} {R0 : ℝ} (hP : Good P d R0) : 0 < d := by
   have h1 := hP.dim
   have h2 := hP.k_ge
   have : (0 : ℝ) < d := by linarith
   exact_mod_cast this
 
-theorem Good.kappa_pos {P : SParams} {d : ℕ} (hP : Good P d) : 0 < P.kappa :=
+theorem Good.kappa_pos {P : SParams} {d : ℕ} {R0 : ℝ} (hP : Good P d R0) : 0 < P.kappa :=
   div_pos hP.g_pos (by linarith [hP.k_ge])
 
-theorem Good.w_pos {P : SParams} {d : ℕ} (hP : Good P d) : 0 < P.w d := by
+theorem Good.w_pos {P : SParams} {d : ℕ} {R0 : ℝ} (hP : Good P d R0) : 0 < P.w d := by
   have hd : (0 : ℝ) < d := by exact_mod_cast hP.d_pos
   have hκ := hP.kappa_pos
   unfold SParams.kappa at hκ
   exact div_pos (mul_pos hκ (mul_pos (by norm_num) (Real.sqrt_pos.2 hd))) hP.L_pos
-
-theorem pB_w (d n : ℕ) : (pB d n).w d = wStar d (kRipe d) (sigB n) (gRipe d n (sigB n)) := rfl
 
 theorem sigB_mul_ellB {n : ℕ} (hn : 1 < n) : sigB n * ellB n = 1 / 8 := by
   have hn' : (1 : ℝ) < n := by exact_mod_cast hn
@@ -161,11 +174,11 @@ theorem clampZ_of_abs_le {ℓ : ℝ} {z : ℕ → ℝ} {i : ℕ} (h : |z i| ≤ 
 theorem measurable_clampZ (ℓ : ℝ) : Measurable (clampZ ℓ) :=
   measurable_pi_iff.2 fun i => measurable_const.max (measurable_const.min (measurable_pi_apply i))
 
-/-! ## The dent of the rule on the unit ball -/
+/-! ## The dent of the rule at a play of `B(0, R0)` -/
 
 section Dent
 
-variable {d : ℕ}
+variable {d : ℕ} {R0 : ℝ}
 
 theorem ruleS_sig (P : SParams) (π : Measure (E d)) (x θ : E d) :
     (ruleS d P).sig π x θ = P.b + if liveS P d π then dentS P d π x θ else 0 := rfl
@@ -176,27 +189,27 @@ theorem ruleS_ans (P : SParams) (π : Measure (E d)) (x θ : E d) :
 theorem rOne_nonneg (d : ℕ) : 0 ≤ rOne d := by
   unfold rOne; positivity
 
-theorem rOne_pos {P : SParams} (hP : Good P d) : 0 < rOne d :=
+theorem rOne_pos {P : SParams} (hP : Good P d R0) : 0 < rOne d :=
   mul_pos (by norm_num) (Real.sqrt_pos.2 (by exact_mod_cast hP.d_pos))
 
-theorem dentS_nonneg {P : SParams} (hP : Good P d) (π : Measure (E d)) (x θ : E d) : 0 ≤ dentS P d π x θ :=
+theorem dentS_nonneg {P : SParams} (hP : Good P d R0) (π : Measure (E d)) (x θ : E d) : 0 ≤ dentS P d π x θ :=
   dent_frame_nonneg (P.w d) P.kappa P.k (rOne d) (covM π) hP.kappa_pos.le (by linarith [hP.k_ge])
     (rOne_nonneg d) _ θ x
 
-theorem dentS_self {P : SParams} (hP : Good P d) (π : Measure (E d)) (θ : E d) : dentS P d π θ θ = 0 :=
+theorem dentS_self {P : SParams} (hP : Good P d R0) (π : Measure (E d)) (θ : E d) : dentS P d π θ θ = 0 :=
   dent_frame_self (P.w d) P.kappa P.k (rOne d) (covM π) hP.kappa_pos.le (by linarith [hP.k_ge])
     (rOne_nonneg d) _ θ
 
-/-- Lemma 9.4, the range: with the mean of `π` in `B(0, 1/2)` and the play in the unit ball, the dent is at most
-`3L/2 + g`. -/
-theorem dentS_le {P : SParams} (hP : Good P d) {π : Measure (E d)} (hS : (covM π).IsHermitian)
-    (hm : meanV π ∈ Metric.closedBall (0 : E d) (1 / 2)) {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) 1)
-    (θ : E d) : dentS P d π x θ ≤ 3 * P.L / 2 + P.g := by
+/-- The legality lemma, the range: with the mean of `π` in `B(0, 1/2)` and the play in `B(0, R0)`, the dent is at most
+`L (R0 + 1/2) + g`. -/
+theorem dentS_le {P : SParams} (hP : Good P d R0) {π : Measure (E d)} (hS : (covM π).IsHermitian)
+    (hm : meanV π ∈ Metric.closedBall (0 : E d) (1 / 2)) {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) R0)
+    (θ : E d) : dentS P d π x θ ≤ P.L * (R0 + 1 / 2) + P.g := by
   have hk : 0 < P.k := by linarith [hP.k_ge]
   have hκ := hP.kappa_pos
   have hr := rOne_pos hP
   have h := dent_frame_le (P.w d) P.kappa P.k (rOne d) (covM π) hS hP.w_pos hκ.le hk.le hr.le (meanV π) θ x
-  have hxm : ‖x - meanV π‖ ≤ 3 / 2 := by
+  have hxm : ‖x - meanV π‖ ≤ R0 + 1 / 2 := by
     have h1 := mem_closedBall_zero_iff.1 hx
     have h2 := mem_closedBall_zero_iff.1 hm
     linarith [norm_sub_le x (meanV π)]
@@ -208,8 +221,8 @@ theorem dentS_le {P : SParams} (hP : Good P d) {π : Measure (E d)} (hS : (covM 
   rw [key] at h
   nlinarith [hP.L_pos]
 
-/-- Lemma 9.4, the Lipschitz constant `L`. -/
-theorem dentS_lipschitz {P : SParams} (hP : Good P d) {π : Measure (E d)} (hS : (covM π).IsHermitian)
+/-- The legality lemma, the Lipschitz constant `L`. -/
+theorem dentS_lipschitz {P : SParams} (hP : Good P d R0) {π : Measure (E d)} (hS : (covM π).IsHermitian)
     (x y θ : E d) : |dentS P d π x θ - dentS P d π y θ| ≤ P.L * ‖x - y‖ := by
   have hr := rOne_pos hP
   have h := dent_frame_lipschitz (P.w d) P.kappa P.k (rOne d) (covM π) hS hP.w_pos hP.kappa_pos.le
@@ -220,28 +233,29 @@ theorem dentS_lipschitz {P : SParams} (hP : Good P d) {π : Measure (E d)} (hS :
   rw [he] at h
   exact h
 
-/-- Lemma 9.4, convexity in the play. -/
-theorem dentS_convexOn {P : SParams} (hP : Good P d) (π : Measure (E d)) (θ : E d) :
+/-- The legality lemma, convexity in the play. -/
+theorem dentS_convexOn {P : SParams} (hP : Good P d R0) (π : Measure (E d)) (θ : E d) :
     ConvexOn ℝ Set.univ (fun x => dentS P d π x θ) :=
   dent_frame_convexOn (P.w d) P.kappa P.k (rOne d) (covM π) hP.kappa_pos.le (by linarith [hP.k_ge])
     (rOne_nonneg d) _ θ
 
-theorem sig_sub_b_nonneg {P : SParams} (hP : Good P d) (π : Measure (E d)) (x θ : E d) :
+theorem sig_sub_b_nonneg {P : SParams} (hP : Good P d R0) (π : Measure (E d)) (x θ : E d) :
     0 ≤ (ruleS d P).sig π x θ - P.b := by
   rw [ruleS_sig]
   split_ifs
   · linarith [dentS_nonneg hP π x θ]
   · simp
 
-theorem sig_sub_b_le {P : SParams} (hP : Good P d) {π : Measure (E d)} (hS : (covM π).IsHermitian)
-    (hm : meanV π ∈ Metric.closedBall (0 : E d) (1 / 2)) {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) 1)
-    (θ : E d) : (ruleS d P).sig π x θ - P.b ≤ 3 * P.L / 2 + P.g := by
+theorem sig_sub_b_le {P : SParams} (hP : Good P d R0) {π : Measure (E d)} (hS : (covM π).IsHermitian)
+    (hm : meanV π ∈ Metric.closedBall (0 : E d) (1 / 2)) {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) R0)
+    (θ : E d) : (ruleS d P).sig π x θ - P.b ≤ P.L * (R0 + 1 / 2) + P.g := by
   rw [ruleS_sig]
   split_ifs
   · linarith [dentS_le hP hS hm hx θ]
-  · linarith [hP.g_pos, hP.L_pos]
+  · have hR0 : 0 ≤ R0 := le_trans dist_nonneg hx
+    nlinarith [hP.g_pos, hP.L_pos]
 
-theorem sig_self {P : SParams} (hP : Good P d) (π : Measure (E d)) (θ : E d) :
+theorem sig_self {P : SParams} (hP : Good P d R0) (π : Measure (E d)) (θ : E d) :
     (ruleS d P).sig π θ θ = P.b := by
   rw [ruleS_sig]
   split_ifs
@@ -254,16 +268,16 @@ end Dent
 
 section Post
 
-variable {d : ℕ}
+variable {d : ℕ} {R0 : ℝ}
 
 instance prior_half_isProb : IsProbabilityMeasure (prior d (1 / 2)) :=
   isProbabilityMeasure_prior d (by norm_num)
 
-theorem ruleS_meas_prior {P : SParams} (hP : Good P d) :
+theorem ruleS_meas_prior {P : SParams} (hP : Good P d R0) :
     (ruleS d P).Meas (prior d (1 / 2)) :=
   ruleS_meas P hP.w_pos.ne' hP.kappa_pos.le (by linarith [hP.k_ge]) _
 
-theorem post_isProb {P : SParams} (hP : Good P d) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
+theorem post_isProb {P : SParams} (hP : Good P d R0) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
     IsProbabilityMeasure (post (prior d (1 / 2)) (ruleS d P) sc t h) :=
   isProbabilityMeasure_post _ _ (ruleS_meas_prior hP) sc t h
 
@@ -271,30 +285,30 @@ theorem post_ball (R : Rule d (Option Cell)) (sc : ℝ) (t : ℕ) (h : Hist d (O
     ∀ᵐ θ ∂post (prior d (1 / 2)) R sc t h, θ ∈ Metric.closedBall (0 : E d) (1 / 2) :=
   post_ae_mem _ R sc t h (prior_ae_mem d (1 / 2))
 
-theorem post_sq {P : SParams} (hP : Good P d) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
+theorem post_sq {P : SParams} (hP : Good P d R0) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
     Integrable (fun θ => ‖θ‖ ^ 2) (post (prior d (1 / 2)) (ruleS d P) sc t h) := by
   have := post_isProb hP sc t h
   exact integrable_sq_norm_of_ae_mem _ (post_ball _ sc t h)
 
-theorem post_mean {P : SParams} (hP : Good P d) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
+theorem post_mean {P : SParams} (hP : Good P d R0) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
     meanV (post (prior d (1 / 2)) (ruleS d P) sc t h) ∈ Metric.closedBall (0 : E d) (1 / 2) := by
   have := post_isProb hP sc t h
   exact meanV_mem_closedBall _ (post_ball _ sc t h)
 
-theorem post_cov (I : Inputs) {P : SParams} (hP : Good P d) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
+theorem post_cov (I : Inputs) {P : SParams} (hP : Good P d R0) (sc : ℝ) (t : ℕ) (h : Hist d (Option Cell)) :
     (covM (post (prior d (1 / 2)) (ruleS d P) sc t h)).PosSemidef := by
   have := post_isProb hP sc t h
   exact I.secMom_posSemidef _ (post_sq hP sc t h) _
 
-/-- The signal of round `t` along the plays of a learner of the class: between `b` and `b + 3L/2 + g`. -/
-theorem sig_post_bounds (I : Inputs) {P : SParams} (hP : Good P d) (t : ℕ) (h : Hist d (Option Cell))
-    {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) 1) (θ : E d) :
+/-- The signal of round `t` at a play in `B(0, R0)`: between `b` and `b + L (R0 + 1/2) + g`. -/
+theorem sig_post_bounds (I : Inputs) {P : SParams} (hP : Good P d R0) (t : ℕ) (h : Hist d (Option Cell))
+    {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) R0) (θ : E d) :
     0 ≤ (ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t h) x θ - P.b ∧
-      (ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t h) x θ - P.b ≤ 3 * P.L / 2 + P.g :=
+      (ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t h) x θ - P.b ≤ P.L * (R0 + 1 / 2) + P.g :=
   ⟨sig_sub_b_nonneg hP _ x θ, sig_sub_b_le hP (post_cov I hP P.sc t h).1 (post_mean hP P.sc t h) hx θ⟩
 
-theorem abs_sig_post_le (I : Inputs) {P : SParams} (hP : Good P d) (t : ℕ) (h : Hist d (Option Cell))
-    {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) 1) (θ : E d) :
+theorem abs_sig_post_le (I : Inputs) {P : SParams} (hP : Good P d R0) (t : ℕ) (h : Hist d (Option Cell))
+    {x : E d} (hx : x ∈ Metric.closedBall (0 : E d) R0) (θ : E d) :
     |(ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t h) x θ| ≤ 1 := by
   obtain ⟨h1, h2⟩ := sig_post_bounds I hP t h hx θ
   have := hP.rng
@@ -304,28 +318,30 @@ theorem abs_sig_post_le (I : Inputs) {P : SParams} (hP : Good P d) (t : ℕ) (h 
 
 end Post
 
-/-! ## Lemma 9.4: the strategy of a tip and a bounded noise sequence is in `StratsLip` -/
+/-! ## The legality lemma: the strategy of a tip and a bounded noise sequence is in `StratsLip` -/
 
 section Legal
 
-variable {d : ℕ}
+variable {d : ℕ} {R0 : ℝ}
 
-theorem stratOf_mem (I : Inputs) {P : SParams} (hP : Good P d) (n : ℕ) (xo : E d) (z : ℕ → ℝ)
-    (hz : ∀ i, |P.sc * z i| ≤ 1 / 8) :
-    stratOf (prior d (1 / 2)) (ruleS d P) P.sc xo z ∈ StratsLip (Metric.closedBall (0 : E d) 1) n := by
+/-- Lemma LEGAL-K: on a convex body `K` inside `B(0, R0)`, the strategy of a tip and a noise sequence with
+`|σ z_i| ≤ 1/8` is in `StratsLip K n`. -/
+theorem stratOf_mem (I : Inputs) {P : SParams} (hP : Good P d R0) {K : Set (E d)} (hK : Convex ℝ K)
+    (hKR : K ⊆ Metric.closedBall (0 : E d) R0) (n : ℕ) (xo : E d) (z : ℕ → ℝ) (hz : ∀ i, |P.sc * z i| ≤ 1 / 8) :
+    stratOf (prior d (1 / 2)) (ruleS d P) P.sc xo z ∈ StratsLip K n := by
   refine ⟨fun t _ => ⟨fun x o => ⟨?_, fun y hy => ?_⟩, fun y _ => ?_⟩, fun t _ x o o' => ⟨rfl, fun y _ y' _ => ?_⟩⟩
   · unfold stratOf
     simp only [ruleS_sig]
     split_ifs
     · have h := ((dentS_convexOn hP (post (prior d (1 / 2)) (ruleS d P) P.sc t
         (replay (prior d (1 / 2)) (ruleS d P) P.sc xo z t x)) xo).subset (Set.subset_univ _)
-        (convex_closedBall 0 1)).add_const (P.b + P.sc * z t)
+        hK).add_const (P.b + P.sc * z t)
       convert h using 1
       funext y
       simp only [Pi.add_apply]
       ring
-    · exact convexOn_const _ (convex_closedBall 0 1)
-  · obtain ⟨h1, h2⟩ := sig_post_bounds I hP t (replay (prior d (1 / 2)) (ruleS d P) P.sc xo z t x) hy xo
+    · exact convexOn_const _ hK
+  · obtain ⟨h1, h2⟩ := sig_post_bounds I hP t (replay (prior d (1 / 2)) (ruleS d P) P.sc xo z t x) (hKR hy) xo
     obtain ⟨h3, h4⟩ := abs_le.1 (hz t)
     have := hP.rng
     have := hP.b_eq
@@ -347,7 +363,7 @@ end Legal
 
 section Regret
 
-variable {d : ℕ} {Ω : Type}
+variable {d : ℕ} {R0 : ℝ} {Ω : Type}
 
 /-- The regret of the Gaussian game on the sample `s = (x°, Z, ω)`: the sum of the dents at the tip. -/
 noncomputable def regG (π0 : Measure (E d)) (P : SParams) (pol : Learner Ω d) (n : ℕ) (s : Sample d Ω) : ℝ :=
@@ -370,16 +386,16 @@ theorem lossAd_stratOf_hist (π0 : Measure (E d)) (R : Rule d (Option Cell)) (sc
   simp only [stratOf]
   rw [replay_hist]
 
-/-- The regret identity of Lemma 9.4: against `stratOf`, the comparator's infimum over the ball is attained at the
-tip, so the regret is the sum of the dents at the tip. -/
-theorem regretAd_stratOf {P : SParams} (hP : Good P d) (π0 : Measure (E d)) (pol : Learner Ω d) (n : ℕ)
-    {xo : E d} (hxo : xo ∈ Metric.closedBall (0 : E d) 1) (z : ℕ → ℝ) (ω : Ω) :
-    regretAd (Metric.closedBall 0 1) (stratOf π0 (ruleS d P) P.sc xo z) (fun t => pol t ω) n =
+/-- The regret identity of the legality lemma: against `stratOf`, the comparator's infimum over `K` is attained at the
+tip, a point of `K`, so the regret is the sum of the dents at the tip. -/
+theorem regretAd_stratOf {P : SParams} (hP : Good P d R0) (π0 : Measure (E d)) (pol : Learner Ω d) (n : ℕ)
+    {K : Set (E d)} {xo : E d} (hxo : xo ∈ K) (z : ℕ → ℝ) (ω : Ω) :
+    regretAd K (stratOf π0 (ruleS d P) P.sc xo z) (fun t => pol t ω) n =
       regG π0 P pol n (xo, z, ω) := by
   unfold regretAd regretPts
   simp only [lossAd_stratOf_hist, plays_stratOf_hist]
   have hinf : sInf ((fun y => ∑ t ∈ Finset.range n, ((ruleS d P).sig (post π0 (ruleS d P) P.sc t
-      (hist π0 (ruleS d P) P.sc pol t (xo, z, ω))) y xo + P.sc * z t)) '' Metric.closedBall 0 1) =
+      (hist π0 (ruleS d P) P.sc pol t (xo, z, ω))) y xo + P.sc * z t)) '' K) =
       ∑ t ∈ Finset.range n, (P.b + P.sc * z t) := by
     apply IsLeast.csInf_eq
     constructor
@@ -398,27 +414,27 @@ end Regret
 
 section Coupling
 
-variable {d : ℕ} {Ω : Type} [MeasurableSpace Ω]
+variable {d : ℕ} {R0 : ℝ} {Ω : Type} [MeasurableSpace Ω]
 
 omit [MeasurableSpace Ω] in
-theorem regG_nonneg {P : SParams} (hP : Good P d) (π0 : Measure (E d)) (pol : Learner Ω d) (n : ℕ)
+theorem regG_nonneg {P : SParams} (hP : Good P d R0) (π0 : Measure (E d)) (pol : Learner Ω d) (n : ℕ)
     (s : Sample d Ω) : 0 ≤ regG π0 P pol n s := by
   exact Finset.sum_nonneg fun t _ => sig_sub_b_nonneg hP _ _ _
 
-theorem regG_le (I : Inputs) {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) (s : Sample d Ω) :
+theorem regG_le (I : Inputs) {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) (s : Sample d Ω) :
     regG (prior d (1 / 2)) P pol n s ≤ n / 2 := by
   have hb : ∀ t ∈ Finset.range n, (ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t
       (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s)) (play pol t s.2.2 (hist (prior d (1 / 2)) (ruleS d P)
         P.sc pol t s)) s.1 - P.b ≤ 1 / 2 := fun t ht => by
-    have hx : play pol t s.2.2 (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) ∈ Metric.closedBall (0 : E d) 1 :=
+    have hx : play pol t s.2.2 (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) ∈ Metric.closedBall (0 : E d) R0 :=
       (hpol t (Finset.mem_range.1 ht)).2 _ _ _
     linarith [(sig_post_bounds I hP t (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) hx s.1).2, hP.rng]
   calc regG (prior d (1 / 2)) P pol n s ≤ ∑ _t ∈ Finset.range n, (1 / 2 : ℝ) := Finset.sum_le_sum hb
     _ = n / 2 := by rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]; ring
 
-theorem measurable_regG {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) : Measurable (regG (prior d (1 / 2)) P pol n) := by
+theorem measurable_regG {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) : Measurable (regG (prior d (1 / 2)) P pol n) := by
   have hR := ruleS_meas_prior hP
   have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
     fun t ht => (hpol t ht).1
@@ -524,8 +540,8 @@ theorem gameLaw_bad_le (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Me
       rw [ENNReal.toReal_mul, ENNReal.toReal_natCast, ENNReal.toReal_ofReal he]
 
 /-- The coupling (S6): the game with the clamped noise loses at most `1/n` of mean regret. -/
-theorem coupling (I : Inputs) {P : SParams} (hP : Good P d) (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {pol : Learner Ω d} {n : ℕ} (hn : 1 < n) (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) :
+theorem coupling (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω) [IsProbabilityMeasure μ]
+    {pol : Learner Ω d} {n : ℕ} (hn : 1 < n) (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) :
     ∫ s, regG (prior d (1 / 2)) P pol n s ∂gameLaw (prior d (1 / 2)) μ - 1 / n ≤
       ∫ s, regG (prior d (1 / 2)) P pol n (s.1, clampZ (ellB n) s.2.1, s.2.2) ∂gameLaw (prior d (1 / 2)) μ := by
   have hG := isProbabilityMeasure_gameLaw (prior d (1 / 2)) μ
@@ -616,7 +632,7 @@ theorem integral_gameLaw_assoc {d : ℕ} {Ω : Type} [MeasurableSpace Ω] (π0 :
 
 end Derand
 
-/-! ## One live round: `RoundFacts` at a law `π` on `B(0, 1/2)` and a play in the unit ball -/
+/-! ## One live round: `RoundFacts` at a law `π` on `B(0, 1/2)` and a play in `B(0, R0)` -/
 
 section OneRound
 
@@ -671,7 +687,7 @@ theorem ansEntropy_answer {V : Type*} [NormedAddCommGroup V] [InnerProductSpace 
     ring
   simp only [e, massRest]
 
-variable {d : ℕ}
+variable {d : ℕ} {R0 : ℝ}
 
 /-- The payment of the announced cells (Ledger.lean) is the sum over the ripe cells (CellsRound.lean). -/
 theorem payAnn_answer (I : Inputs) (w : ℝ) (π : Measure (E d)) (A : E d →L[ℝ] E d) (m : E d) (k dd DMv : ℝ)
@@ -687,8 +703,8 @@ theorem payAnn_answer (I : Inputs) (w : ℝ) (π : Measure (E d)) (A : E d →L[
   · rfl
   · exact I.cellPay_empty π w
 
-/-- The centre of the signal's range `[b, b + 3L/2 + g]`. -/
-noncomputable def midB (P : SParams) : ℝ := P.b + (3 * P.L / 2 + P.g) / 2
+/-- The centre of the signal's range `[b, b + L (R0 + 1/2) + g]` at a play in `B(0, R0)`. -/
+noncomputable def midB (P : SParams) (R0 : ℝ) : ℝ := P.b + (P.L * (R0 + 1 / 2) + P.g) / 2
 
 /-- `p_rest` of the rule at `(π, x)`. -/
 noncomputable abbrev prS (P : SParams) (d : ℕ) (π : Measure (E d)) (x : E d) : ℝ :=
@@ -696,42 +712,42 @@ noncomputable abbrev prS (P : SParams) (d : ℕ) (π : Measure (E d)) (x : E d) 
 
 /-- The centring constants of the channel bound (S1): the centre of the range on the ripe cells, and on rest the
 centre of the range when `p_rest < 1/2`, `b + q(x)` when `p_rest ≥ 1/2`. -/
-noncomputable def cHat (P : SParams) (d : ℕ) (π : Measure (E d)) (x : E d) : Option Cell → ℝ
-  | some _ => midB P
+noncomputable def cHat (P : SParams) (R0 : ℝ) (d : ℕ) (π : Measure (E d)) (x : E d) : Option Cell → ℝ
+  | some _ => midB P R0
   | none => if 1 / 2 ≤ prS P d π x then
-      P.b + bowl (frameS P d π) (meanV π) (P.g / P.k) P.k (5 * Real.sqrt d) x else midB P
+      P.b + bowl (frameS P d π) (meanV π) (P.g / P.k) P.k (5 * Real.sqrt d) x else midB P R0
 
 /-- `Iann = ∑_{c ripe} ∫_c (s - ĉ)²/(2σ²)`. -/
-noncomputable def iAnn (P : SParams) (d : ℕ) (π : Measure (E d)) (x : E d) : ℝ :=
+noncomputable def iAnn (P : SParams) (R0 : ℝ) (d : ℕ) (π : Measure (E d)) (x : E d) : ℝ :=
   ∑ c ∈ ripeCells π (frameS P d π) (meanV π) P.k d (dmS P d π) x,
-    (∫ θ in cellSet (frameS P d π) (meanV π) P.k d (dmS P d π) x c, ((ruleS d P).sig π x θ - midB P) ^ 2 ∂π) /
+    (∫ θ in cellSet (frameS P d π) (meanV π) P.k d (dmS P d π) x c, ((ruleS d P).sig π x θ - midB P R0) ^ 2 ∂π) /
       (2 * P.sc ^ 2)
 
 /-- `Irest = ∫_{rest} (s - ĉ_rest)²/(2σ²)/p_rest`. -/
-noncomputable def iRest (P : SParams) (d : ℕ) (π : Measure (E d)) (x : E d) : ℝ :=
+noncomputable def iRest (P : SParams) (R0 : ℝ) (d : ℕ) (π : Measure (E d)) (x : E d) : ℝ :=
   (∫ θ in restSet π (frameS P d π) (meanV π) P.k d (dmS P d π) x,
-      ((ruleS d P).sig π x θ - cHat P d π x none) ^ 2 ∂π) / (2 * P.sc ^ 2) / prS P d π x
+      ((ruleS d P).sig π x θ - cHat P R0 d π x none) ^ 2 ∂π) / (2 * P.sc ^ 2) / prS P d π x
 
 /-- The context of one live round: the law `π` of the tip on `B(0, 1/2)`, its covariance positive semidefinite, the
-round live, the play in the unit ball. -/
-structure RoundCtx (P : SParams) (d : ℕ) (π : Measure (E d)) (x : E d) : Prop where
+round live, the play in `B(0, R0)`. -/
+structure RoundCtx (P : SParams) (R0 : ℝ) (d : ℕ) (π : Measure (E d)) (x : E d) : Prop where
   prob : IsProbabilityMeasure π
   ball : ∀ᵐ θ ∂π, θ ∈ Metric.closedBall (0 : E d) (1 / 2)
   cov : (covM π).PosSemidef
   live : liveS P d π
-  play : x ∈ Metric.closedBall (0 : E d) 1
+  play : x ∈ Metric.closedBall (0 : E d) R0
 
-theorem RoundCtx.sq {P : SParams} {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x) :
+theorem RoundCtx.sq {P : SParams} {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x) :
     Integrable (fun θ => ‖θ‖ ^ 2) π := by
   have := hc.prob
   exact integrable_sq_norm_of_ae_mem π hc.ball
 
-theorem RoundCtx.mean {P : SParams} {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x) :
+theorem RoundCtx.mean {P : SParams} {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x) :
     meanV π ∈ Metric.closedBall (0 : E d) (1 / 2) := by
   have := hc.prob
   exact meanV_mem_closedBall π hc.ball
 
-theorem RoundCtx.dm {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x) :
+theorem RoundCtx.dm {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x) :
     (d : ℝ) / 2 ≤ dmS P d π :=
   hc.live.trans (dLive_le_DM _ _ hc.cov hP.w_pos.ne')
 
@@ -757,8 +773,8 @@ theorem integral_sig_live {P : SParams} {π : Measure (E d)} (hl : liveS P d π)
   funext θ
   ring
 
-theorem sq_sig_sub_midB_le {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x)
-    (θ : E d) : ‖((ruleS d P).sig π x θ - midB P) ^ 2‖ ≤ (3 * P.L / 2 + P.g) ^ 2 / 4 := by
+theorem sq_sig_sub_midB_le {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x)
+    (θ : E d) : ‖((ruleS d P).sig π x θ - midB P R0) ^ 2‖ ≤ (P.L * (R0 + 1 / 2) + P.g) ^ 2 / 4 := by
   have h0 := sig_sub_b_nonneg hP π x θ
   have h1 := sig_sub_b_le hP hc.cov.1 hc.mean hc.play θ
   rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
@@ -774,11 +790,11 @@ theorem abs_readT_le {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V
   · rw [abs_div, abs_of_pos h, div_le_iff₀ h, mul_comm]
     exact abs_real_inner_le_norm _ _
 
-/-- Lemma 9.6 with the centring constants `cHat`. -/
-theorem chain_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d}
-    (hc : RoundCtx P d π x) :
+/-- The chain-rule lemma with the centring constants `cHat`. -/
+theorem chain_one (I : Inputs) {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d}
+    (hc : RoundCtx P R0 d π x) :
     infoJ π ((ruleS d P).ans π x) ((ruleS d P).sig π x) P.sc ≤
-      entAns π (frameS P d π) (meanV π) P.k d (dmS P d π) x + iAnn P d π x + prS P d π x * iRest P d π x := by
+      entAns π (frameS P d π) (meanV π) P.k d (dmS P d π) x + iAnn P R0 d π x + prS P d π x * iRest P R0 d π x := by
   have := hc.prob
   have hk : 0 < P.k := by linarith [hP.k_ge]
   have hS : ∀ θ, |(ruleS d P).sig π x θ| ≤ 1 := fun θ => by
@@ -793,10 +809,10 @@ theorem chain_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure (E d)
     exact measurable_const.add (measurable_dent_tip _ _ _ _ _ (div_pos hP.g_pos hk).le hk.le
       (by positivity) x)
   have h := I.infoJ_chain π (ans_live hc.live x ▸ measurable_answer_tip π _ _ _ _ _ x) hsm hS
-    hP.sc_pos.ne' (cHat P d π x)
+    hP.sc_pos.ne' (cHat P R0 d π x)
   rw [ans_live hc.live] at h ⊢
   rw [ansEntropy_answer, sum_answer π _ _ _ _ _ x
-    (fun S a => (∫ θ in S, ((ruleS d P).sig π x θ - cHat P d π x a) ^ 2 ∂π) / (2 * P.sc ^ 2))
+    (fun S a => (∫ θ in S, ((ruleS d P).sig π x θ - cHat P R0 d π x a) ^ 2 ∂π) / (2 * P.sc ^ 2))
     (fun a => by simp)] at h
   refine h.trans ?_
   rw [add_assoc]
@@ -812,8 +828,8 @@ theorem chain_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure (E d)
   · rw [mul_div_cancel₀ _ hpos.ne']
 
 /-- (S1) on the ripe cells: each carries at most `B = (3L/2 + g)²/(8σ²)` nats per unit of mass. -/
-theorem ann_le_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x) :
-    iAnn P d π x ≤ chanB P.L P.g P.sc * massAnn π (frameS P d π) (meanV π) P.k d (dmS P d π) x := by
+theorem ann_le_one {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x) :
+    iAnn P R0 d π x ≤ chanBK P.L R0 P.g P.sc * massAnn π (frameS P d π) (meanV π) P.k d (dmS P d π) x := by
   have := hc.prob
   have hσ : 0 < 2 * P.sc ^ 2 := by have := hP.sc_pos; positivity
   unfold iAnn massAnn
@@ -823,17 +839,17 @@ theorem ann_le_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} 
     (s := cellSet (frameS P d π) (meanV π) P.k d (dmS P d π) x c) (measure_lt_top _ _)
     (fun θ _ => sq_sig_sub_midB_le hP hc θ)
   rw [Real.norm_eq_abs] at hint
-  calc _ ≤ (3 * P.L / 2 + P.g) ^ 2 / 4 * π.real (cellSet (frameS P d π) (meanV π) P.k d (dmS P d π) x c) /
+  calc _ ≤ (P.L * (R0 + 1 / 2) + P.g) ^ 2 / 4 * π.real (cellSet (frameS P d π) (meanV π) P.k d (dmS P d π) x c) /
         (2 * P.sc ^ 2) := div_le_div_of_nonneg_right ((le_abs_self _).trans hint) hσ.le
-    _ = _ := by unfold chanB; field_simp; ring
+    _ = _ := by unfold chanBK; field_simp; ring
 
 /-- (S1) on rest when `p_rest < 1/2`. -/
-theorem rest_le_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x)
-    (hpr : prS P d π x < 1 / 2) : iRest P d π x ≤ chanB P.L P.g P.sc := by
+theorem rest_le_one {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x)
+    (hpr : prS P d π x < 1 / 2) : iRest P R0 d π x ≤ chanBK P.L R0 P.g P.sc := by
   have := hc.prob
   have hσ : 0 < 2 * P.sc ^ 2 := by have := hP.sc_pos; positivity
-  have hB : 0 ≤ chanB P.L P.g P.sc := by unfold chanB; positivity
-  have hc0 : cHat P d π x none = midB P := by simp only [cHat, not_le.2 hpr, ↓reduceIte]
+  have hB : 0 ≤ chanBK P.L R0 P.g P.sc := by unfold chanBK; positivity
+  have hc0 : cHat P R0 d π x none = midB P R0 := by simp only [cHat, not_le.2 hpr, ↓reduceIte]
   have hint := norm_setIntegral_le_of_norm_le_const (μ := π)
     (s := restSet π (frameS P d π) (meanV π) P.k d (dmS P d π) x) (measure_lt_top _ _)
     (fun θ _ => sq_sig_sub_midB_le hP hc θ)
@@ -844,15 +860,15 @@ theorem rest_le_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d}
     exact hB
   · unfold iRest
     rw [hc0]
-    calc _ ≤ (3 * P.L / 2 + P.g) ^ 2 / 4 * prS P d π x / (2 * P.sc ^ 2) / prS P d π x := by
+    calc _ ≤ (P.L * (R0 + 1 / 2) + P.g) ^ 2 / 4 * prS P d π x / (2 * P.sc ^ 2) / prS P d π x := by
           gcongr
           exact (le_abs_self _).trans hint
-      _ = _ := by unfold chanB; field_simp; ring
+      _ = _ := by unfold chanBK; field_simp; ring
 
-/-- Lemma 9.7 (ii) through `cells_price` when `p_rest ≥ 1/2`. -/
-theorem price_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (hc : RoundCtx P d π x)
+/-- The rest lemma (ii) through `cells_price` when `p_rest ≥ 1/2`. -/
+theorem price_one {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d} (hc : RoundCtx P R0 d π x)
     (hpr : 1 / 2 ≤ prS P d π x) :
-    iRest P d π x ≤ P.g / (P.sc ^ 2 * priceR d P.k) *
+    iRest P R0 d π x ≤ P.g / (P.sc ^ 2 * priceR d P.k) *
       (dentRest π (frameS P d π) (meanV π) P.g P.k d (dmS P d π) x / prS P d π x) := by
   have := hc.prob
   have hsq := hc.sq
@@ -876,9 +892,9 @@ theorem price_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (
     nlinarith [h6, mul_nonneg (sq_nonneg ‖frameS P d π‖) (sq_nonneg (‖θ‖ - ‖meanV π‖))]
   have h := cells_price π (frameS P d π) (meanV π) P.g P.sc P.k d (dmS P d π) hP.g_pos hP.sc_pos
     (by linarith [hP.k_ge]) hP.dim (hc.dm hP) x hT2 hpr
-  have hc0 : cHat P d π x none = P.b + bowl (frameS P d π) (meanV π) (P.g / P.k) P.k (5 * Real.sqrt d) x := by
+  have hc0 : cHat P R0 d π x none = P.b + bowl (frameS P d π) (meanV π) (P.g / P.k) P.k (5 * Real.sqrt d) x := by
     simp only [cHat, hpr, ↓reduceIte]
-  have he : iRest P d π x = gapRest π (frameS P d π) (meanV π) P.g P.k d (dmS P d π) x /
+  have he : iRest P R0 d π x = gapRest π (frameS P d π) (meanV π) P.g P.k d (dmS P d π) x /
       massRest π (frameS P d π) (meanV π) P.k d (dmS P d π) x / (2 * P.sc ^ 2) := by
     unfold iRest gapRest
     rw [div_right_comm, hc0, sig_live hc.live]
@@ -889,8 +905,8 @@ theorem price_one {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d} (
   exact h
 
 /-- Lemma LEAK through `cells_leak` and the cell payments (L3) to (L5). -/
-theorem leak_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d}
-    (hc : RoundCtx P d π x) :
+theorem leak_one (I : Inputs) {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d}
+    (hc : RoundCtx P R0 d π x) :
     entAns π (frameS P d π) (meanV π) P.k d (dmS P d π) x ≤
         4 * (3 * Real.log d + 1) / P.k * payAnn (P.w d) π ((ruleS d P).ans π x) ∧
       massAnn π (frameS P d π) (meanV π) P.k d (dmS P d π) x ≤ 4 / P.k * payAnn (P.w d) π ((ruleS d P).ans π x) := by
@@ -910,10 +926,10 @@ theorem leak_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure (E d)}
         (fun θ hθ => ((cellOf_inner_iff _ _ _ _ _ _ _).1 hθ).2.2)
 
 /-- All the fields of `RoundFacts` at one live round. -/
-theorem roundFacts_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure (E d)} {x : E d}
-    (hc : RoundCtx P d π x) :
-    RoundFacts d P.k P.g P.sc (chanB P.L P.g P.sc) (massAnn π (frameS P d π) (meanV π) P.k d (dmS P d π) x)
-      (prS P d π x) (entAns π (frameS P d π) (meanV π) P.k d (dmS P d π) x) (iAnn P d π x) (iRest P d π x)
+theorem roundFacts_one (I : Inputs) {P : SParams} (hP : Good P d R0) {π : Measure (E d)} {x : E d}
+    (hc : RoundCtx P R0 d π x) :
+    RoundFacts d P.k P.g P.sc (chanBK P.L R0 P.g P.sc) (massAnn π (frameS P d π) (meanV π) P.k d (dmS P d π) x)
+      (prS P d π x) (entAns π (frameS P d π) (meanV π) P.k d (dmS P d π) x) (iAnn P R0 d π x) (iRest P R0 d π x)
       (infoJ π ((ruleS d P).ans π x) ((ruleS d P).sig π x) P.sc) (payAnn (P.w d) π ((ruleS d P).ans π x))
       (∫ θ, ((ruleS d P).sig π x θ - P.b) ∂π)
       (dentRest π (frameS P d π) (meanV π) P.g P.k d (dmS P d π) x)
@@ -939,11 +955,11 @@ theorem roundFacts_one (I : Inputs) {P : SParams} (hP : Good P d) {π : Measure 
 
 end OneRound
 
-/-! ## The game: `GameFacts` at the parameters of Proposition 9.11 -/
+/-! ## The game: `GameFacts` at the parameters of the game proposition -/
 
 section Game
 
-variable {d : ℕ} {Ω : Type} [MeasurableSpace Ω]
+variable {d : ℕ} {R0 : ℝ} {Ω : Type} [MeasurableSpace Ω]
 
 /-- The law of the tip before round `t` on the sample `s`. -/
 noncomputable abbrev postT (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) : Measure (E d) :=
@@ -973,8 +989,8 @@ noncomputable def af (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d 
 noncomputable def Df (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) : ℝ :=
   ∫ θ, ((ruleS d P).sig (postT P pol t s) (playT P pol t s) θ - P.b) ∂postT P pol t s
 
-theorem measurableSet_liveSet {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) {t : ℕ} (ht : t ≤ n) :
+theorem measurableSet_liveSet {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t ≤ n) :
     MeasurableSet (liveSet P pol t) := by
   have hR := ruleS_meas_prior hP
   have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
@@ -985,7 +1001,7 @@ theorem measurableSet_liveSet {P : SParams} (hP : Good P d) {pol : Learner Ω d}
 
 omit [MeasurableSpace Ω] in
 /-- A dead round stays dead: its answer and its signal are constants, so the posterior does not move. -/
-theorem live_of_live_succ {P : SParams} (hP : Good P d) (pol : Learner Ω d) (t : ℕ)
+theorem live_of_live_succ {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (t : ℕ)
     {s : Sample d Ω} (hs : s ∈ liveSet P pol (t + 1)) : s ∈ liveSet P pol t := by
   by_contra hdead
   have hd' : ¬ liveS P d (postT P pol t s) := hdead
@@ -1003,7 +1019,7 @@ theorem live_of_live_succ {P : SParams} (hP : Good P d) (pol : Learner Ω d) (t 
   exact hd' (hpost ▸ hs)
 
 omit [MeasurableSpace Ω] in
-theorem liveSet_anti {P : SParams} (hP : Good P d) (pol : Learner Ω d) {t u : ℕ} (htu : t ≤ u) :
+theorem liveSet_anti {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) {t u : ℕ} (htu : t ≤ u) :
     liveSet P pol u ⊆ liveSet P pol t := by
   induction u, htu using Nat.le_induction with
   | base => exact le_rfl
@@ -1023,7 +1039,7 @@ theorem Pf_dead (I : Inputs) {P : SParams} (pol : Learner Ω d) (t : ℕ) {s : S
   rw [he, I.cellPay_empty]
 
 omit [MeasurableSpace Ω] in
-theorem Jf_dead (I : Inputs) {P : SParams} (hP : Good P d) (pol : Learner Ω d) (t : ℕ) {s : Sample d Ω}
+theorem Jf_dead (I : Inputs) {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (t : ℕ) {s : Sample d Ω}
     (hs : s ∉ liveSet P pol t) : Jf P pol t s = 0 := by
   have hd' : ¬ liveS P d (postT P pol t s) := hs
   have := post_isProb hP P.sc t (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s)
@@ -1043,8 +1059,8 @@ theorem Df_dead {P : SParams} (pol : Learner Ω d) (t : ℕ) {s : Sample d Ω} (
     simp [ruleS_sig, show ¬ liveS P d (postT P pol t s) from hs]
   simp only [Df, h0, integral_zero]
 
-theorem measurable_af {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) {t : ℕ} (ht : t < n) : Measurable (af P pol t) := by
+theorem measurable_af {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t < n) : Measurable (af P pol t) := by
   have hR := ruleS_meas_prior hP
   have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
     fun t ht => (hpol t ht).1
@@ -1068,8 +1084,8 @@ theorem measurable_af {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : �
   rw [measureReal_def, ← lintegral_indicator_one hθ]
   rfl
 
-theorem measurable_Df {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) {t : ℕ} (ht : t < n) : Measurable (Df P pol t) := by
+theorem measurable_Df {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t < n) : Measurable (Df P pol t) := by
   have hR := ruleS_meas_prior hP
   have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
     fun t ht => (hpol t ht).1
@@ -1096,7 +1112,7 @@ theorem measurable_Df {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : �
   exact ENNReal.measurable_toReal.comp hL
 
 omit [MeasurableSpace Ω] in
-theorem af_mem {P : SParams} (hP : Good P d) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) :
+theorem af_mem {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) :
     0 ≤ af P pol t s ∧ af P pol t s ≤ 1 := by
   have := post_isProb hP P.sc t (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s)
   unfold af
@@ -1106,11 +1122,11 @@ theorem af_mem {P : SParams} (hP : Good P d) (pol : Learner Ω d) (t : ℕ) (s :
   · linarith [measureReal_nonneg (μ := postT P pol t s)
       (s := {θ | (ruleS d P).ans (postT P pol t s) (playT P pol t s) θ = none})]
 
-theorem Df_mem (I : Inputs) {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) {t : ℕ} (ht : t < n) (s : Sample d Ω) :
+theorem Df_mem (I : Inputs) {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t < n) (s : Sample d Ω) :
     0 ≤ Df P pol t s ∧ Df P pol t s ≤ 1 / 2 := by
   have := post_isProb hP P.sc t (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s)
-  have hx : playT P pol t s ∈ Metric.closedBall (0 : E d) 1 := (hpol t ht).2 _ _ _
+  have hx : playT P pol t s ∈ Metric.closedBall (0 : E d) R0 := (hpol t ht).2 _ _ _
   have hb := fun θ => sig_post_bounds I hP t (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) hx θ
   constructor
   · exact integral_nonneg fun θ => (hb θ).1
@@ -1122,12 +1138,12 @@ theorem Df_mem (I : Inputs) {P : SParams} (hP : Good P d) {pol : Learner Ω d} {
     exact (le_abs_self _).trans ((Real.norm_eq_abs _) ▸ h)
 
 /-- The per-round facts at a live sample of round `t`. -/
-theorem roundFacts_at (I : Inputs) {P : SParams} (hP : Good P d) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) {t : ℕ} (ht : t < n) {s : Sample d Ω}
+theorem roundFacts_at (I : Inputs) {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
+    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t < n) {s : Sample d Ω}
     (hs : s ∈ liveSet P pol t) :
-    ∃ pr H Iann Irest Drest preg : ℝ, RoundFacts d P.k P.g P.sc (chanB P.L P.g P.sc) (af P pol t s) pr H Iann
+    ∃ pr H Iann Irest Drest preg : ℝ, RoundFacts d P.k P.g P.sc (chanBK P.L R0 P.g P.sc) (af P pol t s) pr H Iann
       Irest (Jf P pol t s) (Pf P pol t s) (Df P pol t s) Drest preg := by
-  have hc : RoundCtx P d (postT P pol t s) (playT P pol t s) :=
+  have hc : RoundCtx P R0 d (postT P pol t s) (playT P pol t s) :=
     ⟨post_isProb hP P.sc t _, post_ball _ P.sc t _, post_cov I hP P.sc t _, hs, (hpol t ht).2 _ _ _⟩
   have := hc.prob
   have hm := cells_mass (postT P pol t s) (frameS P d (postT P pol t s)) (meanV (postT P pol t s)) P.k d
@@ -1143,9 +1159,9 @@ theorem roundFacts_at (I : Inputs) {P : SParams} (hP : Good P d) {pol : Learner 
   rw [← haf] at h1
   exact ⟨_, _, _, _, _, _, h1⟩
 
-/-- The mean regret of the Gaussian game is the sum of the round means over the live events (Lemma 9.5). -/
-theorem sum_Df_eq (I : Inputs) {P : SParams} (hP : Good P d) (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {pol : Learner Ω d} {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) :
+/-- The mean regret of the Gaussian game is the sum of the round means over the live events (the posterior lemma). -/
+theorem sum_Df_eq (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω) [IsProbabilityMeasure μ]
+    {pol : Learner Ω d} {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) :
     ∑ t ∈ Finset.range n, ∫ s in liveSet P pol t, Df P pol t s ∂gameLaw (prior d (1 / 2)) μ =
       ∫ s, regG (prior d (1 / 2)) P pol n s ∂gameLaw (prior d (1 / 2)) μ := by
   have hG := isProbabilityMeasure_gameLaw (prior d (1 / 2)) μ
@@ -1160,7 +1176,7 @@ theorem sum_Df_eq (I : Inputs) {P : SParams} (hP : Good P d) (μ : Measure Ω) [
         ((measurable_snd.comp measurable_snd).prodMk (measurable_fst.comp measurable_snd))).prodMk
           measurable_fst))).sub measurable_const
   have hFb : ∀ t < n, ∀ p, |F t p| ≤ 1 / 2 := fun t ht p => by
-    have hx : play pol t p.2.2 p.2.1 ∈ Metric.closedBall (0 : E d) 1 := (hpol t ht).2 _ _ _
+    have hx : play pol t p.2.2 p.2.1 ∈ Metric.closedBall (0 : E d) R0 := (hpol t ht).2 _ _ _
     obtain ⟨h0, h1⟩ := sig_post_bounds I hP t p.2.1 hx p.1
     have := hP.rng
     simp only [F]
@@ -1182,56 +1198,56 @@ theorem sum_Df_eq (I : Inputs) {P : SParams} (hP : Good P d) (μ : Measure Ω) [
   rw [Finset.sum_congr rfl hround, ← integral_finsetSum _ fun t ht => hFi t (Finset.mem_range.1 ht)]
   rfl
 
-/-- `GameFacts` at the parameters of Proposition 9.11. -/
-theorem gameFacts (I : Inputs) {n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) (μ : Measure Ω)
-    [IsProbabilityMeasure μ] {pol : Learner Ω d} (hpol : IsLearnerAd (Metric.closedBall 0 1) n pol) :
-    GameFacts d (kRipe d) (gRipe d n (sigB n)) (sigB n) (chanB (sigB n) (gRipe d n (sigB n)) (sigB n))
-      (wStar d (kRipe d) (sigB n) (gRipe d n (sigB n))) n
-      ((gameLaw (prior d (1 / 2)) μ).real (liveSet (pB d n) pol n)ᶜ)
-      (fun t => ∫ s in liveSet (pB d n) pol t, Jf (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => ∫ s in liveSet (pB d n) pol t, Pf (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => ∫ s in liveSet (pB d n) pol t, af (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => ∫ s in liveSet (pB d n) pol t, Df (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => (gameLaw (prior d (1 / 2)) μ).real (liveSet (pB d n) pol t)) := by
-  have hP := good_pB hd hn
+/-- `GameFacts` at the parameters of the lower bound on a body between two balls, for plays in `B(0, R0)`. -/
+theorem gameFacts (I : Inputs) {n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) (hR1 : 1 ≤ R0) (hRd : R0 ≤ d)
+    (μ : Measure Ω) [IsProbabilityMeasure μ] {pol : Learner Ω d} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) :
+    GameFacts d (kRipe d) (gRipe d n (sigB n)) (sigB n) (chanBK (sigB n / R0) R0 (gRipe d n (sigB n)) (sigB n))
+      (wStar d (kRipe d) (sigB n / R0) (gRipe d n (sigB n))) n
+      ((gameLaw (prior d (1 / 2)) μ).real (liveSet (pK d n R0) pol n)ᶜ)
+      (fun t => ∫ s in liveSet (pK d n R0) pol t, Jf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
+      (fun t => ∫ s in liveSet (pK d n R0) pol t, Pf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
+      (fun t => ∫ s in liveSet (pK d n R0) pol t, af (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
+      (fun t => ∫ s in liveSet (pK d n R0) pol t, Df (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
+      (fun t => (gameLaw (prior d (1 / 2)) μ).real (liveSet (pK d n R0) pol t)) := by
+  have hP := good_pK hd hn hR1 hRd
   have hG : IsProbabilityMeasure (gameLaw (prior d (1 / 2)) μ) := isProbabilityMeasure_gameLaw _ μ
   have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
     fun t ht => (hpol t ht).1
   have hR := ruleS_meas_prior hP
-  have hsc : (pB d n).sc ≠ 0 := hP.sc_pos.ne'
-  have hS₀ : ∀ t < n, ∀ h θ ω, |(ruleS d (pB d n)).sig (post (prior d (1 / 2)) (ruleS d (pB d n)) (pB d n).sc t h)
+  have hsc : (pK d n R0).sc ≠ 0 := hP.sc_pos.ne'
+  have hS₀ : ∀ t < n, ∀ h θ ω, |(ruleS d (pK d n R0)).sig (post (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc t h)
       (play pol t ω h) θ| ≤ 1 := fun t ht h θ ω => abs_sig_post_le I hP t h ((hpol t ht).2 _ _ _) θ
-  have hk : 0 < (pB d n).k := by linarith [hP.k_ge]
-  have hB : 0 ≤ chanB (pB d n).L (pB d n).g (pB d n).sc := by unfold chanB; positivity
-  have hLedger := I.ledger_game hP.d_pos (show (0 : ℝ) < 1 / 2 by norm_num) μ (ruleS d (pB d n)) hR hsc hpol'
+  have hk : 0 < (pK d n R0).k := by linarith [hP.k_ge]
+  have hB : 0 ≤ chanBK (pK d n R0).L R0 (pK d n R0).g (pK d n R0).sc := by unfold chanBK; positivity
+  have hLedger := I.ledger_game hP.d_pos (show (0 : ℝ) < 1 / 2 by norm_num) μ (ruleS d (pK d n R0)) hR hsc hpol'
     hP.w_pos.ne'
-  have hJi : ∀ t < n, Integrable (Jf (pB d n) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
-    I.integrable_infoRound (prior d (1 / 2)) μ (ruleS d (pB d n)) hR hsc hpol' hS₀ ht
-  have hPi : ∀ t < n, Integrable (Pf (pB d n) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
+  have hJi : ∀ t < n, Integrable (Jf (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
+    I.integrable_infoRound (prior d (1 / 2)) μ (ruleS d (pK d n R0)) hR hsc hpol' hS₀ ht
+  have hPi : ∀ t < n, Integrable (Pf (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
     hLedger.1 t ht
-  have hai : ∀ t < n, Integrable (af (pB d n) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
+  have hai : ∀ t < n, Integrable (af (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
     (integrable_const (1 : ℝ)).mono' (measurable_af hP hpol ht).aestronglyMeasurable
       (ae_of_all _ fun s => by
         obtain ⟨h0, h1⟩ := af_mem hP pol t s
         rw [Real.norm_eq_abs, abs_le]
         constructor <;> linarith)
-  have hDi : ∀ t < n, Integrable (Df (pB d n) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
+  have hDi : ∀ t < n, Integrable (Df (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
     (integrable_const (1 : ℝ)).mono' (measurable_Df hP hpol ht).aestronglyMeasurable
       (ae_of_all _ fun s => by
         obtain ⟨h0, h1⟩ := Df_mem I hP hpol ht s
         rw [Real.norm_eq_abs, abs_le]
         constructor <;> linarith)
   have hround : ∀ t < n, _ := fun t ht =>
-    round_integral (gameLaw (prior d (1 / 2)) μ) (liveSet (pB d n) pol t) (measurableSet_liveSet hP hpol ht.le)
-      ((4 * (3 * Real.log d + 1) + 8 * chanB (pB d n).L (pB d n).g (pB d n).sc) / (pB d n).k)
-      ((pB d n).g / ((pB d n).sc ^ 2 * priceR d (pB d n).k)) (pB d n).g (pB d n).k
-      (Jf (pB d n) pol t) (Pf (pB d n) pol t) (af (pB d n) pol t) (Df (pB d n) pol t)
+    round_integral (gameLaw (prior d (1 / 2)) μ) (liveSet (pK d n R0) pol t) (measurableSet_liveSet hP hpol ht.le)
+      ((4 * (3 * Real.log d + 1) + 8 * chanBK (pK d n R0).L R0 (pK d n R0).g (pK d n R0).sc) / (pK d n R0).k)
+      ((pK d n R0).g / ((pK d n R0).sc ^ 2 * priceR d (pK d n R0).k)) (pK d n R0).g (pK d n R0).k
+      (Jf (pK d n R0) pol t) (Pf (pK d n R0) pol t) (af (pK d n R0) pol t) (Df (pK d n R0) pol t)
       (hJi t ht) (hPi t ht) (hai t ht) (hDi t ht) fun s hs => by
         obtain ⟨pr, H, Iann, Irest, Drest, preg, hRF⟩ := roundFacts_at I hP hpol ht hs
         exact round_bound hk hP.dim hP.g_pos.le hB hRF
   have hlive := measurableSet_liveSet hP hpol (le_refl n)
-  have hX : Real.exp 1 / 2 ≤ xCount d ((pB d n).w d) := by
-    have h16 := (ripeB_params hd hn).2.2.2.2.2.2.2.1
+  have hX : Real.exp 1 / 2 ≤ xCount d ((pK d n R0).w d) := by
+    have h16 := (ripeK_params hd hn hR1 hRd).2.2.2
     have := Real.exp_one_lt_three
     exact le_trans (by linarith) h16
   refine
@@ -1243,45 +1259,76 @@ theorem gameFacts (I : Inputs) {n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n
       count := ?_ }
   · rw [probReal_compl_eq_one_sub hlive, sub_sub_cancel]
     exact measureReal_mono (liveSet_anti hP pol ht.le)
-  · have he : ∀ t ∈ Finset.range n, ∫ s in liveSet (pB d n) pol t, Pf (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ =
-        ∫ s, Pf (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ := fun t _ =>
+  · have he : ∀ t ∈ Finset.range n, ∫ s in liveSet (pK d n R0) pol t, Pf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ =
+        ∫ s, Pf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ := fun t _ =>
       setIntegral_eq_integral_of_forall_compl_eq_zero fun s hs => Pf_dead I pol t hs
     rw [Finset.sum_congr rfl he]
     exact hLedger.2
-  · have hset : {s : Sample d Ω | dLive ((pB d n).w d) (covM (post (prior d (1 / 2)) (ruleS d (pB d n)) (pB d n).sc n
-        (hist (prior d (1 / 2)) (ruleS d (pB d n)) (pB d n).sc pol n s))) < d / 2} = (liveSet (pB d n) pol n)ᶜ := by
+  · have hset : {s : Sample d Ω | dLive ((pK d n R0).w d) (covM (post (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc n
+        (hist (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc pol n s))) < d / 2} = (liveSet (pK d n R0) pol n)ᶜ := by
       ext s
       exact (not_le (α := ℝ)).symm
-    have hJ : ∀ t ∈ Finset.range n, ∫ s in liveSet (pB d n) pol t, Jf (pB d n) pol t s ∂gameLaw (prior d (1 / 2)) μ =
-        ∫ s, infoRound (prior d (1 / 2)) (ruleS d (pB d n)) (pB d n).sc pol t s ∂gameLaw (prior d (1 / 2)) μ :=
+    have hJ : ∀ t ∈ Finset.range n, ∫ s in liveSet (pK d n R0) pol t, Jf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ =
+        ∫ s, infoRound (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc pol t s ∂gameLaw (prior d (1 / 2)) μ :=
       fun t _ => setIntegral_eq_integral_of_forall_compl_eq_zero fun s hs => Jf_dead I hP pol t hs
     rw [Finset.sum_congr rfl hJ, ← hset]
-    exact I.count_game (by have := hP.d_pos; omega) μ (ruleS d (pB d n)) hR hsc hpol' hS₀ hP.w_pos hX
+    exact I.count_game (by have := hP.d_pos; omega) μ (ruleS d (pK d n R0)) hR hsc hpol' hS₀ hP.w_pos hX
 
 end Game
 
 /-! ## The composition -/
 
-/-- `TheoremConj1Lower` from the statements `Inputs`, which Main.lean discharges (`lowerTopInputs`). -/
-theorem theoremConj1Lower_of_inputs (I : Inputs) : TheoremConj1Lower := by
-  intro d hd n hn Ω _ μ hμ pol hpol
-  have hP := good_pB hd hn
+section Compose
+
+variable {d : ℕ} {R0 : ℝ} {Ω : Type} [MeasurableSpace Ω]
+
+/-- Against the strategy of a tip `xo ∈ K` and a clamped noise sequence, the regret over `K` is integrable in the
+learner's seed: it is `regG` at `(xo, z, ω)` (`regretAd_stratOf`), measurable in `ω` and with values in `[0, n/2]`. -/
+theorem integrable_regretAd_stratOf (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω)
+    [IsProbabilityMeasure μ] {pol : Learner Ω d} {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol)
+    {K : Set (E d)} {xo : E d} (hxo : xo ∈ K) (z : ℕ → ℝ) :
+    Integrable (fun ω => regretAd K (stratOf (prior d (1 / 2)) (ruleS d P) P.sc xo z) (fun t => pol t ω) n) μ := by
+  have he : (fun ω => regretAd K (stratOf (prior d (1 / 2)) (ruleS d P) P.sc xo z) (fun t => pol t ω) n) =
+      fun ω => regG (prior d (1 / 2)) P pol n (xo, z, ω) :=
+    funext fun ω => regretAd_stratOf hP (prior d (1 / 2)) pol n hxo z ω
+  rw [he]
+  have hm : Measurable fun ω : Ω => regG (prior d (1 / 2)) P pol n (xo, z, ω) :=
+    (measurable_regG hP hpol).comp (measurable_const.prodMk (measurable_const.prodMk measurable_id))
+  refine (integrable_const ((n : ℝ) / 2)).mono' hm.aestronglyMeasurable (ae_of_all _ fun ω => ?_)
+  rw [Real.norm_eq_abs, abs_of_nonneg (regG_nonneg hP _ pol n _)]
+  exact regG_le I hP hpol _
+
+/-- The lower bound on a body (the lower bound on a body between two balls, deterministic form): on a convex `K` with
+`B(0, 1/2) ⊆ K ⊆ B(0, R0)`, `1 ≤ R0 ≤ d`, for `d ≥ 4·10^6` and `n ≥ d^10`, every learner of `IsLearnerAd K n` meets a
+strategy of `StratsLip K n` against which its regret is integrable with mean at least `7·10^-9 d^{3/2} n^{1/2}/log d`;
+from the statements `Inputs`, which Main.lean discharges (`lowerTopInputs`). -/
+theorem lowerBody_of_inputs (I : Inputs) {n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) {K : Set (E d)}
+    (hK : Convex ℝ K) (hK1 : Metric.closedBall (0 : E d) (1 / 2) ⊆ K) (hK2 : K ⊆ Metric.closedBall 0 R0)
+    (hR1 : 1 ≤ R0) (hRd : R0 ≤ d) (μ : Measure Ω) [IsProbabilityMeasure μ] {pol : Learner Ω d}
+    (hpol : IsLearnerAd K n pol) :
+    ∃ σ ∈ StratsLip K n, Integrable (fun ω => regretAd K σ (fun t => pol t ω) n) μ ∧
+      7 / 10 ^ 9 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n / Real.log d ≤
+        ∫ ω, regretAd K σ (fun t => pol t ω) n ∂μ := by
+  have hP := good_pK hd hn hR1 hRd
+  have hpolB : IsLearnerAd (Metric.closedBall 0 R0) n pol := fun t ht =>
+    ⟨(hpol t ht).1, fun ω x o => hK2 ((hpol t ht).2 ω x o)⟩
   have hn1 : 1 < n := by
     have h1 : 1 < d ^ 10 := Nat.one_lt_pow (by norm_num) (by omega)
     omega
-  have hbal := ripeB_balance hd hn (gameFacts I hd hn μ hpol)
-    (ER := ∫ s, regG (prior d (1 / 2)) (pB d n) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2) ∂gameLaw (prior d (1 / 2)) μ)
-    (by rw [sum_Df_eq I hP μ hpol]; exact coupling I hP μ hn1 hpol)
+  have hbal := ripeK_balance hd hn hR1 hRd (gameFacts I hd hn hR1 hRd μ hpolB)
+    (ER := ∫ s, regG (prior d (1 / 2)) (pK d n R0) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2)
+      ∂gameLaw (prior d (1 / 2)) μ)
+    (by rw [sum_Df_eq I hP μ hpolB]; exact coupling I hP μ hn1 hpolB)
   rw [integral_gameLaw_assoc (prior d (1 / 2)) μ
-    (fun s => regG (prior d (1 / 2)) (pB d n) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2))] at hbal
+    (fun s => regG (prior d (1 / 2)) (pK d n R0) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2))] at hbal
   have hm : Measurable fun p : (E d × (ℕ → ℝ)) × Ω =>
-      regG (prior d (1 / 2)) (pB d n) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2) :=
-    (measurable_regG hP hpol).comp ((measurable_fst.comp measurable_fst).prodMk
+      regG (prior d (1 / 2)) (pK d n R0) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2) :=
+    (measurable_regG hP hpolB).comp ((measurable_fst.comp measurable_fst).prodMk
       (((measurable_clampZ _).comp (measurable_snd.comp measurable_fst)).prodMk measurable_snd))
   have hb : ∀ p : (E d × (ℕ → ℝ)) × Ω,
-      |regG (prior d (1 / 2)) (pB d n) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2)| ≤ n / 2 := fun p =>
+      |regG (prior d (1 / 2)) (pK d n R0) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2)| ≤ n / 2 := fun p =>
     abs_le.2 ⟨by linarith [regG_nonneg hP (prior d (1 / 2)) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2),
-      (by positivity : (0 : ℝ) ≤ n / 2)], regG_le I hP hpol _⟩
+      (by positivity : (0 : ℝ) ≤ n / 2)], regG_le I hP hpolB _⟩
   have hN : ((prior d (1 / 2)).prod gaussStream)
       {a : E d × (ℕ → ℝ) | a.1 ∉ Metric.closedBall (0 : E d) (1 / 2)} = 0 := by
     have h0 := ae_iff.1 (prior_ae_mem d (1 / 2))
@@ -1294,18 +1341,21 @@ theorem theoremConj1Lower_of_inputs (I : Inputs) : TheoremConj1Lower := by
   have ha1 : a.1 ∈ Metric.closedBall (0 : E d) (1 / 2) := by
     by_contra h
     exact haN h
-  have hxo : a.1 ∈ Metric.closedBall (0 : E d) 1 := Metric.closedBall_subset_closedBall (by norm_num) ha1
+  have hxo : a.1 ∈ K := hK1 ha1
   have hℓ : 0 ≤ ellB n := Real.sqrt_nonneg _
-  have hz : ∀ i, |(pB d n).sc * clampZ (ellB n) a.2 i| ≤ 1 / 8 := fun i => by
+  have hz : ∀ i, |(pK d n R0).sc * clampZ (ellB n) a.2 i| ≤ 1 / 8 := fun i => by
     rw [abs_mul, abs_of_pos hP.sc_pos, ← sigB_mul_ellB hn1]
     exact mul_le_mul_of_nonneg_left (abs_clampZ_le hℓ a.2 i) hP.sc_pos.le
-  have hσ := stratOf_mem I hP n a.1 (clampZ (ellB n) a.2) hz
-  refine ⟨_, hσ, Sanity.integrable_regretAd hσ μ hpol, ?_⟩
-  have he : (fun ω => regretAd (Metric.closedBall 0 1)
-      (stratOf (prior d (1 / 2)) (ruleS d (pB d n)) (pB d n).sc a.1 (clampZ (ellB n) a.2)) (fun t => pol t ω) n) =
-      fun ω => regG (prior d (1 / 2)) (pB d n) pol n (a.1, clampZ (ellB n) a.2, ω) :=
+  have hσ := stratOf_mem I hP hK hK2 n a.1 (clampZ (ellB n) a.2) hz
+  refine ⟨_, hσ, integrable_regretAd_stratOf I hP μ hpolB hxo _, ?_⟩
+  have he : (fun ω => regretAd K
+      (stratOf (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc a.1 (clampZ (ellB n) a.2))
+        (fun t => pol t ω) n) =
+      fun ω => regG (prior d (1 / 2)) (pK d n R0) pol n (a.1, clampZ (ellB n) a.2, ω) :=
     funext fun ω => regretAd_stratOf hP (prior d (1 / 2)) pol n hxo _ ω
   rw [he]
   exact hbal.trans ha
+
+end Compose
 
 end AdversarialBco.Lower.Top

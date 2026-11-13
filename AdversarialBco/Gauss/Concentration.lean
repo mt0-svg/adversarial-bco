@@ -5,25 +5,24 @@ Authors: mt0-svg
 -/
 module
 
-public import AdversarialBco.Gauss.MaureyPisier
+public import AdversarialBco.Gauss.Integrability
 
 @[expose] public section
 
 /-!
-# Gaussian concentration for Lipschitz functions
+# Gaussian clouds, and the smoothing of Lipschitz functions
 
-The weaker form of Theorem A.1 of the paper proved in Lean (Section 11.2 of the paper), with the constant `2 / π^2`
-in place of `1/2` in the exponent.
+The Gaussian cloud, the concentration property `GaussConcAt`, and the smoothing lemmas that
+`AdversarialBco/Poly/GaussConcProof.lean` uses to pass from `C^1` functions to Lipschitz ones.
 
 * `cloud b S`: the law of `b + S g` on `ℝ^d`, `g` standard Gaussian on `ℝ^k` (Mathlib's `stdGaussian` on
-  `EuclideanSpace ℝ (Fin k)`), `S` a linear map. Mathlib's `multivariateGaussian b A` is `cloud b S` with
-  `S = toEuclideanCLM (CFC.sqrt A)` (`multivariateGaussian_eq_cloud`).
+  `EuclideanSpace ℝ (Fin k)`), `S` a linear map.
 * `GaussConcAt c`: for every `L`-Lipschitz `F : ℝ^d → ℝ`, `F` is integrable under `cloud b S` and its upper tail
-  about the mean satisfies `P(F - E F ≥ r) ≤ exp(-c r^2 / (L ‖S‖)^2)` for `r ≥ 0`.
-* `GaussConc`: `GaussConcAt c` for some absolute `c > 0`.
-* `gaussConcAt : GaussConcAt (2 / π^2)`, from the Maurey and Pisier argument of
-  `AdversarialBco/Gauss/MaureyPisier.lean`, a smoothing of `F` by a bump (Part 1) and the limit of the smoothing
-  radius to `0` (Part 3).
+  about the mean satisfies `P(F - E F ≥ r) ≤ exp(-c r^2 / (L ‖S‖)^2)` for `r ≥ 0`. It holds at `c = 1/2`
+  (`AdversarialBco.Poly.GConc.gaussConcAt_half`).
+* Part 1, a Lipschitz function is a uniform limit of smooth functions with the same Lipschitz constant (a smoothing by
+  a bump); Part 2, two lemmas on exponential moments, for the limit of the smoothing radius to `0`; Part 3, the
+  gradient bound and the linear growth of a Lipschitz function.
 
 Junk values. If `L ‖S‖ = 0` the exponent is `-(c r^2) / 0 = 0` and the bound reads `≤ 1`, which is true; the
 statement is then weaker than the truth (the tail is `0` for `r > 0`), never false. The mean `∫ F ∂(cloud b S)` is
@@ -39,10 +38,6 @@ namespace AdversarialBco.Gauss
 noncomputable def cloud {k d : ℕ} (b : EuclideanSpace ℝ (Fin d))
     (S : EuclideanSpace ℝ (Fin k) →L[ℝ] EuclideanSpace ℝ (Fin d)) : Measure (EuclideanSpace ℝ (Fin d)) :=
   (stdGaussian (EuclideanSpace ℝ (Fin k))).map (fun g => b + S g)
-
-instance isProbabilityMeasure_cloud {k d : ℕ} (b : EuclideanSpace ℝ (Fin d))
-    (S : EuclideanSpace ℝ (Fin k) →L[ℝ] EuclideanSpace ℝ (Fin d)) : IsProbabilityMeasure (cloud b S) :=
-  by unfold cloud; infer_instance
 
 /-- Gaussian concentration for Lipschitz functions with the constant `c` in the exponent: under every Gaussian
 cloud `N(b, S Sᵀ)` an `L`-Lipschitz function is integrable and has upper tail
@@ -189,7 +184,7 @@ theorem le_of_forall_exp_mul (M B c : ℝ) (hc : 0 ≤ c) (hB : 0 ≤ B)
   exact ge_of_tendsto h_tendsto' h_eventually
 
 
-/-! ## Part 3. Lipschitz functions, the tail, the cloud -/
+/-! ## Part 3. Two lemmas on Lipschitz functions -/
 
 section lipschitz
 
@@ -215,89 +210,6 @@ theorem abs_le_of_lipschitz {F : E → ℝ} {L : ℝ≥0} (hF : LipschitzWith L 
   have := abs_sub_abs_le_abs_sub (F x) (F 0)
   linarith
 
-/-- Maurey and Pisier for a Lipschitz function: under the standard Gaussian measure, `F - E F` is sub-Gaussian with
-variance proxy `π^2 L^2 / 4`. Smoothing by a bump (Part 1), the port for the smooth function, and the limit of the
-smoothing radius to `0`. -/
-theorem hasSubgaussianMGF_sub_integral_of_lipschitz {F : E → ℝ} {L : ℝ≥0} (hF : LipschitzWith L F) :
-    HasSubgaussianMGF (fun x => F x - ∫ y, F y ∂stdGaussian E) (gaussianConcentrationConst * L ^ 2)
-      (stdGaussian E) := by
-  set μ := stdGaussian E with hμ
-  set m := ∫ y, F y ∂μ with hm
-  have hgrowth : ∀ x, |F x - m| ≤ (|F 0| + |m|) + L * ‖x‖ := fun x => by
-    have h1 := abs_le_of_lipschitz hF x
-    have h2 := abs_sub (F x) m
-    linarith
-  have hmeas : AEStronglyMeasurable (fun x => F x - m) μ :=
-    (hF.continuous.sub continuous_const).aestronglyMeasurable
-  have hint : ∀ t, Integrable (fun x => exp (t * (F x - m))) μ := fun t =>
-    integrable_exp_of_abs_le_add_mul_norm hmeas hgrowth t
-  refine ⟨hint, fun t => ?_⟩
-  change ∫ x, exp (t * (F x - m)) ∂μ ≤ exp (↑(gaussianConcentrationConst * L ^ 2) * t ^ 2 / 2)
-  have hFi : Integrable F μ :=
-    integrable_of_abs_le_add_mul_norm hF.continuous.aestronglyMeasurable (abs_le_of_lipschitz hF)
-  refine le_of_forall_exp_mul _ _ (2 * |t| * L) (by positivity) (exp_pos _).le fun ε hε => ?_
-  obtain ⟨G, hGc, hGL, hGF⟩ := exists_contDiff_lipschitz_approx F L hF ε hε
-  have hMP := hasSubgaussianMGF_sub_integral_stdGaussian (E := E) hGc (norm_gradient_le_of_lipschitz hGL)
-  have hGi : Integrable G μ := integrable_of_norm_gradient_le hGc (norm_gradient_le_of_lipschitz hGL)
-  have hclose := mgf_centered_le_of_close μ F G (L * ε) t (fun x => by rw [abs_sub_comm]; exact hGF x) hFi hGi
-    (hMP.integrable_exp_mul t)
-  calc ∫ x, exp (t * (F x - m)) ∂μ
-      ≤ exp (2 * |t| * (L * ε)) * ∫ x, exp (t * (G x - ∫ y, G y ∂μ)) ∂μ := hclose
-    _ ≤ exp (2 * |t| * (L * ε)) * exp (↑(gaussianConcentrationConst * L ^ 2) * t ^ 2 / 2) := by
-        gcongr
-        exact hMP.mgf_le t
-    _ = exp (2 * |t| * L * ε) * exp (↑(gaussianConcentrationConst * L ^ 2) * t ^ 2 / 2) := by
-        rw [← mul_assoc]
-
-/-- The upper tail of a Lipschitz function under the standard Gaussian measure, about its mean. -/
-theorem tail_stdGaussian_of_lipschitz {F : E → ℝ} {L : ℝ≥0} (hF : LipschitzWith L F) {r : ℝ} (hr : 0 ≤ r) :
-    (stdGaussian E).real {x | (∫ y, F y ∂stdGaussian E) + r ≤ F x} ≤
-      exp (-(2 / π ^ 2 * r ^ 2) / (L : ℝ) ^ 2) := by
-  have h := (hasSubgaussianMGF_sub_integral_of_lipschitz hF).measure_ge_le hr
-  have hset : {x | (∫ y, F y ∂stdGaussian E) + r ≤ F x} = {x | r ≤ F x - ∫ y, F y ∂stdGaussian E} := by
-    ext x
-    simp only [Set.mem_ofPred_eq]
-    constructor <;> intro h <;> linarith
-  rw [hset]
-  refine h.trans_eq ?_
-  congr 1
-  rw [NNReal.coe_mul, NNReal.coe_pow, coe_gaussianConcentrationConst]
-  ring
-
 end lipschitz
-
-section cloud
-
-open MeasureTheory ProbabilityTheory Real
-open scoped NNReal
-
-/-- Gaussian concentration for Lipschitz functions under every cloud, with the constant `2/π^2` of Maurey and
-Pisier. -/
-theorem gaussConcAt : GaussConcAt (2 / π ^ 2) := by
-  intro k d b S F L hF
-  set μ := stdGaussian (EuclideanSpace ℝ (Fin k)) with hμ
-  have hmap : Measurable (fun g => b + S g) := by fun_prop
-  have hFm : AEStronglyMeasurable F (cloud b S) := hF.continuous.aestronglyMeasurable
-  have h1 : LipschitzWith ‖S‖₊ (fun g => b + S g) := by
-    have := ((isometry_add_left b).lipschitzWith).comp S.lipschitzWith
-    simpa [Function.comp_def] using this
-  have hG : LipschitzWith (L * ‖S‖₊) (fun g => F (b + S g)) := hF.comp h1
-  have hGi : Integrable (fun g => F (b + S g)) μ :=
-    integrable_of_abs_le_add_mul_norm hG.continuous.aestronglyMeasurable (abs_le_of_lipschitz hG)
-  have hint_eq : ∫ y, F y ∂cloud b S = ∫ g, F (b + S g) ∂μ := integral_map hmap.aemeasurable hFm
-  refine ⟨(integrable_map_measure hFm hmap.aemeasurable).2 hGi, fun r hr => ?_⟩
-  have hs : MeasurableSet {x | (∫ g, F (b + S g) ∂μ) + r ≤ F x} :=
-    measurableSet_le measurable_const hF.continuous.measurable
-  have hreal : (cloud b S).real {x | (∫ y, F y ∂cloud b S) + r ≤ F x} =
-      μ.real {g | (∫ g', F (b + S g') ∂μ) + r ≤ F (b + S g)} := by
-    rw [hint_eq]
-    unfold cloud
-    rw [map_measureReal_apply hmap hs]
-    rfl
-  rw [hreal]
-  refine (tail_stdGaussian_of_lipschitz hG hr).trans_eq ?_
-  rw [NNReal.coe_mul, coe_nnnorm]
-
-end cloud
 
 end AdversarialBco.Gauss

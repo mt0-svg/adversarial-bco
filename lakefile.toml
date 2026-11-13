@@ -1,12 +1,12 @@
 name = "adversarial-bco"
-version = "2.0.0"
-description = "Adversarial bandit convex optimisation: regret d^(3/2) sqrt(n) up to logarithms with polynomial-time steps on a real RAM, and a matching lower bound"
+version = "2.1.0"
+description = "Optimal regret for adversarial bandit convex optimisation in polynomial time: regret d^(3/2) sqrt(n) up to logarithms with polynomial-time steps in the bit model, and a matching lower bound (Conjecture 1 of Bubeck, Eldan and Lee)"
 keywords = ["math", "formal verification", "bandit convex optimisation", "online learning", "minimax regret"]
 license = "Apache-2.0"
 licenseFiles = ["LICENSE", "NOTICE"]
 preferReleaseBuild = true
 releaseRepo = "https://github.com/mt0-svg/adversarial-bco"
-defaultTargets = ["Statement", "Main", "Challenge", "Solution"]
+defaultTargets = ["Statement", "Main", "Challenge"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -18,42 +18,32 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.34.1"
 
-# The frozen statements: Corollary 1.6 for measurable learners (Statement), Theorem 1.5, Lemma 7.13 and Corollary 1.6
-# with their constants (StatementExplicit), Theorem 3.1 and Proposition 2.2 with their constants (StatementBody),
-# Corollary 8.6 (StatementPoly), Remark 1.2 (StatementConj1), Theorem 1.1 (StatementConj1Exp), Theorem 1.4
-# (StatementConj1Lower), Theorem 1.3 (a) (StatementConj1Poly) and Theorem 1.3 (b) (StatementConj1PolyExp).
+# The frozen statements: the bit-model upper bound (StatementConj1Bit, over the machine of StatementBitRAM and the
+# statement files it imports), its corollary in expectation (StatementConj1BitExp) and the lower bound on a polytope
+# (StatementConj1LowerPoly), with the statement files the proofs import.
 [[lean_lib]]
 name = "Statement"
-roots = ["AdversarialBco.Statement", "AdversarialBco.StatementExplicit", "AdversarialBco.StatementBody",
-  "AdversarialBco.StatementPoly", "AdversarialBco.StatementConj1", "AdversarialBco.StatementConj1Exp",
-  "AdversarialBco.StatementConj1Lower", "AdversarialBco.StatementConj1Poly", "AdversarialBco.StatementConj1PolyExp"]
+roots = ["AdversarialBco.Statement", "AdversarialBco.StatementBody", "AdversarialBco.StatementPoly",
+  "AdversarialBco.StatementConj1", "AdversarialBco.StatementConj1Lower", "AdversarialBco.StatementConj1Poly",
+  "AdversarialBco.StatementBitRAM", "AdversarialBco.StatementConj1Bit", "AdversarialBco.StatementConj1BitExp",
+  "AdversarialBco.StatementConj1LowerPoly"]
 
 # The development and the theorems.
 [[lean_lib]]
 name = "Main"
-roots = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Body2.Main", "AdversarialBco.Poly.Poly32OFinal",
-  "AdversarialBco.Conj1.Main", "AdversarialBco.Conj1Exp.Main", "AdversarialBco.Conj1Lower.Main",
-  "AdversarialBco.Conj1Poly.Main", "AdversarialBco.Conj1PolyExp.Main"]
-globs = ["AdversarialBco.Main", "AdversarialBco.Explicit", "AdversarialBco.Explicit.+", "AdversarialBco.Body2.+", "AdversarialBco.Lemmas", "AdversarialBco.Body", "AdversarialBco.Body.+", "AdversarialBco.Gauss.+",
+roots = ["AdversarialBco.Conj1Bit.Main", "AdversarialBco.Conj1Bit.Exp", "AdversarialBco.Conj1BitExp.Main",
+  "AdversarialBco.Conj1LowerPoly.Main"]
+globs = ["AdversarialBco.Lemmas", "AdversarialBco.Body.+", "AdversarialBco.Body2.+", "AdversarialBco.Gauss.+",
   "AdversarialBco.Poly.+", "AdversarialBco.Conj1.+", "AdversarialBco.Conj1Exp.+", "AdversarialBco.Conj1Lower.+",
-  "AdversarialBco.Conj1Poly.+", "AdversarialBco.Conj1PolyExp.+"]
+  "AdversarialBco.Conj1Poly.+", "AdversarialBco.Conj1PolyExp.+", "AdversarialBco.Bit.+",
+  "AdversarialBco.Conj1Bit.+", "AdversarialBco.Conj1BitExp.+", "AdversarialBco.Conj1LowerPoly.+"]
 
-# The statements with `sorry`, which nothing imports, and the modules that prove them: the pairs Comparator checks
-# (config.json: Challenge and Solution; config-explicit.json: ChallengeExplicit and AdversarialBco.Explicit;
-# config-body.json: ChallengeBody and AdversarialBco.Body2.Main; config-poly.json, config-conj1.json,
-# config-conj1-exp.json, config-conj1-lower.json, config-conj1-poly.json and config-conj1-poly-exp.json: ChallengePoly,
-# ChallengeConj1, ChallengeConj1Exp, ChallengeConj1Lower, ChallengeConj1Poly and ChallengeConj1PolyExp, over the copies
-# in ChallengeBase, and the modules their configurations name).
+# The statements with `sorry`, which nothing imports: the challenges of config-conj1-bit.json, config-conj1-bit-exp.json
+# and config-conj1-lower-poly.json (ChallengeConj1Bit, ChallengeConj1BitExp and ChallengeConj1LowerPoly, over the copies
+# in ChallengeBase), whose theorems the modules named by the configurations prove.
 [[lean_lib]]
 name = "Challenge"
-roots = ["AdversarialBco.Challenge", "AdversarialBco.ChallengeExplicit", "AdversarialBco.ChallengeBody",
-  "AdversarialBco.ChallengePoly", "AdversarialBco.ChallengeConj1", "AdversarialBco.ChallengeConj1Exp",
-  "AdversarialBco.ChallengeConj1Lower", "AdversarialBco.ChallengeConj1Poly", "AdversarialBco.ChallengeConj1PolyExp"]
-globs = ["AdversarialBco.Challenge", "AdversarialBco.ChallengeExplicit", "AdversarialBco.ChallengeBody",
-  "AdversarialBco.ChallengePoly", "AdversarialBco.ChallengeConj1", "AdversarialBco.ChallengeConj1Exp",
-  "AdversarialBco.ChallengeConj1Lower", "AdversarialBco.ChallengeConj1Poly", "AdversarialBco.ChallengeConj1PolyExp",
-  "AdversarialBco.ChallengeBase.+"]
-
-[[lean_lib]]
-name = "Solution"
-roots = ["AdversarialBco.Solution"]
+roots = ["AdversarialBco.ChallengeConj1Bit", "AdversarialBco.ChallengeConj1BitExp",
+  "AdversarialBco.ChallengeConj1LowerPoly"]
+globs = ["AdversarialBco.ChallengeConj1Bit", "AdversarialBco.ChallengeConj1BitExp",
+  "AdversarialBco.ChallengeConj1LowerPoly", "AdversarialBco.ChallengeBase.+"]

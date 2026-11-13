@@ -11,11 +11,11 @@ public import AdversarialBco.Poly.Cover
 @[expose] public section
 
 /-!
-# Covers of a ball, the union bound and the Lipschitz completion: proofs
+# Nets of a ball and the union bound: proofs
 
-Proofs of the six interface statements of `AdversarialBco/Poly/Cover.lean`. The leaves are
-`card_le_of_separated_ball`, `exists_net`, `quad_diff`, `log_card_net`, `union_bound_finset` (from
-`MeasureTheory.measure_biUnion_finset_le`) and `quad_sum_diff`. The assemblies close the file.
+Proof of the interface statement `ExistsNet` of `AdversarialBco/Poly/Cover.lean` (theorem `existsNet`), from
+`card_le_of_separated_ball` and `exists_net`, and the union bound over a finite family, `union_bound_finset` (from
+`MeasureTheory.measure_biUnion_finset_le`).
 -/
 
 open MeasureTheory
@@ -296,138 +296,6 @@ theorem AdversarialBco.Poly.exists_net {d : ℕ} (R ε : ℝ) (hR : 0 ≤ R) (h�
     -- So:
     exact h_card_bound C hC_admissible
 
-theorem AdversarialBco.Poly.quad_diff {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
-    (M : E →L[ℝ] E) (hM : IsSelfAdjoint M) (y y' μ : E) :
-    ⟪M (y - μ), y - μ⟫ - ⟪M (y' - μ), y' - μ⟫ = ⟪M (y - y'), y + y' - 2 • μ⟫ ∧
-      |⟪M (y - μ), y - μ⟫ - ⟪M (y' - μ), y' - μ⟫| ≤ ‖M‖ * ‖y - y'‖ * ‖y + y' - 2 • μ‖ := by
-  have hsymm : (M : E →ₗ[ℝ] E).IsSymmetric := hM.isSymmetric
-  have hsymm_inner : ∀ x y : E, ⟪M x, y⟫ = ⟪x, M y⟫ := hsymm.apply_clm
-  set a := y - μ with ha
-  set b := y' - μ with hb
-  have hab_sub : a - b = y - y' := by
-    dsimp [a, b]
-    abel
-  have hab_add : a + b = y + y' - 2 • μ := by
-    dsimp [a, b]
-    abel
-  have h_cross : ⟪M a, b⟫ = ⟪M b, a⟫ := by
-    calc
-      ⟪M a, b⟫ = ⟪a, M b⟫ := hsymm_inner a b
-      _ = ⟪M b, a⟫ := real_inner_comm _ _
-  have h_eq' : ⟪M (a - b), a + b⟫ = ⟪M a, a⟫ - ⟪M b, b⟫ := by
-    calc
-      ⟪M (a - b), a + b⟫ = ⟪M a - M b, a + b⟫ := by rw [M.map_sub]
-      _ = ⟪M a, a + b⟫ - ⟪M b, a + b⟫ := by rw [inner_sub_left]
-      _ = (⟪M a, a⟫ + ⟪M a, b⟫) - (⟪M b, a⟫ + ⟪M b, b⟫) := by rw [inner_add_right, inner_add_right]
-      _ = (⟪M a, a⟫ + ⟪M a, b⟫) - (⟪M a, b⟫ + ⟪M b, b⟫) := by rw [h_cross]
-      _ = ⟪M a, a⟫ - ⟪M b, b⟫ := by ring
-  have h_eq : ⟪M (y - μ), y - μ⟫ - ⟪M (y' - μ), y' - μ⟫ = ⟪M (y - y'), y + y' - 2 • μ⟫ := by
-    calc
-      ⟪M (y - μ), y - μ⟫ - ⟪M (y' - μ), y' - μ⟫ = ⟪M a, a⟫ - ⟪M b, b⟫ := by simp [a, b]
-      _ = ⟪M (a - b), a + b⟫ := by rw [h_eq']
-      _ = ⟪M (y - y'), y + y' - 2 • μ⟫ := by rw [hab_sub, hab_add]
-  have h_bound : |⟪M (y - μ), y - μ⟫ - ⟪M (y' - μ), y' - μ⟫| ≤ ‖M‖ * ‖y - y'‖ * ‖y + y' - 2 • μ‖ := by
-    rw [h_eq]
-    calc
-      |⟪M (y - y'), y + y' - 2 • μ⟫| = |⟪M (a - b), a + b⟫| := by rw [hab_sub, hab_add]
-      _ ≤ ‖M (a - b)‖ * ‖a + b‖ := abs_real_inner_le_norm _ _
-      _ ≤ (‖M‖ * ‖a - b‖) * ‖a + b‖ :=
-        mul_le_mul_of_nonneg_right (ContinuousLinearMap.le_opNorm M (a - b)) (norm_nonneg _)
-      _ = ‖M‖ * ‖a - b‖ * ‖a + b‖ := by ring
-      _ = ‖M‖ * ‖y - y'‖ * ‖y + y' - 2 • μ‖ := by rw [hab_sub, hab_add]
-  exact And.intro h_eq h_bound
-
-theorem AdversarialBco.Poly.log_card_net (d : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hδ0 : 0 < δ) (hδ1 : δ < 1)
-    (hdδ : (d : ℝ) ≤ 1 / δ) (hx : 14 ≤ Real.log (1 / δ)) :
-    (d : ℝ) * Real.log (1 + 2 * (2 * d) / δ ^ 3) ≤ 4.12 * d * Real.log (1 / δ) := by
-  set x := Real.log (1 / δ) with hx_def
-  have hx_pos : 0 < x := by linarith
-  have hd_nonneg : 0 ≤ (d : ℝ) := by
-    have hd' : (1 : ℝ) ≤ (d : ℝ) := by exact_mod_cast hd
-    linarith
-  have hδ_nonneg : 0 ≤ δ := by linarith
-  have hδ3_pos : 0 < δ ^ 3 := pow_pos hδ0 3
-  have hδ4_pos : 0 < δ ^ 4 := pow_pos hδ0 4
-  -- d * δ ≤ 1 from hdδ
-  have hdδ_mul : (d : ℝ) * δ ≤ 1 := by
-    calc
-      (d : ℝ) * δ ≤ (1 / δ) * δ := mul_le_mul_of_nonneg_right hdδ hδ_nonneg
-      _ = 1 := by field_simp [hδ0.ne.symm]
-  -- Simplify 2*(2*d) = 4*d
-  have h_simplify : 2 * (2 * (d : ℝ)) = 4 * (d : ℝ) := by ring
-  -- Key inequality: 1 + 4d/δ^3 ≤ 5/δ^4
-  have h_main_ineq : 1 + 4 * (d : ℝ) / (δ ^ 3) ≤ 5 / (δ ^ 4) := by
-    have hδ4_le_one : δ ^ 4 ≤ 1 := pow_le_one₀ hδ_nonneg (by linarith) (n := 4)
-    -- First: 4d/δ^3 ≤ 4/δ^4
-    have h1 : 4 * (d : ℝ) / (δ ^ 3) ≤ 4 / (δ ^ 4) := by
-      apply (div_le_div_iff₀ hδ3_pos hδ4_pos).mpr
-      calc
-        4 * (d : ℝ) * (δ ^ 4) = 4 * ((d : ℝ) * δ) * (δ ^ 3) := by ring
-        _ ≤ 4 * 1 * (δ ^ 3) := by gcongr
-        _ = 4 * (δ ^ 3) := by ring
-    -- Second: 1 ≤ 1/δ^4
-    have h2 : (1 : ℝ) ≤ 1 / (δ ^ 4) :=
-      one_le_one_div hδ4_pos hδ4_le_one
-    -- Combine
-    have h3 : 1 + 4 * (d : ℝ) / (δ ^ 3) ≤ 1 + 4 / (δ ^ 4) := by
-      gcongr
-    have h4 : 1 + 4 / (δ ^ 4) ≤ 5 / (δ ^ 4) := by
-      field_simp [hδ4_pos.ne.symm]
-      linarith
-    exact h3.trans h4
-  -- Take log of both sides
-  have h_pos_arg : 0 < 1 + 4 * (d : ℝ) / (δ ^ 3) := by positivity
-  have h_pos_target : 0 < 5 / (δ ^ 4) := by positivity
-  have h_log_ineq : Real.log (1 + 4 * (d : ℝ) / (δ ^ 3)) ≤ Real.log (5 / (δ ^ 4)) :=
-    Real.log_le_log h_pos_arg h_main_ineq
-  -- log(5/δ^4) = log 5 + 4*x
-  have h_log_right : Real.log (5 / (δ ^ 4)) = Real.log 5 + 4 * x := by
-    calc
-      Real.log (5 / (δ ^ 4)) = Real.log 5 - Real.log (δ ^ 4) := by
-        rw [Real.log_div (by norm_num : (5 : ℝ) ≠ 0) (by positivity : δ ^ 4 ≠ 0)]
-      _ = Real.log 5 - (4 * Real.log δ) := by rw [Real.log_pow, Nat.cast_ofNat]
-      _ = Real.log 5 + 4 * (-Real.log δ) := by ring
-      _ = Real.log 5 + 4 * Real.log (δ⁻¹) := by rw [Real.log_inv]
-      _ = Real.log 5 + 4 * x := by
-        rw [hx_def]
-        simp
-  -- Bound log 5 ≤ 0.12 * x
-  have h_log5_bound : Real.log 5 ≤ 0.12 * x := by
-    -- log 5 = 2*log 2 + log(5/4)
-    have h_log5_eq : Real.log 5 = 2 * Real.log 2 + Real.log (5/4) := by
-      calc
-        Real.log 5 = Real.log (4 * (5/4)) := by norm_num
-        _ = Real.log 4 + Real.log (5/4) := by
-          rw [Real.log_mul (by norm_num : (4 : ℝ) ≠ 0) (by norm_num : (5/4 : ℝ) ≠ 0)]
-        _ = Real.log ((2:ℝ)^2) + Real.log (5/4) := by norm_num
-        _ = 2 * Real.log 2 + Real.log (5/4) := by rw [Real.log_pow, Nat.cast_ofNat]
-    rw [h_log5_eq]
-    have h_log2 : Real.log 2 < 0.6931471808 := Real.log_two_lt_d9
-    have h_log_54 : Real.log (5/4) ≤ 5/4 - 1 := Real.log_le_sub_one_of_pos (by norm_num : 0 < (5/4 : ℝ))
-    have h_sum_lt : 2 * Real.log 2 + Real.log (5/4) < 2 * 0.6931471808 + (5/4 - 1) := by
-      nlinarith
-    have h_bound : 2 * 0.6931471808 + (5/4 - 1) ≤ 0.12 * x := by
-      have h_mid : 2 * 0.6931471808 + (5/4 - 1) ≤ 0.12 * (14 : ℝ) := by norm_num
-      have h_x : 0.12 * (14 : ℝ) ≤ 0.12 * x := by
-        gcongr
-      linarith
-    linarith
-  -- Combine: log(1 + 4d/δ^3) ≤ 4.12 * x
-  have h_log_final : Real.log (1 + 4 * (d : ℝ) / (δ ^ 3)) ≤ 4.12 * x := by
-    calc
-      Real.log (1 + 4 * (d : ℝ) / (δ ^ 3)) ≤ Real.log (5 / (δ ^ 4)) := h_log_ineq
-      _ = Real.log 5 + 4 * x := h_log_right
-      _ ≤ 0.12 * x + 4 * x := by gcongr
-      _ = (0.12 + 4) * x := by ring
-      _ = 4.12 * x := by norm_num
-  -- Multiply by d ≥ 0
-  calc
-    (d : ℝ) * Real.log (1 + 2 * (2 * d) / δ ^ 3) = (d : ℝ) * Real.log (1 + 4 * (d : ℝ) / (δ ^ 3)) := by
-      simp [h_simplify]
-    _ ≤ (d : ℝ) * (4.12 * x) := by gcongr
-    _ = (d : ℝ) * (4.12 * Real.log (1 / δ)) := by rw [hx_def]
-    _ = 4.12 * d * Real.log (1 / δ) := by ring
-
 theorem AdversarialBco.Poly.union_bound_finset {Ω ι : Type*} [MeasurableSpace Ω] (P : Measure Ω) (S : Finset ι)
     (A : ι → Set Ω) (p : ENNReal) (hA : ∀ i ∈ S, P (A i) ≤ p) :
     P (⋃ i ∈ S, A i) ≤ S.card * p := by
@@ -435,31 +303,10 @@ theorem AdversarialBco.Poly.union_bound_finset {Ω ι : Type*} [MeasurableSpace 
   have h := Finset.sum_le_card_nsmul S (fun i => P (A i)) p hA
   rwa [nsmul_eq_mul] at h
 
-theorem AdversarialBco.Poly.quad_sum_diff {E ι : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteSpace E]
-    (S : Finset ι) (M : ι → E →L[ℝ] E) (hM : ∀ s ∈ S, IsSelfAdjoint (M s)) (μ : ι → E) (y y' : E) (R : ℝ)
-    (hR : ∀ s ∈ S, ‖y + y' - 2 • μ s‖ ≤ R) :
-    |∑ s ∈ S, ⟪M s (y - μ s), y - μ s⟫ - ∑ s ∈ S, ⟪M s (y' - μ s), y' - μ s⟫| ≤
-      (∑ s ∈ S, ‖M s‖) * ‖y - y'‖ * R := by
-  rw [← Finset.sum_sub_distrib, Finset.sum_mul, Finset.sum_mul]
-  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum fun s hs => ?_)
-  exact (AdversarialBco.Poly.quad_diff (M s) (hM s hs) y y' (μ s)).2.trans
-    (mul_le_mul_of_nonneg_left (hR s hs) (by positivity))
-
 namespace AdversarialBco.Poly
 
 /-! ## Assemblies -/
 
-theorem cardLeOfSeparatedBall : CardLeOfSeparatedBall := fun _ R ε hR hε C hCK hsep =>
-  card_le_of_separated_ball R ε hR hε C hCK hsep
-
 theorem existsNet : ExistsNet := fun _ R ε hR hε => exists_net R ε hR hε
-
-theorem logCardNet : LogCardNet := fun d δ hd h0 h1 hdδ hx => log_card_net d δ hd h0 h1 hdδ hx
-
-theorem unionBoundFinset : UnionBoundFinset := fun _ _ _ P S A p hA => union_bound_finset P S A p hA
-
-theorem quadDiff : QuadDiff := fun _ _ _ _ M hM y y' μ => quad_diff M hM y y' μ
-
-theorem quadSumDiff : QuadSumDiff := fun _ _ _ _ _ S M hM μ y y' R hR => quad_sum_diff S M hM μ y y' R hR
 
 end AdversarialBco.Poly

@@ -10,9 +10,9 @@ public import AdversarialBco.Body.Gauss
 @[expose] public section
 
 /-!
-# The entropic objective: bounds, continuity, and the arithmetic of the moved components
+# The entropic objective: bounds and continuity
 
-`abs_det_le`, `integral_cloud_lipschitz`, `entropic_lower`, `entropic_bounded` and `moved_arith`.
+`abs_det_le`, `integral_cloud_lipschitz`, `entropic_lower` and `entropic_bounded`.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -516,28 +516,3 @@ theorem AdversarialBco.Body.entropic_bounded {d : ℕ} (G : EuclideanSpace ℝ (
   exact ⟨hb', hS', hdet⟩
 
 
-theorem AdversarialBco.Body.moved_arith (h η Fb Fbs Mb Mbs : ℝ) (hh : 0 < h) (hη0 : 0 ≤ η) (hη : η ≤ h / 32)
-    (hmove : Fb - Fbs < -(h / 2)) (hmin : Mbs ≤ Mb + η) :
-    h ^ 2 / 32 ≤ (Fb - Mb) ^ 2 + (Fbs - Mbs) ^ 2 := by
-  set x := Fb - Mb with hx
-  set y := Fbs - Mbs with hy
-  have hx_sub_y_lt : x - y < -(15 * h / 32) := by
-    have h_eq : x - y = (Fb - Fbs) - (Mb - Mbs) := by
-      dsimp [x, y]
-      ring
-    have h_lower : Mb - Mbs ≥ -η := by
-      linarith
-    have h_comb : (Fb - Fbs) - (Mb - Mbs) < -(h / 2) - (-η) := by
-      linarith
-    have h_bound : -(h / 2) - (-η) ≤ -(15 * h / 32) := by
-      nlinarith
-    linarith
-  have hy_sub_x_pos : 0 < y - x := by
-    linarith
-  have h_sq_ineq : (x - y) ^ 2 / 2 ≤ x ^ 2 + y ^ 2 := by
-    have h_nonneg : (x + y) ^ 2 ≥ 0 := by positivity
-    nlinarith
-  have h_final : h ^ 2 / 32 ≤ (15 * h / 32) ^ 2 / 2 := by
-    have h_sq_nonneg : h ^ 2 ≥ 0 := by positivity
-    nlinarith
-  nlinarith

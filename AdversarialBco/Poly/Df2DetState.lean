@@ -13,7 +13,8 @@ public import AdversarialBco.Poly.Df2DetMain
 # DET, the states up to the stopping time
 
 `StInv s`: what holds of the state of round `s ≤ τ` by the conditions before `τ` alone (conditions (a),
-(b), (d) of the epoch, with Lemma D.2), and the forms of `P`, `b`, `Φ`, `Ĝ`, `l` as sums over the rounds. `SIat s`:
+(b), (d) of the epoch, with the rank-one round lemma), and the forms of `P`, `b`, `Φ`, `Ĝ`, `l` as sums over the rounds.
+`SIat s`:
 the facts of `Df2SIFacts` at the state of round `s`.
 -/
 
@@ -208,7 +209,7 @@ theorem stInv_succ (H : DetBase c δ π m) {s : ℕ} (hs : s < c.tau π m) (hI :
   · rw [hst]; exact hiii.2.1
   · rw [hst]; exact hiii.2.2
   · exact psd_of_eq (hI.pb0.add (hhess.smul hek.le)) (by rw [Df2Ctx.PBar_succ]; abel)
-  · have hsp := (H.hap (c.Rp π s) ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) c.p.R (c.Pn π s) (c.wmu π s)
+  · have hsp := (H.hap s (c.Rp π s) ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) c.p.R (c.Pn π s) (c.wmu π s)
       (c.eM π s)).2
     unfold Df2Ctx.mcall at hmc
     rw [hmc] at hsp

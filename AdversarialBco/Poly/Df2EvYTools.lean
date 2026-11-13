@@ -13,7 +13,7 @@ public import AdversarialBco.Poly.FreedmanProof
 /-!
 # The leaves of the budget of Y
 
-Self-contained facts for `Df2SIFacts → Df2EvYProp`: the conditional second moment of the observation given the
+Self-contained facts for the budget of the event Y: the conditional second moment of the observation given the
 past and the draw; the conditional variance of a bounded nonnegative variable; Freedman's inequality for bounded
 nonnegative increments, uniform over the horizons (a hitting time makes the union over the horizons free); the
 second moment of `v = pip - 1` by truncation at `2 L`; the first moment of `v` by Jensen on the extension at the

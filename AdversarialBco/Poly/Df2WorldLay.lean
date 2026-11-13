@@ -10,20 +10,20 @@ public import AdversarialBco.Poly.Df2LawProof
 @[expose] public section
 
 /-!
-# The world as an instance of setting (E)
+# The world as a probability space
 
-The world `ω = (gs, noise)` under `gaussStream.prod ν`. The epoch of D0 started before round `a` reads, in its round
-`s`, the `d + 1` terms of the block of round `a + s` of the Gaussian stream when `a + s < n`; past the horizon the
-block of round `a + s ≥ n` lies in the spare region, which the out-of-range entries of the stream of PG read too, so
-the instance reads fresh terms there instead (`lay`: `S + pair 0 (pair 0 (d + …))`, which PG never reads,
-`mrA_ne_lay`, `mrT_ne_lay`). The filtration `𝒢w a s` holds every term of the Gaussian stream outside the rounds
-`s' ≥ s` of the instance, and the noise before round `a + s`.
+The world `ω = (gs, noise)` under `gaussStream.prod ν` (`WΩ`), with the sigma-field `gσ i` of term `i` of the Gaussian
+stream.
 
+* Generic lemmas: the gauge of a family of convex bodies containing `B̄(0, 1)` is measurable once membership is
+  (`gauge_family_measurable`); independence on a product (`iIndep_prod_snd`); the exponential moments behind
+  `E exp(e²) ≤ 2` for the noise of an instance (`gauss_exp_quarter`, `exp_sq_mid_le`); conditional expectations of a
+  function of the second factor (`condExp_snd_le`, `condExp_snd_eq_zero`, from Lemma NZ on the product); the mean width
+  of a ball (`pgMw_closedBall_le`, `inv_R_le_df2Mw`); an affine image of an interior point (`affine_interior_mem`).
 * `indep_world`: the terms of the Gaussian stream at disjoint index sets, with the whole noise on one side, are
-  independent (`iIndep_prod_snd`, `iIndepFun_infinitePi`).
-* `setE_world`: the instance is a setting (E) (`Df2SetE`): the draw `ξ s` is a standard Gaussian vector independent of
-  `𝒢w a s`; the noise `e s = (ε_{a+s} + g/2)/2` is centred with `E exp(e²) ≤ 2` given `𝒢w a s` and `ξ s`
-  (`exp_sq_mid_le`, `gauss_exp_quarter`, Lemma NZ on the product).
+  independent (`iIndep_world`, from `iIndep_coords`).
+* The marginals of the world and the integrability of the noise (`map_fst_world`, `map_snd_world`,
+  `integrable_noise_world`, `integrable_noise_exp`, `integrable_noise_lin`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -423,94 +423,6 @@ theorem affine_interior_mem {d : ℕ} (K C : Set (EuclideanSpace ℝ (Fin d)))
     rfl
   exact h_img_sub_int_K hy_mem
 
-/-! ## The layout of the instance -/
-
-/-- The index of coordinate `c` (`c ≤ d`) of round `s` of the epoch started before round `a`: the block of round
-`a + s` of the stream when `a + s < n`, else a fresh index past the spare index `S`. -/
-def lay (N0 S n d a s : ℕ) (c : Fin (d + 1)) : ℕ :=
-  if a + s < n then N0 + (a + s) * (d + 1) + c else S + Nat.pair 0 (Nat.pair 0 (d + (s * (d + 1) + c)))
-
-theorem lay_inj (N0 S n d a s s' : ℕ) (hS : N0 + n * (d + 1) ≤ S) (c c' : Fin (d + 1))
-    (h : lay N0 S n d a s c = lay N0 S n d a s' c') : s = s' ∧ c = c' := by
-  have hc := c.isLt
-  have hc' := c'.isLt
-  have key : ∀ x y : ℕ, x * (d + 1) + c = y * (d + 1) + c' → x = y ∧ c = c' := fun x y e => by
-    obtain ⟨h1, h2⟩ := mr_divmod_inj (d + 1) x y c c' hc hc' e
-    exact ⟨h1, Fin.ext h2⟩
-  unfold lay at h
-  split_ifs at h with h1 h2 h2
-  · obtain ⟨e1, e2⟩ := key (a + s) (a + s') (by omega)
-    exact ⟨by omega, e2⟩
-  · exfalso
-    have : (a + s) * (d + 1) + c < n * (d + 1) := by
-      have : (a + s + 1) * (d + 1) ≤ n * (d + 1) := Nat.mul_le_mul_right _ (by omega)
-      nlinarith
-    omega
-  · exfalso
-    have : (a + s') * (d + 1) + c' < n * (d + 1) := by
-      have : (a + s' + 1) * (d + 1) ≤ n * (d + 1) := Nat.mul_le_mul_right _ (by omega)
-      nlinarith
-    omega
-  · have e := Nat.add_left_cancel h
-    rw [Nat.pair_eq_pair] at e
-    rw [Nat.pair_eq_pair] at e
-    exact key s s' (by omega)
-
-theorem lay_ge (N0 S n d a s : ℕ) (hS : N0 ≤ S) (c : Fin (d + 1)) : N0 ≤ lay N0 S n d a s c := by
-  unfold lay; split_ifs <;> omega
-
-theorem lay_lt_or (N0 S n d a s : ℕ) (hS : S = N0 + n * (d + 1)) (c : Fin (d + 1)) :
-    lay N0 S n d a s c < S ∨ lay N0 S n d a s c = S + Nat.pair 0 (Nat.pair 0 (d + (s * (d + 1) + c))) := by
-  unfold lay
-  split_ifs with h
-  · left
-    have hc := c.isLt
-    have : (a + s + 1) * (d + 1) ≤ n * (d + 1) := Nat.mul_le_mul_right _ (by omega)
-    nlinarith
-  · right; rfl
-
-theorem mrA_ne_lay (m Jr d S n : ℕ) (Ns NT W : ℕ → ℕ) (MT : ℕ)
-    (hW : ∀ i, W i = Ns i + MT * NT i) (hS : S = mrOff Jr d W m + n * (d + 1)) (i r k : ℕ) (c : Fin d) (a s : ℕ)
-    (c' : Fin (d + 1)) : mrA m Jr d S Ns W i r k c ≠ lay (mrOff Jr d W m) S n d a s c' := by
-  intro h
-  have hge := lay_ge (mrOff Jr d W m) S n d a s (by omega) c'
-  unfold mrA at h
-  split_ifs at h with hin
-  · obtain ⟨hi, hr, hk⟩ := hin
-    have hkW : k < W i := by rw [hW i]; omega
-    have := mrOff_add_lt Jr d m i _ W hi (mr_slot_lt Jr (W i) d r k c hr hkW c.isLt)
-    omega
-  · rcases lay_lt_or (mrOff Jr d W m) S n d a s hS c' with hl | hl
-    · omega
-    · rw [hl] at h
-      have e := Nat.add_left_cancel h
-      rw [Nat.pair_eq_pair, Nat.pair_eq_pair] at e
-      have hc := c.isLt
-      omega
-
-theorem mrT_ne_lay (m Jr MT d S n : ℕ) (Ns NT W : ℕ → ℕ)
-    (hW : ∀ i, W i = Ns i + MT * NT i) (hS : S = mrOff Jr d W m + n * (d + 1)) (i r v k : ℕ) (c : Fin d) (a s : ℕ)
-    (c' : Fin (d + 1)) : mrT m Jr MT d S Ns NT W i r v k c ≠ lay (mrOff Jr d W m) S n d a s c' := by
-  intro h
-  have hge := lay_ge (mrOff Jr d W m) S n d a s (by omega) c'
-  unfold mrT at h
-  split_ifs at h with hin
-  · obtain ⟨hi, hr, hv, hk⟩ := hin
-    have hy : Ns i + v * NT i + k < W i := by
-      rw [hW i]
-      have : (v + 1) * NT i ≤ MT * NT i := Nat.mul_le_mul_right _ hv
-      nlinarith
-    have := mrOff_add_lt Jr d m i _ W hi (mr_slot_lt Jr (W i) d r (Ns i + v * NT i + k) c hr hy c.isLt)
-    have e : r * W i + Ns i + v * NT i + k = r * W i + (Ns i + v * NT i + k) := by ring
-    rw [e] at h
-    omega
-  · rcases lay_lt_or (mrOff Jr d W m) S n d a s hS c' with hl | hl
-    · omega
-    · rw [hl] at h
-      have e := Nat.add_left_cancel h
-      rw [Nat.pair_eq_pair, Nat.pair_eq_pair] at e
-      omega
-
 /-! ## The world as a probability space -/
 
 /-- The sample space of the world: the Gaussian stream and the noise. -/
@@ -587,57 +499,13 @@ theorem measurable_pi_of {Ω ι : Type*} {m : MeasurableSpace Ω} {g : Ω → ι
     Measurable[m] g :=
   measurable_pi_iff.mpr h
 
-/-! ## The filtration of the instance -/
-
 variable {d : ℕ}
 
-/-- The indices of the rounds `s' ≥ s` of the instance. -/
-def fut (N0 S n d a s : ℕ) : Set ℕ := {i | ∃ s', s ≤ s' ∧ ∃ c, lay N0 S n d a s' c = i}
-
-theorem fut_anti (N0 S n d a : ℕ) {s t : ℕ} (h : s ≤ t) : fut N0 S n d a t ⊆ fut N0 S n d a s := by
-  rintro i ⟨s', hs', c, rfl⟩
-  exact ⟨s', h.trans hs', c, rfl⟩
-
-/-- The sigma-field before round `s` of the instance at start `a`: the terms of the Gaussian stream outside the rounds
-`s' ≥ s`, and the noise before round `a + s`. -/
-def 𝒢w (N0 S n d a : ℕ) : Filtration ℕ (inferInstance : MeasurableSpace WΩ) where
-  seq s := (⨆ i ∈ (fut N0 S n d a s)ᶜ, gσ i) ⊔ MeasurableSpace.comap Prod.snd (pastNoise (a + s))
-  mono' s t h := sup_le_sup
-    (iSup₂_le fun i hi => le_iSup₂ (f := fun i (_ : i ∈ (fut N0 S n d a t)ᶜ) => gσ i) i
-      (fun h' => hi (fut_anti N0 S n d a h h')))
-    (MeasurableSpace.comap_mono (pastNoise_mono (by omega)))
-  le' s := sup_le (iSup₂_le fun i _ => gσ_le i)
-    ((MeasurableSpace.comap_mono (pastNoise_le _)).trans measurable_snd.comap_le)
-
-/-- The draw of round `s` of the instance. -/
-def xiL (N0 S n d a s : ℕ) (ω : WΩ) : Fin d → ℝ := fun c => ω.1 (lay N0 S n d a s c.castSucc)
-
-/-- The noise of round `s` of the instance: `(ε_{a+s} + g/2)/2`, `g` the last term of the block. -/
-noncomputable def eL (N0 S n d a s : ℕ) (ω : WΩ) : ℝ := (ω.2 (a + s) + ω.1 (lay N0 S n d a s (Fin.last d)) / 2) / 2
-
-/-! ## The instance -/
+/-! ## The marginals of the world and the noise -/
 
 section Inst
 
 variable (N0 S n a : ℕ)
-
-theorem lay_mem_fut (s : ℕ) (c : Fin (d + 1)) : lay N0 S n d a s c ∈ fut N0 S n d a s := ⟨s, le_rfl, c, rfl⟩
-
-theorem lay_not_fut (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) (c : Fin (d + 1)) :
-    lay N0 S n d a s c ∉ fut N0 S n d a (s + 1) := by
-  rintro ⟨s', hs', c', h⟩
-  have := (lay_inj N0 S n d a s' s hS c' c h).1
-  omega
-
-theorem gσ_le_𝒢w (s i : ℕ) (hi : i ∉ fut N0 S n d a s) : gσ i ≤ 𝒢w N0 S n d a s :=
-  (le_iSup₂ (f := fun i (_ : i ∈ (fut N0 S n d a s)ᶜ) => gσ i) i hi).trans le_sup_left
-
-theorem xiL_meas (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) : Measurable[𝒢w N0 S n d a (s + 1)] (xiL N0 S n d a s) :=
-  measurable_pi_of fun _ => meas_coord _ (gσ_le_𝒢w N0 S n a (s + 1) _ (lay_not_fut N0 S n a hS s _))
-
-theorem xiL_meas_fut (s : ℕ) : Measurable[⨆ i ∈ fut N0 S n d a s, gσ i] (xiL N0 S n d a s) :=
-  measurable_pi_of fun _ => meas_coord _
-    (le_iSup₂ (f := fun i (_ : i ∈ fut N0 S n d a s) => gσ i) _ (lay_mem_fut N0 S n a s _))
 
 theorem map_fst_world (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] :
     (gaussStream.prod ν).map Prod.fst = gaussStream := by
@@ -647,98 +515,13 @@ theorem map_snd_world (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] :
     (gaussStream.prod ν).map Prod.snd = ν := by
   rw [Measure.map_snd_prod, measure_univ, one_smul]
 
-theorem map_coord_world (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (i : ℕ) :
-    (gaussStream.prod ν).map (fun ω : WΩ => ω.1 i) = gaussianReal 0 1 := by
-  rw [show (fun ω : WΩ => ω.1 i) = (fun x : ℕ → ℝ => x i) ∘ Prod.fst from rfl,
-    ← Measure.map_map (measurable_pi_apply i) measurable_fst, map_fst_world, gaussStream,
-    Measure.infinitePi_map_eval]
-
-theorem xiL_law (hS : N0 + n * (d + 1) ≤ S) (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (s : ℕ) :
-    (gaussStream.prod ν).map (xiL N0 S n d a s) = Measure.pi fun _ : Fin d => gaussianReal 0 1 := by
-  have hσ : Function.Injective fun c : Fin d => lay N0 S n d a s c.castSucc := fun c c' h =>
-    Fin.castSucc_injective _ (lay_inj N0 S n d a s s hS _ _ h).2
-  rw [show xiL N0 S n d a s = (fun x : ℕ → ℝ => fun c : Fin d => x (lay N0 S n d a s c.castSucc)) ∘ Prod.fst
-    from rfl, ← Measure.map_map (by fun_prop) measurable_fst, map_fst_world, gaussStream,
-    infinitePi_comp_inj _ _ hσ, Measure.infinitePi_eq_pi]
-
-theorem xiL_indep (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (s : ℕ) :
-    Indep (MeasurableSpace.comap (xiL N0 S n d a s) inferInstance) (𝒢w N0 S n d a s) (gaussStream.prod ν) := by
-  have h := indep_world ν (fut N0 S n d a s) (fut N0 S n d a s)ᶜ disjoint_compl_right
-  refine indep_of_indep_of_le_right (indep_of_indep_of_le_left h (xiL_meas_fut N0 S n a s).comap_le) ?_
-  exact sup_le_sup le_rfl (MeasurableSpace.comap_mono (pastNoise_le _))
-
 theorem abs_le_exp_sq (x : ℝ) : |x| ≤ Real.exp (x ^ 2) := by
   nlinarith [abs_nonneg x, sq_abs x, Real.add_one_le_exp (x ^ 2), sq_nonneg (|x| - 1 / 2)]
-
-/-- The index of the dither of round `s` of the instance. -/
-abbrev idxZ (s : ℕ) : ℕ := lay N0 S n d a s (Fin.last d)
-
-/-- The sigma-field of (E3) at round `s`. -/
-abbrev HL (s : ℕ) : MeasurableSpace WΩ :=
-  𝒢w N0 S n d a s ⊔ MeasurableSpace.comap (xiL N0 S n d a s) inferInstance
-
-theorem HL_le (s : ℕ) : HL (d := d) N0 S n a s ≤ (inferInstance : MeasurableSpace WΩ) :=
-  sup_le ((𝒢w N0 S n d a).le s) (xiL_meas_fut N0 S n a s |>.mono
-    (iSup₂_le fun i _ => gσ_le i) le_rfl).comap_le
-
-theorem HL_le_noise (s : ℕ) :
-    HL (d := d) N0 S n a s ≤ MeasurableSpace.comap Prod.fst inferInstance ⊔
-      MeasurableSpace.comap Prod.snd (pastNoise (a + s)) := by
-  have hfst : ∀ i, gσ i ≤ MeasurableSpace.comap (Prod.fst : WΩ → ℕ → ℝ) inferInstance := fun i =>
-    MeasurableSpace.comap_mono (measurable_pi_apply i).comap_le
-  refine sup_le (sup_le ((iSup₂_le fun i _ => hfst i).trans le_sup_left) le_sup_right) ?_
-  refine le_sup_of_le_left ?_
-  rw [show xiL N0 S n d a s = (fun x : ℕ → ℝ => fun c : Fin d => x (lay N0 S n d a s c.castSucc)) ∘ Prod.fst
-    from rfl, ← MeasurableSpace.comap_comp]
-  exact MeasurableSpace.comap_mono (Measurable.comap_le (by fun_prop))
-
-theorem HL_le_dither (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) :
-    HL (d := d) N0 S n a s ≤ (⨆ i ∈ ({idxZ (d := d) N0 S n a s} : Set ℕ)ᶜ, gσ i) ⊔
-      MeasurableSpace.comap Prod.snd inferInstance := by
-  have hmem : ∀ i, i ≠ idxZ (d := d) N0 S n a s →
-      gσ i ≤ ⨆ i ∈ ({idxZ (d := d) N0 S n a s} : Set ℕ)ᶜ, gσ i := fun i hi =>
-    le_iSup₂ (f := fun i (_ : i ∈ ({idxZ (d := d) N0 S n a s} : Set ℕ)ᶜ) => gσ i) i hi
-  refine sup_le (sup_le (iSup₂_le fun i hi => (hmem i ?_).trans le_sup_left)
-    (le_sup_of_le_right (MeasurableSpace.comap_mono (pastNoise_le _)))) (le_sup_of_le_left ?_)
-  · rintro rfl
-    exact hi (lay_mem_fut N0 S n a s _)
-  · refine (measurable_pi_of fun c => meas_coord _ (hmem _ fun h => ?_)).comap_le
-    have := (lay_inj N0 S n d a s s hS _ _ h).2
-    exact Fin.castSucc_ne_last c this
-
-theorem indep_dither (hS : N0 + n * (d + 1) ≤ S) (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (s : ℕ) :
-    Indep (gσ (idxZ (d := d) N0 S n a s)) (HL (d := d) N0 S n a s) (gaussStream.prod ν) := by
-  have h := indep_world ν {idxZ (d := d) N0 S n a s} {idxZ (d := d) N0 S n a s}ᶜ disjoint_compl_right
-  rw [iSup_singleton] at h
-  exact indep_of_indep_of_le_right h (HL_le_dither N0 S n a hS s)
-
-theorem integral_coord_world (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (i : ℕ) (F : ℝ → ℝ)
-    (hF : Measurable F) : ∫ ω, F (ω.1 i) ∂(gaussStream.prod ν) = ∫ x, F x ∂(gaussianReal 0 1) := by
-  rw [← map_coord_world ν i, integral_map (by fun_prop) hF.aestronglyMeasurable]
-
-theorem integrable_coord_world (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (i : ℕ) (F : ℝ → ℝ)
-    (hF : Integrable F (gaussianReal 0 1)) : Integrable (fun ω : WΩ => F (ω.1 i)) (gaussStream.prod ν) := by
-  rw [← map_coord_world ν i] at hF
-  exact hF.comp_measurable (by fun_prop)
 
 theorem integrable_noise_world (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (F : (ℕ → ℝ) → ℝ)
     (hF : Integrable F ν) : Integrable (fun ω : WΩ => F ω.2) (gaussStream.prod ν) := by
   rw [← map_snd_world ν] at hF
   exact hF.comp_measurable measurable_snd
-
-theorem eL_meas (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) : Measurable[𝒢w N0 S n d a (s + 1)] (eL N0 S n d a s) := by
-  have h1 : Measurable[𝒢w N0 S n d a (s + 1)] fun ω : WΩ => ω.2 (a + s) :=
-    (meas_noise (a + (s + 1)) (a + s) (by omega)).mono le_sup_right le_rfl
-  have h2 : Measurable[𝒢w N0 S n d a (s + 1)] fun ω : WΩ => ω.1 (idxZ (d := d) N0 S n a s) :=
-    meas_coord _ (gσ_le_𝒢w N0 S n a (s + 1) _ (lay_not_fut N0 S n a hS s _))
-  exact (h1.add (h2.div_const 2)).div_const 2
-
-theorem eL_bound (s : ℕ) (ω : WΩ) :
-    Real.exp (eL N0 S n d a s ω ^ 2) ≤
-      (1 / 2 : ℝ) * (Real.exp (ω.2 (a + s) ^ 2) + Real.exp ((ω.1 (idxZ (d := d) N0 S n a s) / 2) ^ 2)) := by
-  have := exp_sq_mid_le (ω.2 (a + s)) (ω.1 (idxZ (d := d) N0 S n a s) / 2)
-  simp only [eL, idxZ] at this ⊢
-  linarith
 
 section Noise
 
@@ -753,87 +536,6 @@ theorem integrable_noise_exp (t : ℕ) :
 theorem integrable_noise_lin (t : ℕ) : Integrable (fun ε : ℕ → ℝ => ε t) ν :=
   (hν.2 t).1.mono' (measurable_pi_apply t).aestronglyMeasurable
     (Filter.Eventually.of_forall fun ε => by simpa [Real.norm_eq_abs] using abs_le_exp_sq (ε t))
-
-theorem integrable_eL_exp (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) :
-    Integrable (fun ω => Real.exp (eL N0 S n d a s ω ^ 2)) (gaussStream.prod ν) := by
-  have := hν.1
-  have hA := integrable_noise_exp ν hν (a + s)
-  have hB := integrable_coord_world ν (idxZ (d := d) N0 S n a s) _ gauss_exp_quarter.1
-  refine ((hA.add hB).const_mul (1 / 2)).mono' ?_ (Filter.Eventually.of_forall fun ω => ?_)
-  · exact (Real.measurable_exp.comp ((eL_meas N0 S n a hS s).mono ((𝒢w N0 S n d a).le _) le_rfl |>.pow_const 2)).aestronglyMeasurable
-  · rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-    exact eL_bound N0 S n a s ω
-
-theorem condExp_dither (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) (F : ℝ → ℝ) (hF : Measurable F) :
-    (gaussStream.prod ν)[fun ω => F (ω.1 (idxZ (d := d) N0 S n a s)) | HL (d := d) N0 S n a s] =ᵐ[gaussStream.prod ν]
-      fun _ => ∫ x, F x ∂(gaussianReal 0 1) := by
-  have := hν.1
-  rw [← integral_coord_world ν _ F hF]
-  exact condExp_indep_eq (gσ_le _) (HL_le N0 S n a s)
-    (hF.comp (meas_coord _ le_rfl)).stronglyMeasurable (indep_dither N0 S n a hS ν s)
-
-include NZ in
-theorem eL_mean (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) :
-    (gaussStream.prod ν)[eL N0 S n d a s | HL (d := d) N0 S n a s] =ᵐ[gaussStream.prod ν] 0 := by
-  have := hν.1
-  have he : eL N0 S n d a s = (1 / 2 : ℝ) • ((fun ω : WΩ => ω.2 (a + s)) +
-      fun ω : WΩ => ω.1 (idxZ (d := d) N0 S n a s) / 2) := by
-    funext ω; simp only [eL, Pi.smul_apply, Pi.add_apply, smul_eq_mul]; ring
-  have hF := integrable_noise_world ν _ (integrable_noise_lin ν hν (a + s))
-  have hG : Integrable (fun ω : WΩ => ω.1 (idxZ (d := d) N0 S n a s) / 2) (gaussStream.prod ν) :=
-    integrable_coord_world ν _ (fun x => x / 2) ((memLp_id_gaussianReal 1).integrable le_rfl |>.div_const 2)
-  have h1 := condExp_snd_eq_zero NZ (pastNoise (a + s)) gaussStream ν (pastNoise_le _) _ (HL_le_noise (d := d) N0 S n a s)
-    (fun ε => ε (a + s)) (integrable_noise_lin ν hν (a + s)) (hν.2 (a + s)).2.1
-  have h2 := condExp_dither N0 S n a ν hν hS s (fun x => x / 2) (by fun_prop)
-  have h0 : ∫ x, x / 2 ∂(gaussianReal 0 1) = 0 := by
-    rw [integral_div, integral_id_gaussianReal, zero_div]
-  rw [he]
-  refine (condExp_smul _ _ _).trans ?_
-  have hadd := condExp_add hF hG (HL (d := d) N0 S n a s)
-  filter_upwards [hadd, h1, h2] with ω hω h1ω h2ω
-  simp only [Pi.smul_apply, Pi.zero_apply, smul_eq_mul] at hω h1ω h2ω ⊢
-  rw [hω, Pi.add_apply, h1ω, h2ω, h0]
-  simp
-
-include NZ in
-theorem eL_exp (hS : N0 + n * (d + 1) ≤ S) (s : ℕ) :
-    (gaussStream.prod ν)[fun ω => Real.exp (eL N0 S n d a s ω ^ 2) | HL (d := d) N0 S n a s] ≤ᵐ[gaussStream.prod ν]
-      fun _ => 2 := by
-  have := hν.1
-  have hA := integrable_noise_exp ν hν (a + s)
-  have hB := integrable_coord_world ν (idxZ (d := d) N0 S n a s) _ gauss_exp_quarter.1
-  have hmono := condExp_mono (m := HL (d := d) N0 S n a s) (integrable_eL_exp N0 S n a ν hν hS s)
-    ((hA.add hB).smul (1 / 2 : ℝ)) (Filter.Eventually.of_forall fun ω => by
-      simpa only [Pi.smul_apply, Pi.add_apply, smul_eq_mul] using eL_bound N0 S n a s ω)
-  have hsm := condExp_smul (μ := gaussStream.prod ν) (1 / 2 : ℝ)
-    ((fun ω : WΩ => Real.exp (ω.2 (a + s) ^ 2)) + fun ω : WΩ => Real.exp ((ω.1 (idxZ (d := d) N0 S n a s) / 2) ^ 2))
-    (HL (d := d) N0 S n a s)
-  have hadd := condExp_add hA hB (HL (d := d) N0 S n a s)
-  have h1 := condExp_snd_le NZ (pastNoise (a + s)) gaussStream ν (pastNoise_le _) _ (HL_le_noise (d := d) N0 S n a s)
-    (fun ε => Real.exp (ε (a + s) ^ 2)) (hν.2 (a + s)).1 2 (hν.2 (a + s)).2.2
-  have h2 := condExp_dither N0 S n a ν hν hS s (fun x => Real.exp ((x / 2) ^ 2)) (by fun_prop)
-  have h0 := gauss_exp_quarter.2
-  filter_upwards [hmono, hsm, hadd, h1, h2] with ω hm hs ha h1ω h2ω
-  have hm2 := hm.trans_eq hs
-  simp only [Pi.smul_apply, smul_eq_mul] at hm2
-  rw [ha] at hm2
-  simp only [Pi.add_apply] at hm2
-  rw [h2ω] at hm2
-  linarith
-
-include NZ in
-/-- The world is an instance of setting (E), for every start round `a`. -/
-theorem setE_world (hS : N0 + n * (d + 1) ≤ S) :
-    Df2SetE d (gaussStream.prod ν) (𝒢w N0 S n d a) (xiL N0 S n d a) (eL N0 S n d a) := by
-  have := hν.1
-  exact
-  { xi_meas := xiL_meas N0 S n a hS
-    xi_law := xiL_law N0 S n a hS ν
-    xi_indep := xiL_indep N0 S n a ν
-    e_meas := eL_meas N0 S n a hS
-    e_int := integrable_eL_exp N0 S n a ν hν hS
-    e_mean := eL_mean N0 S n a NZ ν hν hS
-    e_exp := eL_exp N0 S n a NZ ν hν hS }
 
 end Noise
 

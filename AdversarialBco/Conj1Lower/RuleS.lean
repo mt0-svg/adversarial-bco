@@ -14,7 +14,7 @@ public import AdversarialBco.Conj1Lower.CellMeas
 @[expose] public section
 
 /-!
-# The rule S' of the genie (Section 9 of the paper)
+# The rule S' of the genie (the paper's section on the lower bound)
 
 The strategy `S'(g, k, L, σ)` as an instance of the generic Bayes core of Bayes.lean.
 
@@ -27,12 +27,12 @@ The strategy `S'(g, k, L, σ)` as an instance of the generic Bayes core of Bayes
   rest).
 * `ruleS d P : Rule d (Option Cell)`: on a live round the answer `ansS` and the signal `b + D_π(x; θ)`; on a dead
   round the answer `none` and the signal `b` (constants, so the posterior does not move: `bayesUpd_const`).
-* Measurability (Lemma 9.3): `ruleS_meas`, from the measurability of `cfc` in the matrix
+* Measurability (the measurability lemma of the lower bound): `ruleS_meas`, from the measurability of `cfc` in the
+  matrix
   (`measurable_cfc_of_continuous`), of `dLive` (a limit of continuous traces), of the dent (an infimum over rational
   `λ`), of the moments and the ripeness masses along a measurable family of densities.
 * The deterministic strategy of a fixed tip `xo` and noise sequence `z` (`stratOf`), a `Strategy d` that reads the
   past plays only, and its transcript against any learner (`transcript_stratOf`): the history of Bayes.lean.
-* The mean regret of a round: `regret_round`, Lemma 9.5 for the dent.
 -/
 
 open MeasureTheory ProbabilityTheory Filter
@@ -103,15 +103,6 @@ noncomputable def ansS (P : SParams) (d : ℕ) (π : Measure (E d)) (x θ : E d)
 noncomputable def ruleS (d : ℕ) (P : SParams) : Rule d (Option Cell) where
   ans π x θ := if liveS P d π then ansS P d π x θ else none
   sig π x θ := P.b + if liveS P d π then dentS P d π x θ else 0
-
-theorem ruleS_sig_sub (P : SParams) (π : Measure (E d)) (x θ : E d) :
-    (ruleS d P).sig π x θ - P.b = if liveS P d π then dentS P d π x θ else 0 := by
-  simp [ruleS]
-
-/-- On a dead round the answer and the signal do not depend on the tip. -/
-theorem ruleS_dead (P : SParams) {π : Measure (E d)} (h : ¬ liveS P d π) (x θ : E d) :
-    (ruleS d P).ans π x θ = none ∧ (ruleS d P).sig π x θ = P.b := by
-  simp [ruleS, h]
 
 end Rule
 
@@ -224,7 +215,7 @@ theorem measurable_frameA_apply {w : ℝ} (hw : w ≠ 0) :
   exact Matrix.continuous_uncurry_toEuclideanCLM.measurable.comp
     (((measurable_clipSqrt hw).comp measurable_fst).prodMk measurable_snd)
 
-/-- The dent of the frame of `S`, as a function of `(S, m, x, θ)` (Lemma 9.3). -/
+/-- The dent of the frame of `S`, as a function of `(S, m, x, θ)` (the measurability lemma of the lower bound). -/
 theorem measurable_dent_frame {w κ ε r₁ : ℝ} (hw : w ≠ 0) (hκ : 0 ≤ κ) (hε : 0 ≤ ε) (hr : 0 ≤ r₁) :
     Measurable (fun p : Matrix (Fin d) (Fin d) ℝ × E d × E d × E d =>
       dent (frameA w p.1) p.2.1 κ ε r₁ p.2.2.2 p.2.2.1) := by
@@ -250,7 +241,7 @@ theorem measurable_dent_frame {w κ ε r₁ : ℝ} (hw : w ≠ 0) (hκ : 0 ≤ �
   have h2 := hhub.comp hA.norm
   exact (h2.const_mul κ).const_mul _
 
-/-- The cell map, as a function of `(S, m, D_M, x, θ)` (Lemma 9.3). -/
+/-- The cell map, as a function of `(S, m, D_M, x, θ)` (the measurability lemma of the lower bound). -/
 theorem measurable_cellOf_frame {w : ℝ} (hw : w ≠ 0) (k dd : ℝ) :
     Measurable (fun p : Matrix (Fin d) (Fin d) ℝ × E d × ℝ × E d × E d =>
       cellOf (frameA w p.1) p.2.1 k dd p.2.2.1 p.2.2.2.1 p.2.2.2.2) := by
@@ -284,7 +275,7 @@ theorem measurable_readT_frame {w : ℝ} (hw : w ≠ 0) :
 
 end MatMeas
 
-/-! ## Integrals along a measurable family of densities (Lemma 9.3) -/
+/-! ## Integrals along a measurable family of densities (the measurability lemma of the lower bound) -/
 
 section DensMeas
 
@@ -471,7 +462,7 @@ theorem measurable_cellOf_dens (P : SParams) (hw : P.w d ≠ 0) (π0 : Measure (
   rw [h_eq]
   exact h_cell.comp h_tuple
 
-/-- Ripeness of each cell is a measurable condition on `(h, x)` (Lemma 9.3). -/
+/-- Ripeness of each cell is a measurable condition on `(h, x)` (the measurability lemma of the lower bound). -/
 theorem measurableSet_ripe_dens (P : SParams) (hw : P.w d ≠ 0) (π0 : Measure (E d)) [SFinite π0]
     {g : H → E d → ℝ≥0∞} (hg : Measurable (Function.uncurry g)) (hfin : ∀ h θ, g h θ ≠ ∞) (c : Cell) :
     MeasurableSet {p : H × E d | ripe (π0.withDensity (g p.1)) (frameS P d (π0.withDensity (g p.1)))
@@ -713,45 +704,6 @@ theorem transcript_stratOf (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) {Ω 
         simp only [Hist.push, Fin.val_castSucc]
         rw [Function.update_of_ne j.isLt.ne]
 
-/-- The point of round `t` against `stratOf` is the play of the history. -/
-theorem plays_stratOf (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) {Ω : Type} (pol : Learner Ω d) (xo : E d)
-    (z : ℕ → ℝ) (ω : Ω) (t : ℕ) :
-    plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω) t =
-      play pol t ω (hist π0 R sc pol t (xo, z, ω)) := by
-  unfold plays
-  rw [transcript_stratOf π0 R sc pol xo z ω t]
-  rfl
-
-/-- The loss of round `t` against `stratOf`, on the run of the learner. -/
-theorem lossAd_stratOf (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) {Ω : Type} (pol : Learner Ω d) (xo : E d)
-    (z : ℕ → ℝ) (ω : Ω) (t : ℕ) :
-    lossAd (stratOf π0 R sc xo z) (fun _ => 0) (plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω)) t =
-      fun y => R.sig (post π0 R sc t (hist π0 R sc pol t (xo, z, ω))) y xo + sc * z t := by
-  let _ : MeasurableSpace Ω := ⊤
-  funext y
-  unfold lossAd
-  simp [stratOf]
-  have h_plays_eq : (fun i : Fin t => (plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω)) i) =
-      (fun i : Fin t => (hist π0 R sc pol t (xo, z, ω)).1 i) := by
-    funext i
-    have hi : (i : ℕ) < t := i.2
-    calc
-      (plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω)) (i : ℕ)
-          = play pol (i : ℕ) ω (hist π0 R sc pol (i : ℕ) (xo, z, ω)) := by
-        simpa using plays_stratOf π0 R sc pol xo z ω (i : ℕ)
-      _ = (hist π0 R sc pol ((i : ℕ) + 1) (xo, z, ω)).1 (i : ℕ) := by
-        simpa using ((hist_succ_self π0 R sc pol (xo, z, ω) (i : ℕ)).1).symm
-      _ = (hist π0 R sc pol t (xo, z, ω)).1 (i : ℕ) := by
-        simpa using ((hist_stable π0 R sc pol (xo, z, ω) hi).1).symm
-      _ = (hist π0 R sc pol t (xo, z, ω)).1 i := rfl
-  rw [h_plays_eq]
-  rw [replay_hist π0 R sc pol xo z ω t]
-
-omit [MeasurableSpace α] in
-/-- `stratOf` reads the past plays only. -/
-theorem stratOf_obs (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) (xo : E d) (z : ℕ → ℝ) (t : ℕ)
-    (x : Fin t → E d) (o o' : Fin t → ℝ) : stratOf π0 R sc xo z t x o = stratOf π0 R sc xo z t x o' := rfl
-
 /-- The loss of `stratOf` at a point is measurable in the history. -/
 theorem measurable_stratOf [Fintype α] [MeasurableSingletonClass α] (π0 : Measure (E d)) [IsProbabilityMeasure π0]
     (R : Rule d α) (hR : R.Meas π0) (sc : ℝ) (xo : E d) (z : ℕ → ℝ) (t : ℕ) (y : E d) :
@@ -774,35 +726,5 @@ theorem measurable_stratOf [Fintype α] [MeasurableSingletonClass α] (π0 : Mea
   exact h2.add measurable_const
 
 end Strategy
-
-/-! ## The mean regret of a round -/
-
-section MeanRegret
-
-variable {d : ℕ} {Ω : Type} [MeasurableSpace Ω]
-
-/-- The mean regret of a round, Lemma 9.5 for the dent: the dent at the tip, on the live rounds, has the mean of the
-posterior mean of the dent. -/
-theorem regret_round (P : SParams) (hw : P.w d ≠ 0) (hκ : 0 ≤ P.kappa) (hk : 0 ≤ P.k) (hsc : P.sc ≠ 0)
-    (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [SFinite μ] {pol : Learner Ω d} {n : ℕ}
-    (hpol : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2) {t : ℕ}
-    (ht : t < n) :
-    ∫⁻ s, ENNReal.ofReal ((ruleS d P).sig (post π0 (ruleS d P) P.sc t (hist π0 (ruleS d P) P.sc pol t s))
-        (play pol t s.2.2 (hist π0 (ruleS d P) P.sc pol t s)) s.1 - P.b) ∂gameLaw π0 μ =
-      ∫⁻ s, ∫⁻ θ, ENNReal.ofReal ((ruleS d P).sig (post π0 (ruleS d P) P.sc t (hist π0 (ruleS d P) P.sc pol t s))
-          (play pol t s.2.2 (hist π0 (ruleS d P) P.sc pol t s)) θ - P.b)
-        ∂post π0 (ruleS d P) P.sc t (hist π0 (ruleS d P) P.sc pol t s) ∂gameLaw π0 μ := by
-  have hR := ruleS_meas P hw hκ hk π0
-  obtain ⟨_, hS⟩ := measurable_rule_post π0 (ruleS d P) hR P.sc t
-  have hxp : Measurable fun q : E d × Hist d (Option Cell) × Ω => play pol t q.2.2 q.2.1 := by
-    have h1 := measurable_play (α := Option Cell) (hpol t ht)
-    exact h1.comp ((measurable_snd.comp measurable_snd).prodMk (measurable_fst.comp measurable_snd))
-  have hF : Measurable fun q : E d × Hist d (Option Cell) × Ω => ENNReal.ofReal
-      ((ruleS d P).sig (post π0 (ruleS d P) P.sc t q.2.1) (play pol t q.2.2 q.2.1) q.1 - P.b) := by
-    have h2 := hS.comp ((measurable_fst.comp measurable_snd).prodMk (hxp.prodMk measurable_fst))
-    exact ENNReal.measurable_ofReal.comp (h2.sub measurable_const)
-  exact post_disintegrates' π0 μ (ruleS d P) hR hsc hpol ht.le hF
-
-end MeanRegret
 
 end AdversarialBco.Lower.Bayes

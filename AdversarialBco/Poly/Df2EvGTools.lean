@@ -16,10 +16,10 @@ public import AdversarialBco.Poly.SrcToolsProof
 /-!
 # The leaves of the budget of Noise, Pi and Gauss
 
-Self-contained facts for `Df2EvGProp`: the extension is `extOf` at `c = 2/ε`, nonnegative, of linear
-growth and continuous; the surrogate of a convex function of linear growth is convex; the tail of the gauge of a
-Gaussian point of small spread (lem:ons:mink, then the Lipschitz concentration at the constant `1/2`); the tails of
-the noise and of the draw in one round; the facts of the parameters `df2oPar` the budget reads.
+Self-contained facts for the budget of the events Noise, Pi and Gauss: the extension is `extOf` at `c = 2/ε`,
+nonnegative, of linear growth and continuous; the surrogate of a convex function of linear growth is convex; the tail
+of the gauge of a Gaussian point of small spread (lem:ons:mink, then the Lipschitz concentration at the constant
+`1/2`); the tails of the noise and of the draw in one round; the facts of the parameters `df2oPar` the budget reads.
 -/
 
 open MeasureTheory ProbabilityTheory

@@ -14,17 +14,18 @@ public import AdversarialBco.Poly.Df2DetTools
 /-!
 # DET, the proof
 
-`df2DetOf_holds : Df2DetOf`. The hypotheses of DET are bundled in `DetHyp`, which extends `DetBase` (the same
-without the five events, all that the state invariants up to `τ` read); `τ = c.tau π m`. The proof is the induction on
-the rounds:
+DET: under the hypotheses `DetHyp` the epoch meets (a) and (b5') (`DetHyp.epoch_ok`, in `Df2DetW.lean`). The hypotheses
+of DET are bundled in `DetHyp`, which extends `DetBase` (the same without the five events, all that the state
+invariants up to `τ` read); `τ = c.tau π m`. The proof is the induction on the rounds:
 
-* the states up to `τ` (`StInv`): the conditions before `τ`, Lemma D.2, the bonus, the sums `Ĝ` and `l`;
-* the closure at `τ` (`closure_tau`): conditions 2 and 3 at `τ` from the events Gauss and S-DF and from X8;
-* the region (`inc2_at`, `mon_at`): Proposition D.8 and Lemma D.7 on the run;
-* the three calls (`acc_all`): the test call is accurate (its ball is that of the round before), the online Newton
+* the states up to `τ` (`StInv`): the conditions before `τ`, the rank-one round lemma, the bonus, the sums `Ĝ` and `l`;
+* the closure at `τ`: conditions 2 and 3 at `τ` from the events Gauss and S-DF and from X8;
+* the region (`inc2_at`, `mon_at`): the region proposition and the monotonicity lemma on the run;
+* the three calls: the test call is accurate (its ball is that of the round before), the online Newton
   inequality with the defects of line μ holds, and a round without a fire has its ball in the next lower region
-  (Lemma D.17, with Lemma D.18 for the centre), so line μ is accurate;
-* Lemma D.14 at `τ` (`epoch_ok`), with Lemma D.10 for (W4s), (W4c) and Lemma D.12 for (W1).
+  (the inner-ball lemma, with the lemma of the centre of the test for the centre), so line μ is accurate;
+* The restart-wrapper lemma at `τ` (`epoch_ok`), with the dichotomy lemma for (W4s), (W4c) and the log-determinant lemma
+  for (W1).
 
 Sums over the rounds: `OmH t`, `Lin t`, ... sum over `u < t`, so the quantities of round `t` (DF2's index `t + 1`)
 carry `t + 1`.
@@ -100,7 +101,7 @@ structure DetBase {d : ℕ} (c : Df2Ctx d) (δ : ℝ) (π : Df2Path d) (m : ℕ)
   hm1 : 1 ≤ m
   hmn : m ≤ c.n
   body : Df2Body d c.p.R c.Kt
-  hap : ApSpec c.ap
+  hap : ∀ s, ApSpec (c.ap s)
   adm : ∀ s < m, AdmLoss c.Kt (π.g s)
 
 /-- The hypotheses of DET: `DetBase` and the five events on the path. -/
@@ -158,20 +159,15 @@ theorem sig2 (H : DetBase c δ π m) : c.p.sig2 = 1 / (8 * c.p.Le) := by rw [H.h
 
 /-! ### The layer-1 statements -/
 
-theorem dfi (H : DetBase c δ π m) : LemmaDFI := H.L1.1
 theorem mon (H : DetBase c δ π m) : LemmaMON := H.L1.2.1
 theorem inc2 (H : DetBase c δ π m) : PropINC2 := H.L1.2.2.1
 theorem d2 (H : DetBase c δ π m) : LemmaD2 := H.L1.2.2.2.1
 theorem ons2 (H : DetBase c δ π m) : LemmaONS2Core := H.L1.2.2.2.2.1
-theorem zcore (H : DetBase c δ π m) : LemmaZCore := H.L1.2.2.2.2.2.1
-theorem rowz (H : DetBase c δ π m) : Df2RowZ := H.L1.2.2.2.2.2.2.1
 theorem shift (H : DetBase c δ π m) : PlayShift := H.L1.2.2.2.2.2.2.2.1
-theorem carriers (H : DetBase c δ π m) : Df2Carriers := H.L1.2.2.2.2.2.2.2.2.2.2.2.1
 theorem r1i (H : DetBase c δ π m) : LemmaR1i := H.L1.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem r1ii (H : DetBase c δ π m) : LemmaR1ii := H.L1.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem r1iii (H : DetBase c δ π m) : LemmaR1iii := H.L1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
 theorem r1iv (H : DetBase c δ π m) : LemmaR1iv := H.L1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
-theorem r1v (H : DetBase c δ π m) : LemmaR1v := H.L1.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 end DetBase
 

@@ -10,11 +10,12 @@ public import AdversarialBco.Poly.Df2DetSand
 @[expose] public section
 
 /-!
-# DET, the regions of the calls, the statistic, and Lemma D.13 with the defects
+# DET, the regions of the calls, the statistic, and the online Newton step lemma with the defects
 
 For a round `s ≤ τ`: the test region `R⁻ = Rm s` is `K_ε` at `s = 0` and the lower region of round `s - 1` after;
 it lies in the region `Reg s` (so in the past ellipsoids and in `B_R`); `Rm`, `RmN` and `Rp` are closed and convex.
-The statistic of the test is `Ξ = η T̂ - 2 Φ₀`. Lemma D.13 with the defects ((U1)): if line μ was accurate in the rounds `u < s`, then `η ĥqReg^κ ≤ pri + stab + 1` on `R⁻` of round `s`; each
+The statistic of the test is `Ξ = η T̂ - 2 Φ₀`. The online Newton step lemma with the defects ((U1)): if line μ was
+accurate in the rounds `u < s`, then `η ĥqReg^κ ≤ pri + stab + 1` on `R⁻` of round `s`; each
 Pythagorean defect is at most `1/(2n)` (`approx_min_pyth`, `defect_arith`).
 -/
 
@@ -156,9 +157,9 @@ theorem xi_eq (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) (y : Fin 
   unfold Df2Ctx.ThT Df2Ctx.OmH
   rw [H.kap]; ring
 
-/-! ### Lemma D.13 with the defects -/
+/-! ### The online Newton step lemma with the defects -/
 
-/-- The Newton point of line μ: `w_μ = μ - η Σ' ĝ` (Lemma D.2 (iv)). -/
+/-- The Newton point of line μ: `w_μ = μ - η Σ' ĝ` (the rank-one round lemma (iv)). -/
 theorem wmu_eq (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) :
     c.wmu π s = (c.st π s).mu - c.p.eta • (c.Sn π s *ᵥ c.ghat π s) := by
   have hI := H.stInv_le_tau s hs
@@ -172,7 +173,7 @@ theorem wmu_eq (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) :
   unfold Df2Ctx.wmu
   congr 2; ring
 
-/-- `|ĝ|²_{Σ'} = κ₀ Y² |ξ|²/q` (Lemma D.2 (iv)). -/
+/-- `|ĝ|²_{Σ'} = κ₀ Y² |ξ|²/q` (the rank-one round lemma (iv)). -/
 theorem ghat_sq (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) :
     df2Sq (c.Sn π s) (c.ghat π s) = c.p.k0 * c.Y π s ^ 2 * (π.xi s ⬝ᵥ π.xi s) / c.qq π s := by
   have hI := H.stInv_le_tau s hs
@@ -229,7 +230,7 @@ theorem stab_le (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) :
     _ ≤ c.p.eta ^ 2 / 2 * (4 * c.p.k0 * X * (22 * c.n)) := mul_le_mul_of_nonneg_left h2 hη
     _ ≤ _ := h3
 
-/-- A point of `R⁻` of round `s ≥ 1` is in `R⁺` of every round `u < s` (Lemma D.7 and the margin R20). -/
+/-- A point of `R⁻` of round `s ≥ 1` is in `R⁺` of every round `u < s` (the monotonicity lemma and the margin R20). -/
 theorem rm_sub_rp (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) {y : Fin d → ℝ} (hy : y ∈ c.Rm π s)
     {u : ℕ} (hu : u < s) : y ∈ c.Rp π u := by
   obtain ⟨hSS, hR⟩ := H.reg_sub hs (H.Rm_sub_reg hs hy)
@@ -244,7 +245,7 @@ theorem rm_sub_rp (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) {y : 
   have hg := H.gam; have hc1 := H.c1; have hρ := H.rows.pos_rho
   linarith
 
-/-- Lemma D.13 with the defects at round `s ≤ τ`, when line μ was accurate before. -/
+/-- The online Newton step lemma with the defects at round `s ≤ τ`, when line μ was accurate before. -/
 theorem ons (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) (hP : ∀ u < s, c.ProjOK π u) {y : Fin d → ℝ}
     (hy : y ∈ c.Rm π s) : c.p.eta * c.hqReg π (s + 1) y ≤ df2Pri c.p + df2Stab c.p d c.n + 1 := by
   set τ := c.tau π m with hτ

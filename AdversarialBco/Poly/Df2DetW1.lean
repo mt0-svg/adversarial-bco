@@ -10,11 +10,12 @@ public import AdversarialBco.Poly.Df2DetAcc
 @[expose] public section
 
 /-!
-# DET, (W1) of Lemma D.14 at `τ`
+# DET, (W1) of the restart-wrapper lemma at `τ`
 
 For `x ∈ K_ε`, `eReg_τ(x) ≤ sReg_τ(x) + 1 + d L/(η λ)`. Each round: the play shift
 (`E_{p'} e - s(μ) = (1 - λ)(E_p e - s(μ))`), prop:lower (X3) with a nonnegative right side, `s ≤ e` (X7); the trace
-term by Lemma D.12 (`ld_core` with `H_u = η κ s''_u ≤ P̄_u`, from X6, `P_u ≤ 2 P̄_u` and row R6) and `Σ_u ≤ 2 P̄_u⁻¹`;
+term by the log-determinant lemma (`ld_core` with `H_u = η κ s''_u ≤ P̄_u`, from X6, `P_u ≤ 2 P̄_u` and row R6) and
+`Σ_u ≤ 2 P̄_u⁻¹`;
 the terms `2 δ_e d/λ` sum to at most 1 (condition c2dl).
 -/
 
@@ -100,7 +101,7 @@ namespace DetHyp
 
 variable {d : ℕ} {c : Df2Ctx d} {δ : ℝ} {π : Df2Path d} {m : ℕ}
 
-/-- Lemma D.12 on the run. -/
+/-- The log-determinant lemma on the run. -/
 theorem ld_sum (H : DetHyp c δ π m) :
     ∑ u ∈ Finset.range (c.tau π m + 1), ((c.PBar π u)⁻¹ * ((c.p.eta * c.p.kap) • c.sHess π u)).trace ≤
       2 * d * Real.log (1 / (2 * c.p.δe) * c.p.sig2) := by

@@ -13,9 +13,9 @@ public import Mathlib
 # DF2-O: the projection subroutine AP = ELL-cap, definitions and interface statements
 
 The subroutine AP of the learner DF2-O is Procedure ELL-cap for `d ≥ 2` and Procedure ELL-1 for `d = 1`, of
-Appendix E of the paper (PO below), with the Lipschitz constant `L_F = tr(P) (R + |w|)` in place of `‖P‖ (R + |w|)`. This file defines the
-procedures as functions of their inputs and states what PO proves of them; the machine layer proves that the program
-computes these functions, and `Df2OracleProof.lean` proves the statements.
+the paper's appendix on the projection routine (PO below), with the Lipschitz constant `L_F = tr(P) (R + |w|)` in place
+of `‖P‖ (R + |w|)`. This file defines the procedures as functions of their inputs and states what PO proves of
+them; `Df2OracleProof.lean` proves the statements.
 
 Carriers: points are `Fin d → ℝ`, matrices `Matrix (Fin d) (Fin d) ℝ`, as in `Df2R1.lean`; the norm is the Euclidean
 one, `oNorm v = (v ⬝ᵥ v)^{1/2}` (the norm of `Fin d → ℝ` in Mathlib is the sup norm, which no statement here reads).
@@ -30,8 +30,8 @@ Definitions, in the order.
   exceeds `B` (stop (c2)).
 * `LineWin`, `lineFirst`, `lineHalve`, `lineLoop`, `line`: Procedure LINE on the values `ev1 s η` of a
   function of one variable, asked with error `η`, which may fail; with at most `J` halvings (stop (c1)).
-* `sep`: Procedure SEP: LINE along each coordinate, then the vector `g` of Lemma E.1.
-* `ccUpdate`: the central cut of Lemma E.4.
+* `sep`: Procedure SEP: LINE along each coordinate, then the vector `g` of the finite-differences lemma.
+* `ccUpdate`: the central cut of the central-cut lemma.
 * `ellConsts`, `ellStep`, `ellLoop`, `ellCap`: Procedure ELL-cap with its stops (c0) to (c4).
 * `ellOne`: Procedure ELL-1, the case `d = 1`, on `ℝ`.
 * `apCall`: the subroutine AP of DF2-O: `ellOne` on the coordinate line when `d = 1`, `ellCap` otherwise.
@@ -61,9 +61,7 @@ Statements.
   `PropELL`, `apCall` returns a point of `Q` within `e` of the infimum of `F` over `Q`; (b) on every input it fails or
   returns a point of `Q` of norm at most `R`.
 
-Not stated here: the counts of membership calls of Propositions ELL and ELL-cap (a) and of Lemmas LINE and SEP. The
-machine layer counts the steps of the program, membership calls among them, and bounds them with the caps `N`, `J`,
-`B`, `m` read off these definitions; the arguments of the calls are bounded in the analysis of the learner. What
+Not stated here: the counts of membership calls of Propositions ELL and ELL-cap (a) and of Lemmas LINE and SEP. What
 `PropELL` needs of the counts, the region and the least error of the queries of LINE and SEP, is in the accuracy
 hypotheses of `LemmaLINE` and `LemmaSEP`, and `LemmaGCAP` turns it into "the stop (c2) does not occur".
 
@@ -240,7 +238,8 @@ noncomputable def sep (ev : (Fin d → ℝ) → ℝ → Option ℝ) (y0 : Fin d 
 
 /-! ## The central cut -/
 
-/-- Lemma E.4: `b = A c/(cᵀ A c)^{1/2}`, `a' = a - b/(d + 1)`, `A' = (d²/(d² - 1)) (A - (2/(d + 1)) b bᵀ)`. -/
+/-- The central-cut lemma: `b = A c/(cᵀ A c)^{1/2}`, `a' = a - b/(d + 1)`,
+`A' = (d²/(d² - 1)) (A - (2/(d + 1)) b bᵀ)`. -/
 noncomputable def ccUpdate (A : Matrix (Fin d) (Fin d) ℝ) (a c : Fin d → ℝ) : Matrix (Fin d) (Fin d) ℝ × (Fin d → ℝ) :=
   let b := (Real.sqrt (c ⬝ᵥ (A *ᵥ c)))⁻¹ • (A *ᵥ c)
   ((((d : ℝ) ^ 2) / ((d : ℝ) ^ 2 - 1)) • (A - (2 / ((d : ℝ) + 1)) • vecMulVec b b), a - ((d : ℝ) + 1)⁻¹ • b)
@@ -363,7 +362,7 @@ noncomputable def apCall (Q : Set (Fin d → ℝ)) (a0 : Fin d → ℝ) (r R : �
 
 /-! ## Statements -/
 
-/-- Lemma E.4: for `d ≥ 2`, `A` positive definite and `c ≠ 0`, the matrix `A'` is positive definite,
+/-- The central-cut lemma: for `d ≥ 2`, `A` positive definite and `c ≠ 0`, the matrix `A'` is positive definite,
 `E(A, a) ∩ {x : ⟨c, x - a⟩ ≤ 0} ⊆ E(A', a')`, and
 `det A' = det A (d²/(d² - 1))^{d-1} (d/(d + 1))² ≤ det A e^{-1/(d+1)}`. -/
 def LemmaCC : Prop :=
@@ -373,12 +372,12 @@ def LemmaCC : Prop :=
       (ccUpdate A a c).1.det = A.det * ((d : ℝ) ^ 2 / ((d : ℝ) ^ 2 - 1)) ^ (d - 1) * ((d : ℝ) / (d + 1)) ^ 2 ∧
       (ccUpdate A a c).1.det ≤ A.det * Real.exp (-1 / ((d : ℝ) + 1))
 
-/-- Lemma E.5: a ball `B(b, ρ)` inside `E(A, a)`, `A` positive definite, gives `det A ≥ ρ^{2d}`. -/
+/-- The inscribed-ball lemma: a ball `B(b, ρ)` inside `E(A, a)`, `A` positive definite, gives `det A ≥ ρ^{2d}`. -/
 def LemmaBALL : Prop :=
   ∀ (d : ℕ) (A : Matrix (Fin d) (Fin d) ℝ) (a b : Fin d → ℝ) (ρ : ℝ), A.PosDef → 0 ≤ ρ →
     (∀ x ∈ oBall b ρ, ellIn A a x) → ρ ^ (2 * d) ≤ A.det
 
-/-- Lemma E.2: `φ` convex and `L`-Lipschitz on `ℝ`, `0 < τ ≤ L`, `ℓ > 0`, `J = ⌈log₂ (8L/τ)⌉`, and
+/-- Lemma LINE: `φ` convex and `L`-Lipschitz on `ℝ`, `0 < τ ≤ L`, `ℓ > 0`, `J = ⌈log₂ (8L/τ)⌉`, and
 values that do not fail and have their error at the queries LINE makes: points `s ∈ [0, ℓ]` and errors
 `η ≥ τ ℓ 4^{-J}/1600` (the first window asks `τ ℓ/1600`, the `k`-th halving `τ ℓ 4^{-k}/1600`, `k ≤ J`). Then LINE
 with the cap `J` returns `(s, δ)` with `0 ≤ s ≤ ℓ`, `ℓ 4^{-(J+1)} ≤ δ ≤ ℓ/4` and
@@ -392,7 +391,7 @@ def LemmaLINE : Prop :=
       ℓ * (4 : ℝ) ^ (-((⌈Real.logb 2 (8 * L / τ)⌉₊ : ℝ) + 1)) ≤ δ ∧ δ ≤ ℓ / 4 ∧
       φ (s + δ) + φ (s - δ) - 2 * φ s ≤ τ * δ / 2 + τ * δ / 100
 
-/-- Lemma E.3: `d ≥ 1`, `h` convex and `L`-Lipschitz on `ℝ^d` (Euclidean norm), `0 < τ ≤ L`, `ℓ₁ > 0`,
+/-- Lemma SEP: `d ≥ 1`, `h` convex and `L`-Lipschitz on `ℝ^d` (Euclidean norm), `0 < τ ≤ L`, `ℓ₁ > 0`,
 `J = ⌈log₂ (8L/τ)⌉`, and values that do not fail and have their error at the queries SEP makes: points `x` with
 `|x - y⁰| ≤ 2 ℓ₁` and errors `η ≥ η_min = (τ ℓ₁/1600) 2^{-3d(J+1)}` (the searches ask within `(64/63) ℓ₁` of `y⁰`, the
 final values within `(64/63 + 1/4) ℓ₁`; `ℓ_{i+1} ≥ ℓ_i 2^{-3(J+1)}` since `16L/τ ≤ 2^{J+1}`, and every error is at

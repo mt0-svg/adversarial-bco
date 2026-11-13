@@ -15,30 +15,25 @@ public import AdversarialBco.Poly.Df2Azuma
 /-!
 # DF2-O: the interface of the analysis, second layer
 
-Interface statements for `Df2ORegretMeas` of `Df2Run.lean`, the regret clause of Theorem POLY32-O for the learner
-`df2oPlay`. No proof here except definitional checks (`rfl`). The proofs go in `Df2Layer2Proof.lean`.
+Definitions and interface statements for the analysis of one epoch of the learner DF2-O. No proof here except
+definitional checks (`rfl`).
 
-## The route
+* The levels and the rows: the constants of the epoch (`df2Cg`, `df2Lg`, `df2Bn`, ...) and the rows `Df2Rows`, which
+  hold at the parameters of the learner in the regime `ε ≤ 1/2` (`Df2RowsHold`).
+* Round maps with a general gauge and a general projection routine: a routine `ap : ApFun d` that meets `ApSpec`
+  (the two clauses of `PropAP`, which give `ApSpec apCall`), the line `df2NextAP` and the round map `df2RoundGa` with
+  a gauge `ga`. D0 is the learner with the exact gauge of `K'` and `ap = apCall`.
+* One epoch on a path (`Df2Ctx`, `Df2Path`): the losses are any admissible functions, the projections any `ap` with
+  `ApSpec`; the stopping time `tau`, the five events `EvG`, `EvY`, `EvLQ`, `EvSDF`, `EvDQ` on the path, and (a) and
+  (b5') of the one-epoch statement (`EpochOK`).
+* The analytic inputs: the bodies of the analysis (`Df2Body`), `Df2SIFacts` (the analytic facts on the extension and
+  the surrogate) and the layer-1 statements (`Df2LayerOne`).
+* Setting (E) (`Df2SetE`) and (L1), the joint measurability of a round in a parameter (`Df2EpochMeas`).
+* Lemma FR (`LemmaFR`) and Lemma NZ on a product (`LemmaNZProd`), standard facts proved in `Df2Layer2Proof.lean`.
 
-* DJ is `df2oPlay` (bisection gauge `piTilde`). D0 is the same learner with the exact gauge of `K'` (`df2zPlay`,
-  through `df2RoundGa`): the learner E(A) on the instance `(f_t/2, (ε_t + ζ_t)/2)`. There is no
-  reference learner: the one-epoch theorem is stated for every projection routine `ap` that meets
-  `ApSpec` (the two clauses of `PropAP`), and D0 is the instance `ap = apCall`.
-* One epoch, pathwise (`Df2Det`): the losses are any
-  admissible functions, the projections are any `ap` with `ApSpec`, the five events are hypotheses
-  on the path, and the conclusion is (a) and (b5') of the one-epoch statement (Appendix D.1 of the paper).
-* One epoch, probability (`Df2E1Loc`, Statement E1-loc): on every instance of the setting (E) of Appendix D.1,
-  with a body that is a function of the first sigma-field, the epoch fails (a) or (b5') with probability at most
-  `(149/168) δ_e`. The class of the round map: (L1) `Df2EpochMeas`, (L2) and (L3) `ApSpec`. It follows from `Df2Det`
-  and the five event budgets (`Df2EvGProp` to `Df2EvDQProp`) by a union bound.
-* The run (Lemma 8.8): the virtual epoch of D0 started at each round `a < n` is an instance of (E) on the world,
-  with the filtration of the run (Lemma NZ, `LemmaNZProd`); `Df2VEWorld` is the budget per start round on the
-  world. The Azuma event of the run is `Df2AzWorld` (from `Df2AzumaEvent` and Lemma FR, `LemmaFR`). `Df2WorldDet`
-  is the gluing with the regret: on every world of the case of the analysis where every virtual epoch meets (a) and
-  (b5') and the Azuma event holds, the regret of D0 is at most `2 ρ/η + n ε + (2 n log(7/δ_e))^{1/2}`.
-* DJ against D0 (`Df2PropG`): Lemma TV and Proposition G, at the `j` of the learner.
-* The composition (`Df2Layer2Comp`): the leaves imply `Df2ORegretMeas`, with Theorem 8.3 for the positioning and
-  the trivial bound outside the regime (`Df2Trivial`).
+Condition 1 of the stopping time is taken in this form: some minimiser of the cumulative surrogate over `K_ε` lies in
+the next lower region; the restart-wrapper lemma reads `xs` as any minimiser, so no measurable selection (Lemma MS) is
+asked for.
 
 ## Indices
 
@@ -48,7 +43,7 @@ round `s` (`c.mode π 0` is the fresh state), `c.st π s` its state: `μ_s`, `P_
 `P'`, `b'`, `k'`) carry the index `s`. `PBar k` is `P̄` after `k` rounds (`P̄_{k+1}` of DF2). `c.Phi π k` is the
 quadratic before round `k` (`Φ_k` of DF2), and `c.PhiN π s` the one computed in round `s` (`Φ_{s+1}` of DF2). The
 lower region of the test of round `s` is `{y ∈ K_ε : Φ_s(y) ≤ (c₁ - γ) ρ}` (`K_ε` at the first round of the epoch),
-the region of line `μ` of round `s` is `{y ∈ K_ε : c.PhiN π s y ≤ c₁ ρ}`, as in `df2Next`. The ellipsoid set `S_t`
+the region of line `μ` of round `s` is `{y ∈ K_ε : c.PhiN π s y ≤ c₁ ρ}`, as in `df2NextAP`. The ellipsoid set `S_t`
 of DF2 (rounds `1, ..., t`) is `c.SS π (t - 1)` (rounds `0, ..., t - 1`). The stopping time `τ` and the events
 read the rounds `s ≤ τ ≤ m - 1`, `m` the horizon of the epoch.
 
@@ -65,15 +60,6 @@ draw is measurable). The measure of a set that is not measurable is its outer me
 measures, and a measurable event of the same measure exists (`exists_measurable_superset`). The parameters are
 those of `df2oPar` and every statement is in the regime `ε ≤ 1/2`; there `L_e ≥ 504`, `δ_e ≤ e^{-14} (d n)^{-3}`,
 `0 < λ < 1`.
-
-## Inputs beyond Df2.lean, Lemma D.14, PropAP, Theorem 8.3 and the events
-
-`Df2SIFacts` (the analytic facts on the extension and the surrogate),
-`Df2PropG` (PO Lemma TV and Proposition G), `Df2ApCallMeas` (the measurability of the round map of DF2-O, (L1)),
-`PgMeas` and `PgGoodMeas` (measurability of the positioning), `Df2AzumaEvent` (proved in `Df2AzumaProof.lean`).
-`LemmaFR` and `LemmaNZProd` are standard facts proved in `Df2Layer2Proof.lean`. Condition 1 of the stopping time is taken
-in this form: some minimiser of the cumulative surrogate over `K_ε` lies in the
-next lower region; Lemma D.14 reads `xs` as any minimiser, so no measurable selection (Lemma MS) is asked for.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -169,7 +155,7 @@ structure Df2Rows (p : Df2OPar) (d n : ℕ) : Prop where
   /-- R24o, the row bonus with the defects. -/
   r24o : 2 * p.eta + 8 * df2Pri p + 7 * df2Stab p d n + 7 * (p.eta * df2DevK p d n) + 7 * (p.eta * df2Dev p d n) +
     df2DevP p d n + 7 * p.theta * p.rho + 7 ≤ (p.c1 - p.gam) * p.rho
-  /-- R24b, the row of the ball (Lemma D.17). -/
+  /-- R24b, the row of the ball (the inner-ball lemma). -/
   r24b : 3 + 2 * df2Pri p + df2Stab p d n + p.eta * df2DevK p d n + p.eta * df2Dev p d n + df2DevP p d n +
     p.theta * p.rho ≤ (p.c1 - p.gam) * p.rho
   /-- The condition. -/
@@ -185,11 +171,11 @@ structure Df2Rows (p : Df2OPar) (d n : ℕ) : Prop where
   c500 : 500 * p.δe * (n : ℝ) ^ ((3 : ℝ) / 2) * d * p.Le ^ 2 ≤ 1
   cx : 14 + 3 * Real.log (d * n) ≤ Real.log (1 / p.δe)
   clg : df2Lg p n ≤ 4 / 3 * Real.log (1 / p.δe)
-  /-- The row of Lemma D.18 at `x = log (1/δ_e)` (`Df2RowZ`). -/
+  /-- The row of the lemma of the centre of the test at `x = log (1/δ_e)` (`Df2RowZ`). -/
   cz : 1 / 4 * Real.sqrt p.k0 * df2C0 * Real.sqrt (32 / 9) * p.δe ^ ((3 : ℝ) / 2) * (n : ℝ) ^ ((3 : ℝ) / 2) *
     Real.sqrt d * Real.log (1 / p.δe) ^ ((3 : ℝ) / 2) ≤ 3 / 4
 
-/-- The rows hold at the parameters of the learner in the regime `ε ≤ 1/2` (Lemma D.15 of
+/-- The rows hold at the parameters of the learner in the regime `ε ≤ 1/2` (the rows lemma of the epoch of
 the paper). -/
 def Df2RowsHold : Prop :=
   ∀ (d n : ℕ) (δ : ℝ), 1 ≤ d → 1 ≤ n → 0 < δ → δ < 1 → (df2oPar d n δ).eps ≤ 1 / 2 →
@@ -212,7 +198,7 @@ def ApSpec (ap : ApFun d) : Prop :=
     (ap Q a0 r R P w e = none ∨ ∃ μ, ap Q a0 r R P w e = some μ ∧ μ ∈ Q ∧ oNorm μ ≤ R)
 
 open Classical in
-/-- `df2Next` with the routine `ap` in place of `apCall`, line by line. -/
+/-- The line of DF2-O with the routine `ap` in place of `apCall`. -/
 noncomputable def df2NextAP (ap : ApFun d) (p : Df2OPar) (n : ℕ) (Keps : Set (Fin d → ℝ)) (st : Df2St d)
     (ξ w : Fin d → ℝ) (Y : ℝ) : Df2Mode d :=
   let u := st.P *ᵥ w
@@ -247,13 +233,9 @@ noncomputable def df2NextAP (ap : ApFun d) (p : Df2OPar) (n : ℕ) (Keps : Set (
     | none => .guard
     | some mu' => .run ⟨false, mu', P', S', A', b', k', G', l', ctr', r'⟩
 
-/-- Definitional check: `df2Next` is `df2NextAP apCall`. -/
-theorem df2Next_eq_AP (p : Df2OPar) (n : ℕ) (Keps : Set (Fin d → ℝ)) (st : Df2St d) (ξ w : Fin d → ℝ) (Y : ℝ) :
-    df2Next p n Keps st ξ w Y = df2NextAP apCall p n Keps st ξ w Y := rfl
-
 open Classical in
-/-- `df2Round` with the gauge `ga` in place of `piTilde (df2Kp K Ps p.R) p.R p.j` and the routine `ap` in place of
-`apCall`. -/
+/-- The round map of DF2-O with the gauge `ga` in place of the bisection gauge of `df2Kp K Ps p.R` and the routine `ap`
+in place of `apCall`. -/
 noncomputable def df2RoundGa (p : Df2OPar) (n : ℕ) (K : Set (E d)) (Ps : PgSp d) (ga : E d → ℝ) (ap : ApFun d)
     (ft : E d → ℝ) (nt : ℝ) (ξ : Fin d → ℝ) (ζ : ℝ) : Df2Mode d → E d × Df2Mode d
   | .off => (0, .off)
@@ -267,48 +249,22 @@ noncomputable def df2RoundGa (p : Df2OPar) (n : ℕ) (K : Set (E d)) (Ps : PgSp 
       (x, df2NextAP ap p n (df2Keps K Ps p.R p.eps) st ξ w (pt * (ft x + nt + ζ) / 2 + 2 * (pt - 1) / p.eps))
     else (0, .off)
 
-/-- Definitional check: `df2Round` is `df2RoundGa` at the bisection gauge and `apCall`. -/
-theorem df2Round_eq_Ga (p : Df2OPar) (n : ℕ) (K : Set (E d)) (Ps : PgSp d) (ft : E d → ℝ) (nt : ℝ)
-    (ξ : Fin d → ℝ) (ζ : ℝ) (m : Df2Mode d) :
-    df2Round p n K Ps ft nt ξ ζ m = df2RoundGa p n K Ps (piTilde (df2Kp K Ps p.R) p.R p.j) apCall ft nt ξ ζ m := by
-  cases m <;> rfl
-
-/-! ## D0: the learner with the exact gauge, on the world -/
-
-/-- The position read off the world, `0` when PG returns none. -/
-noncomputable def df2oPs (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : PgSp d := (df2oPos d n r0 R0 δ w).getD 0
-
-/-- Round `t` of D0 from the mode `m`: `df2oRoundAt` with the exact gauge `gauge K'` of `K' = df2Kp K Ps R`. -/
-noncomputable def df2zRoundAt (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) (m : Df2Mode d) : E d × Df2Mode d :=
-  df2RoundGa (df2oPar d n δ) n w.K (df2oPs d n r0 R0 δ w)
-    (gauge (df2Kp w.K (df2oPs d n r0 R0 δ w) (df2oPar d n δ).R)) apCall (w.f t) (w.noise t)
-    (df2oXi (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs t) (df2oZeta d (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs t) m
-
-/-- The mode of D0 before round `a + s`, started in the mode `m` before round `a`. -/
-noncomputable def df2zFrom (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (a : ℕ) (m : Df2Mode d) : ℕ → Df2Mode d
-  | 0 => m
-  | s + 1 => (df2zRoundAt d n r0 R0 δ w (a + s) (df2zFrom d n r0 R0 δ w a m s)).2
-
-/-- The mode of D0 before round `t`. -/
-noncomputable def df2zMode (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) : Df2Mode d :=
-  df2zFrom d n r0 R0 δ w 0 (df2oMode0 d n r0 R0 δ w) t
-
-/-- The point played by D0 in round `t`. -/
-noncomputable def df2zPlay (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) : E d :=
-  (df2zRoundAt d n r0 R0 δ w t (df2zMode d n r0 R0 δ w t)).1
-
 /-! ## One epoch on a path (setting (E), pathwise) -/
 
 /-- The context of an epoch: the parameters, the horizon `n` of the thresholds, the body `K~` (positioned), the
-projection routine. -/
+projection routine of each round (`ap s` in round `s`; (O7)). -/
 structure Df2Ctx (d : ℕ) where
   p : Df2OPar
   n : ℕ
   Kt : Set (E d)
-  ap : ApFun d
+  ap : ℕ → ApFun d
 
-/-- The context at the parameters of the learner. -/
+/-- The context at the parameters of the learner, with the routine `ap` in every round. -/
 noncomputable def df2CtxAt (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ApFun d) : Df2Ctx d :=
+  ⟨df2oPar d n δ, n, Kt, fun _ => ap⟩
+
+/-- The context at the parameters of the learner, with the routine `ap s` in round `s`. -/
+noncomputable def df2CtxAtF (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ℕ → ApFun d) : Df2Ctx d :=
   ⟨df2oPar d n δ, n, Kt, ap⟩
 
 /-- A path of the data of an epoch: the losses `g s` (on `E d`, positioned), the noise `e s` of the observation, the
@@ -321,10 +277,6 @@ structure Df2Path (d : ℕ) where
 /-- `K_ε = (1 - ε) K~` in the coordinates `Fin d → ℝ`; `df2Keps K Ps R ε = df2KepsOf (df2Kp K Ps R) ε`. -/
 def df2KepsOf (Kt : Set (E d)) (eps : ℝ) : Set (Fin d → ℝ) := {y | WithLp.toLp 2 ((1 - eps)⁻¹ • y) ∈ Kt}
 
-/-- Definitional check. -/
-theorem df2Keps_eq (K : Set (E d)) (Ps : PgSp d) (R eps : ℝ) : df2Keps K Ps R eps = df2KepsOf (df2Kp K Ps R) eps :=
-  rfl
-
 /-- The exact gauge `pip(x) = max (1, π(x)/(1 - ε))`. -/
 noncomputable def df2Pip (p : Df2OPar) (Kt : Set (E d)) (x : E d) : ℝ := max 1 (gauge Kt x / (1 - p.eps))
 
@@ -334,8 +286,9 @@ noncomputable def df2Ext (p : Df2OPar) (Kt : Set (E d)) (g : E d → ℝ) (x : E
 
 /-- One round of the epoch learner from a mode: the point played (positioned coordinates) and the next mode. In a
 round of DF2: `X = μ + (1 - λ) A ξ`, the play `X/pip(X)`, `Y = pip(X) (g(X/pip(X)) + e) + 2 (pip(X) - 1)/ε`, then
-`df2NextAP`. D0 on a world with a position of `G_pos` is this map at `g y = f_t(S⁻¹ y)/2`, `e = (ε_t + ζ_t)/2`. -/
-noncomputable def df2RoundE (c : Df2Ctx d) (g : E d → ℝ) (e : ℝ) (ξ : Fin d → ℝ) :
+`df2NextAP` with the routine `ap` of the round. D0 on a world with a position of `G_pos` is this map at
+`g y = f_t(S⁻¹ y)/2`, `e = (ε_t + ζ_t)/2`. -/
+noncomputable def df2RoundE (c : Df2Ctx d) (ap : ApFun d) (g : E d → ℝ) (e : ℝ) (ξ : Fin d → ℝ) :
     Df2Mode d → (Fin d → ℝ) × Df2Mode d
   | .off => (0, .off)
   | .guard => (0, .guard)
@@ -343,7 +296,7 @@ noncomputable def df2RoundE (c : Df2Ctx d) (g : E d → ℝ) (e : ℝ) (ξ : Fin
     let w := st.A *ᵥ ξ
     let X := st.mu + (1 - c.p.lam) • w
     let pt := df2Pip c.p c.Kt (WithLp.toLp 2 X)
-    (pt⁻¹ • X, df2NextAP c.ap c.p c.n (df2KepsOf c.Kt c.p.eps) st ξ w
+    (pt⁻¹ • X, df2NextAP ap c.p c.n (df2KepsOf c.Kt c.p.eps) st ξ w
       (pt * (g (WithLp.toLp 2 (pt⁻¹ • X)) + e) + 2 * (pt - 1) / c.p.eps))
 
 /-- The state of a mode, the default `dflt` when the mode is not `.run`. -/
@@ -361,7 +314,7 @@ def Keps : Set (Fin d → ℝ) := df2KepsOf c.Kt c.p.eps
 /-- The mode before round `s` of the epoch started fresh before round `0`. -/
 noncomputable def mode : ℕ → Df2Mode d
   | 0 => .run (df2Init c.p d)
-  | s + 1 => (df2RoundE c (π.g s) (π.e s) (π.xi s) (mode s)).2
+  | s + 1 => (df2RoundE c (c.ap s) (π.g s) (π.e s) (π.xi s) (mode s)).2
 
 /-- The state before round `s` (`μ_s`, `P_s`, `A_s`, ...). -/
 noncomputable def st (s : ℕ) : Df2St d := (c.mode π s).stOr (df2Init c.p d)
@@ -595,7 +548,7 @@ def Df2SIFacts : Prop :=
             1 / 4 * df2Sq (df2HessM (df2SurrOf (df2oPar d n δ) Kt g mu A) (WithLp.toLp 2 mu)) (y - mu) +
             (df2oPar d n δ).δe / (df2oPar d n δ).lam ^ 2)
 
-/-! ## The pathwise epoch theorem (DET) -/
+/-! ## The layer-1 statements -/
 
 /-- The layer-1 Props (`Df2.lean`, `Df2R1.lean`), all proved in `Df2DetProof.lean`, `Df2PlayProof.lean` and
 `Df2R1Proof.lean`. -/
@@ -603,22 +556,7 @@ def Df2LayerOne : Prop :=
   LemmaDFI ∧ LemmaMON ∧ PropINC2 ∧ LemmaD2 ∧ LemmaONS2Core ∧ LemmaZCore ∧ Df2RowZ ∧ PlayShift ∧ LemmaUBPrime ∧
     PlayHess ∧ Df2Trivial ∧ Df2Carriers ∧ LemmaR1i ∧ LemmaR1ii ∧ LemmaR1iii ∧ LemmaR1iv ∧ LemmaR1v
 
-/-- DET, one epoch on every path. The
-losses are any admissible functions on the body, the routine is any `ap` with `ApSpec`, the five events are
-hypotheses; the conclusion is (a) and (b5'). The proof is the induction on the rounds: the closure,
-Lemma D.7, Proposition D.8, Lemma D.13 with the defects, Lemma D.10, Lemma D.14, Lemma D.17, Lemma D.18. -/
-def Df2Det : Prop :=
-  ∀ (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ApFun d) (π : Df2Path d) (m : ℕ),
-    1 ≤ d → 1 ≤ n → 0 < δ → δ < 1 → (df2oPar d n δ).eps ≤ 1 / 2 → 1 ≤ m → m ≤ n →
-    Df2Body d (df2oPar d n δ).R Kt → ApSpec ap → (∀ s < m, AdmLoss Kt (π.g s)) →
-    (df2CtxAt d n δ Kt ap).EvG π m → (df2CtxAt d n δ Kt ap).EvY π m → (df2CtxAt d n δ Kt ap).EvLQ π m →
-    (df2CtxAt d n δ Kt ap).EvSDF π m → (df2CtxAt d n δ Kt ap).EvDQ π m →
-    (df2CtxAt d n δ Kt ap).EpochOK π m
-
-/-- DET from its inputs. -/
-def Df2DetOf : Prop := Df2LayerOne → LemmaW → Df2SIFacts → Df2RowsHold → Df2Det
-
-/-! ## Setting (E) and the event budgets -/
+/-! ## Setting (E) and the measurability of a round -/
 
 /-- The fields of a state, as a point of a product of Borel spaces. -/
 def Df2St.code (st : Df2St d) :
@@ -651,7 +589,7 @@ def Df2EpochMeas (p : Df2OPar) (n m : ℕ) {Θ : Type} [MeasurableSpace Θ] (Kθ
 
 /-- Setting (E): the draw `ξ s` is measurable in `𝒢 (s + 1)`, standard Gaussian and
 independent of `𝒢 s` (E1); the noise `e s` is measurable in `𝒢 (s + 1)`, centred, with `E exp(e²) ≤ 2`, given
-`𝒢 s` and `ξ s` (E3). The losses (E2) are fixed functions of the parameter (`Df2OnSetE`). -/
+`𝒢 s` and `ξ s` (E3). The losses (E2) are fixed functions of the parameter. -/
 structure Df2SetE (d : ℕ) {Ω : Type} [m0 : MeasurableSpace Ω] (μ : Measure Ω) (𝒢 : Filtration ℕ m0)
     (ξ : ℕ → Ω → Fin d → ℝ) (e : ℕ → Ω → ℝ) : Prop where
   xi_meas : ∀ s, Measurable[𝒢 (s + 1)] (ξ s)
@@ -661,45 +599,6 @@ structure Df2SetE (d : ℕ) {Ω : Type} [m0 : MeasurableSpace Ω] (μ : Measure 
   e_int : ∀ s, Integrable (fun ω => Real.exp (e s ω ^ 2)) μ
   e_mean : ∀ s, μ[e s | 𝒢 s ⊔ MeasurableSpace.comap (ξ s) inferInstance] =ᵐ[μ] 0
   e_exp : ∀ s, μ[fun ω => Real.exp (e s ω ^ 2) | 𝒢 s ⊔ MeasurableSpace.comap (ξ s) inferInstance] ≤ᵐ[μ] fun _ => 2
-
-/-- `Bad` has probability at most `k δ_e` on every instance of setting (E) at the horizon `m ≤ n`, with a body and
-losses that are functions of a parameter `θ` measurable in `𝒢 0` (the position, in the instance of the world), a
-routine with (L1) to (L3), at the parameters of the learner in the regime. -/
-def Df2OnSetE (k : ℝ) (Bad : (d : ℕ) → Df2Ctx d → Df2Path d → ℕ → Prop) : Prop :=
-  ∀ (d n m : ℕ) (δ : ℝ), 1 ≤ d → 1 ≤ n → 1 ≤ m → m ≤ n → 0 < δ → δ < 1 → (df2oPar d n δ).eps ≤ 1 / 2 →
-  ∀ (Θ : Type) [MeasurableSpace Θ] (Kθ : Θ → Set (E d)) (gθ : ℕ → Θ → E d → ℝ) (ap : ApFun d),
-    (∀ q, Df2Body d (df2oPar d n δ).R (Kθ q)) → (∀ q, ∀ s < m, AdmLoss (Kθ q) (gθ s q)) → ApSpec ap →
-    Df2EpochMeas (df2oPar d n δ) n m Kθ gθ ap →
-  ∀ (Ω : Type) [m0 : MeasurableSpace Ω] (μ : Measure Ω), IsProbabilityMeasure μ →
-  ∀ (𝒢 : Filtration ℕ m0) (θ : Ω → Θ) (ξ : ℕ → Ω → Fin d → ℝ) (e : ℕ → Ω → ℝ),
-    Measurable[𝒢 0] θ → Df2SetE d μ 𝒢 ξ e →
-    μ {ω | Bad d (df2CtxAt d n δ (Kθ (θ ω)) ap) ⟨fun s => gθ s (θ ω), fun s => e s ω, fun s => ξ s ω⟩ m} ≤
-      ENNReal.ofReal (k * (df2oPar d n δ).δe)
-
-/-- Noise and Pi and Gauss fail with probability at most `3 δ_e/7` (the Gaussian tails (T1), (T2), NoiseTail;
-lem:ons:mink with R1 to R3). -/
-def Df2EvGProp : Prop := Df2OnSetE (3 / 7) fun _ c π m => ¬ c.EvG π m
-
-/-- The event Y fails on G with probability at most `δ_e/7` (as in the source, with `V_τ ≤ 10 n`;
-rows R5p and R7). -/
-def Df2EvYProp : Prop := Df2OnSetE (1 / 7) fun _ c π m => c.EvG π m ∧ ¬ c.EvY π m
-
-/-- The event LQ fails on G with probability at most `δ_e/21` (Lemma LQ). -/
-def Df2EvLQProp : Prop := Df2OnSetE (1 / 21) fun _ c π m => c.EvG π m ∧ ¬ c.EvLQ π m
-
-/-- The event S-DF fails on G with probability at most `δ_e/7` (DF Lemma S-DF). -/
-def Df2EvSDFProp : Prop := Df2OnSetE (1 / 7) fun _ c π m => c.EvG π m ∧ ¬ c.EvSDF π m
-
-/-- The event DQ fails on G with probability at most `δ_e/8` (DF Lemma DQ on `B_R`). -/
-def Df2EvDQProp : Prop := Df2OnSetE (1 / 8) fun _ c π m => c.EvG π m ∧ ¬ c.EvDQ π m
-
-/-- Statement E1-loc: on every instance of setting (E) the epoch fails
-(a) or (b5') with probability at most `(3/7 + 1/7 + 1/21 + 1/7 + 1/8) δ_e = (149/168) δ_e`. -/
-def Df2E1Loc : Prop := Df2OnSetE (149 / 168) fun _ c π m => ¬ c.EpochOK π m
-
-/-- E1-loc from DET and the five budgets (a union bound). -/
-def Df2E1LocOf : Prop :=
-  Df2Det → Df2EvGProp → Df2EvYProp → Df2EvLQProp → Df2EvSDFProp → Df2EvDQProp → Df2E1Loc
 
 /-! ## Tools: the freezing lemma and the noise on a product -/
 
@@ -722,114 +621,5 @@ def LemmaNZProd : Prop :=
     Integrable h ν →
     (γ.prod ν)[fun ω => h ω.2 | MeasurableSpace.comap Prod.fst mX ⊔ MeasurableSpace.comap Prod.snd m] =ᵐ[γ.prod ν]
       fun ω => (ν[h | m]) ω.2
-
-/-! ## The run of D0 on the world -/
-
-/-- The world of the frozen statement at `ω = (gs, noise)`. -/
-def df2World (K : Set (E d)) (f : ℕ → E d → ℝ) (ω : (ℕ → ℝ) × (ℕ → ℝ)) : World d := ⟨K, f, ω.2, ω.1⟩
-
-/-- The case of the analysis: PG returned a position of `G_pos` (`PgGood` at the radius `R` of the learner) and
-`ε ≤ 1/2`. -/
-def Df2Case (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : Prop :=
-  PgGood d w.K (df2oPar d n δ).R (df2oPos d n r0 R0 δ w) ∧ (df2oPar d n δ).eps ≤ 1 / 2
-
-/-- The context of the epochs of D0 on the world. -/
-noncomputable def df2zCtx (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : Df2Ctx d :=
-  df2CtxAt d n δ (df2Kp w.K (df2oPs d n r0 R0 δ w) (df2oPar d n δ).R) apCall
-
-/-- The path of the virtual epoch of D0 started before round `a`: the losses
-`g_s(y) = f_{a+s}(S⁻¹ y)/2`, the noise `(ε_{a+s} + ζ_{a+s})/2`, the draws `ξ_{a+s}`. It is read at the rounds
-`s < n - a` only. -/
-noncomputable def df2zPath (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (a : ℕ) : Df2Path d :=
-  ⟨fun s y => w.f (a + s) (pgMu (df2oPs d n r0 R0 δ w) + pgOp (df2oPs d n r0 R0 δ w) y) / 2,
-    fun s => (w.noise (a + s) + df2oZeta d (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs (a + s)) / 2,
-    fun s => df2oXi (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs (a + s)⟩
-
-/-- The mean of the loss of round `t` of D0 given the past: the integral over the draw of round `t` of the loss at
-the point played from the mode before round `t` (the point does not read the loss, the noise or the dither). -/
-noncomputable def df2zMean (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) : ℝ :=
-  ∫ z, w.f t (df2RoundGa (df2oPar d n δ) n w.K (df2oPs d n r0 R0 δ w)
-      (gauge (df2Kp w.K (df2oPs d n r0 R0 δ w) (df2oPar d n δ).R)) apCall (w.f t) 0 z 0 (df2zMode d n r0 R0 δ w t)).1
-    ∂(Measure.pi fun _ : Fin d => gaussianReal 0 1)
-
-/-- The Azuma event of the run of D0. -/
-def Df2AzPath (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : Prop :=
-  ∑ t ∈ Finset.range n, w.f t (df2zPlay d n r0 R0 δ w t) ≤
-    ∑ t ∈ Finset.range n, df2zMean d n r0 R0 δ w t + Real.sqrt (2 * n * Real.log (7 / (df2oPar d n δ).δe))
-
-/-- The quantifier block of the world statements: the hypotheses of `Df2ORegretMeas`. -/
-def Df2WorldHyp (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ) : Prop :=
-  1 ≤ d ∧ 1 ≤ n ∧ 0 < r0 ∧ r0 ≤ R0 ∧ 0 < δ ∧ δ < 1 ∧ IsCompact K ∧ Convex ℝ K ∧ Metric.closedBall 0 r0 ⊆ K ∧
-    K ⊆ Metric.closedBall 0 R0 ∧ f ∈ Advs K n
-
-/-- Lemma 8.8 on the world: for each start round `a < n`, the virtual epoch of D0
-started before round `a` fails (a) or (b5') at the horizon `n - a`, in the case of the analysis, with probability
-at most `(149/168) δ_e`. These are the five event budgets on the world, summed. -/
-def Df2VEWorld : Prop :=
-  ∀ (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ), Df2WorldHyp d n r0 R0 δ K f →
-    ∀ ν : Measure (ℕ → ℝ), NoiseOK ν → ∀ a < n,
-      (gaussStream.prod ν) {ω | Df2Case d n r0 R0 δ (df2World K f ω) ∧
-          ¬ (df2zCtx d n r0 R0 δ (df2World K f ω)).EpochOK (df2zPath d n r0 R0 δ (df2World K f ω) a) (n - a)} ≤
-        ENNReal.ofReal (149 / 168 * (df2oPar d n δ).δe)
-
-/-- The Azuma event of the run of D0 fails, in the case of the analysis, with probability at most `δ_e/7`. -/
-def Df2AzWorld : Prop :=
-  ∀ (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ), Df2WorldHyp d n r0 R0 δ K f →
-    ∀ ν : Measure (ℕ → ℝ), NoiseOK ν →
-      (gaussStream.prod ν) {ω | Df2Case d n r0 R0 δ (df2World K f ω) ∧ ¬ Df2AzPath d n r0 R0 δ (df2World K f ω)} ≤
-        ENNReal.ofReal ((df2oPar d n δ).δe / 7)
-
-/-- The measurability (L1) of the round map of DF2-O after the observation, jointly in the position. -/
-def Df2ApCallMeas : Prop :=
-  ∀ (d n : ℕ) (δ : ℝ) (K : Set (E d)), 1 ≤ d → IsClosed K → Convex ℝ K →
-    Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
-      df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (df2Kp K x.1 (df2oPar d n δ).R) (df2oPar d n δ).eps) x.2.1 x.2.2.1
-        (x.2.1.A *ᵥ x.2.2.1) x.2.2.2
-
-/-- Lemma 8.8 on the world from E1-loc: the world with the filtration of the run is an instance of setting (E)
-for each start round (Lemma NZ), with the position as parameter; `PropAP` gives `ApSpec apCall`, which E1-loc reads. -/
-def Df2VEWorldOf : Prop := Df2E1Loc → PropAP → PgMeas → PgGoodMeas → Df2ApCallMeas → Df2VEWorld
-
-/-- The Azuma event on the world from `Df2AzumaEvent` on the filtration of the run (Lemma FR for the means). -/
-def Df2AzWorldOf : Prop := Df2AzumaEvent.{0} → PgMeas → PgGoodMeas → Df2ApCallMeas → Df2AzWorld
-
-/-- Lemma 8.10 with the regret, on every world: in the
-case of the analysis, if every virtual epoch of D0 meets (a) and (b5') and the Azuma event holds, the regret of D0
-is at most `2 ρ/η + n ε + (2 n log(7/δ_e))^{1/2}` (the factor 2 is that of the losses `f/2`). -/
-def Df2WorldDet : Prop :=
-  ∀ (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ), Df2WorldHyp d n r0 R0 δ K f →
-    ∀ w : World d, w.K = K → w.f = f → Df2Case d n r0 R0 δ w →
-      (∀ a < n, (df2zCtx d n r0 R0 δ w).EpochOK (df2zPath d n r0 R0 δ w a) (n - a)) → Df2AzPath d n r0 R0 δ w →
-      regretPts K f (df2zPlay d n r0 R0 δ w) n ≤
-        2 * ((df2oPar d n δ).rho / (df2oPar d n δ).eta) + n * (df2oPar d n δ).eps +
-          Real.sqrt (2 * n * Real.log (7 / (df2oPar d n δ).δe))
-
-/-- Lemma TV and Proposition G for DF2-O: the bisection gauge with `j` steps against the exact gauge.
-In the case of the analysis, the regret of DJ exceeds `B + 1` with probability at most that of D0 exceeding `B`,
-plus `n η_g (R + 7)/ε ≤ δ₁`. -/
-def Df2PropG : Prop :=
-  ∀ (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ), Df2WorldHyp d n r0 R0 δ K f →
-    ∀ ν : Measure (ℕ → ℝ), NoiseOK ν → ∀ B : ℝ,
-      (gaussStream.prod ν) {ω | Df2Case d n r0 R0 δ (df2World K f ω) ∧
-          B + 1 < regretPts K f (df2oPlay d n r0 R0 δ (df2World K f ω)) n} ≤
-        (gaussStream.prod ν) {ω | Df2Case d n r0 R0 δ (df2World K f ω) ∧
-          B < regretPts K f (df2zPlay d n r0 R0 δ (df2World K f ω)) n} + ENNReal.ofReal (df2oPar d n δ).δ1
-
-/-- The last step: the union over the start rounds and the Azuma event, Proposition G, Theorem 8.3 for the
-positioning (with the law of the positioning block, `PgMeas` and `PgGoodMeas`), and the trivial bound outside the
-regime give the measure clause. -/
-def Df2CompOf : Prop :=
-  Df2VEWorld → Df2AzWorld → Df2WorldDet → Df2PropG → PgThm → PgMeas → PgGoodMeas → Df2Trivial → Df2ORegretMeas
-
-/-! ## The composition -/
-
-/-- The composition: the layer-1 Props, Lemma D.14, `PropAP`, Theorem 8.3 with the measurability of the positioning,
-the SI facts, the five event budgets, the Azuma event, Proposition G and (L1) for `apCall` imply the measure clause
-of `Df2ORegret`. Its proof chains `Df2DetOf`, `Df2E1LocOf`, `Df2VEWorldOf`, `Df2AzWorldOf`, `Df2WorldDet` and
-`Df2CompOf`, with `Df2RowsHold`, `LemmaFR` and `LemmaNZProd` proved in `Df2Layer2Proof.lean`. -/
-def Df2Layer2Comp : Prop :=
-  Df2LayerOne → LemmaW → PropAP → PgThm → PgMeas → PgGoodMeas → Df2SIFacts →
-    Df2EvGProp → Df2EvYProp → Df2EvLQProp → Df2EvSDFProp → Df2EvDQProp →
-    Df2AzumaEvent.{0} → Df2PropG → Df2ApCallMeas → Df2ORegretMeas
 
 end AdversarialBco.Poly

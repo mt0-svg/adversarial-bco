@@ -10,12 +10,12 @@ public import Mathlib
 @[expose] public section
 
 /-!
-# Freedman's inequality at a stopping time: definitions and interface statements
+# Freedman's inequality: definitions and interface statements
 
-Interface: the scalar Freedman inequality that the learner's concentration bounds
-use (the source's thm:freedman, arXiv 2402.06535), in its corrected two-sided form, and Lemma FK; the corrected constant is explained. Every statement is a
+Interface: the scalar Freedman inequality that the learner's concentration bounds use (the source's thm:freedman,
+arXiv 2402.06535) in its unnormalised one-sided form, and Lemma FK with the corrected constant. Every statement is a
 `Prop`, proved in `AdversarialBco/Poly/FreedmanProof.lean` (theorems named after the `Prop` in lower camel case,
-`freedmanStopped : FreedmanStopped`).
+`freedmanFK : FreedmanFK`).
 
 Indexing: `X t` is the increment of round `t + 1`, `ℱ (t + 1)`-measurable and conditioned on `ℱ t`; a stopping time
 `τ ≤ n` keeps the increments `X t` with `t < τ` (the rounds `1, ..., τ`).
@@ -54,36 +54,7 @@ def FreedmanUnnorm : Prop :=
     ∀ (n : ℕ) (δ : ℝ), 0 < δ →
     μ {ω | α * predVar μ ℱ X n ω + Real.log (1 / δ) / α ≤ ∑ t ∈ Finset.range n, X t ω} ≤ ENNReal.ofReal δ
 
-/-- The one-sided strengthened Freedman inequality at a fixed horizon (Zimmert and Lattimore 2022, Theorem 9):
-`Σ_{t < n} X_t ≤ 3 (V l)^{1/2} + 2 U l` with probability at least `1 - δ`, `U = max(1, max_{t < n} X_t)`,
-`V` the predictable variance, `l = log (2 max(U, V^{1/2})/δ)`. -/
-def FreedmanOneSided : Prop :=
-  ∀ {Ω : Type u} {m0 : MeasurableSpace Ω} (μ : Measure Ω) [IsProbabilityMeasure μ] (ℱ : Filtration ℕ m0)
-    (X : ℕ → Ω → ℝ), (∀ t, StronglyMeasurable[ℱ (t + 1)] (X t)) → (∀ t, Integrable (X t) μ) →
-    (∀ t, Integrable (fun ω => X t ω ^ 2) μ) → (∀ t, μ[X t | ℱ t] =ᵐ[μ] 0) →
-    ∀ (n : ℕ) (δ : ℝ), 0 < δ → δ ≤ 1 →
-    μ {ω | 3 * Real.sqrt (predVar μ ℱ X n ω *
-          Real.log (2 * max (upMax X n ω) (Real.sqrt (predVar μ ℱ X n ω)) / δ))
-        + 2 * upMax X n ω * Real.log (2 * max (upMax X n ω) (Real.sqrt (predVar μ ℱ X n ω)) / δ)
-        < ∑ t ∈ Finset.range n, X t ω} ≤ ENNReal.ofReal δ
-
-/-- Freedman's inequality at a stopping time, two-sided (the source's thm:freedman with the corrected constant `4`):
-for `E[X_t | ℱ_t] = 0` on `{t < τ}`, `τ ≤ n` a stopping time, with probability at least `1 - δ`,
-`|Σ_{t < τ} X_t| ≤ 3 (V_τ l)^{1/2} + 2 B l`, `B = max(1, max_{t < τ} |X_t|)`, `V_τ` the predictable variance up to
-`τ`, `l = log (4 max(B, V_τ^{1/2})/δ)`. -/
-def FreedmanStopped : Prop :=
-  ∀ {Ω : Type u} {m0 : MeasurableSpace Ω} (μ : Measure Ω) [IsProbabilityMeasure μ] (ℱ : Filtration ℕ m0)
-    (X : ℕ → Ω → ℝ), (∀ t, StronglyMeasurable[ℱ (t + 1)] (X t)) → (∀ t, Integrable (X t) μ) →
-    (∀ t, Integrable (fun ω => X t ω ^ 2) μ) →
-    ∀ (τ : Ω → ℕ), IsStoppingTime ℱ (fun ω => (τ ω : WithTop ℕ)) → ∀ n : ℕ, (∀ ω, τ ω ≤ n) →
-    (∀ t, ∀ᵐ ω ∂μ, t < τ ω → μ[X t | ℱ t] ω = 0) →
-    ∀ δ : ℝ, 0 < δ → δ ≤ 1 →
-    μ {ω | 3 * Real.sqrt (predVar μ ℱ X (τ ω) ω *
-          Real.log (4 * max (absMax X (τ ω) ω) (Real.sqrt (predVar μ ℱ X (τ ω) ω)) / δ))
-        + 2 * absMax X (τ ω) ω * Real.log (4 * max (absMax X (τ ω) ω) (Real.sqrt (predVar μ ℱ X (τ ω) ω)) / δ)
-        < |∑ t ∈ Finset.range (τ ω), X t ω|} ≤ ENNReal.ofReal δ
-
-/-- Lemma FK, corrected constant: `FreedmanStopped` applied to `κ X_t` and divided
+/-- Lemma FK, corrected constant: Freedman's two-sided inequality at a stopping time applied to `κ X_t` and divided
 by `κ`. With `B_κ = max(1, κ max_{t < τ} |X_t|)`: `|Σ_{t < τ} X_t| ≤ 3 (V_τ l)^{1/2} + 2 (B_κ/κ) l`, that is
 `2 max(1/κ, max |X_t|) l`, with `l = log (4 max(B_κ, κ V_τ^{1/2})/δ)`. -/
 def FreedmanFK : Prop :=

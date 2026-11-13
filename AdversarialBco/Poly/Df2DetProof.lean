@@ -16,13 +16,16 @@ Proofs of the deterministic `Prop`s of `Df2.lean`, statements unchanged, one the
 `lemmaDFI_holds`, `lemmaMON_holds`, `propINC2_holds`, `lemmaD2_holds`,
 `lemmaONS2Core_holds`, `lemmaZCore_holds`, `df2RowZ_holds`, `df2Trivial_holds`, `df2Carriers_holds`.
 
-* Proposition D.8 goes through `Df2Det.inc2_core`, stated for any sequence of functions `Φ t` with Lemma D.7 and the
+* The region proposition goes through `Df2Det.inc2_core`, stated for any sequence of functions `Φ t` with the
+  monotonicity lemma and the
   lower bound `Φ_t ≥ -dev'` of the event of Lemma DQ as hypotheses. The last point of the segment in the paper is
   replaced by connectedness (`Df2Det.segment_clopen`): on `[0, 1]` the set where every `|x_θ - μ_s|²_{P_s}` is `< r` is
   open, contains `0`, and its closure in `[0, 1]` lies in it, since `≤ r` everywhere gives `≤ 8 (c₁ρ + 2 dev') < r`.
-* Lemma D.13 is the one-round identity `Df2Det.ons2_step` (no sign on `η`, `P₁` or the defects) summed by
+* The online Newton step lemma is the one-round identity `Df2Det.ons2_step` (no sign on `η`, `P₁` or the defects) summed
+  by
   `Df2Det.telescope_ons`.
-* The row of Lemma D.18 uses `e^{-x} d n x ≤ 1/16` (`Df2Det.rowz_core`, from `x ≤ 2 e^{x/2}` and `e^{x/2} ≥ e^7 d n`), with
+* The row of the lemma of the centre of the test uses `e^{-x} d n x ≤ 1/16` (`Df2Det.rowz_core`, from `x ≤ 2 e^{x/2}`
+  and `e^{x/2} ≥ e^7 d n`), with
   `κ₀^{1/2}, (32/9)^{1/2} ≤ 2` and `√d ≤ d`: the left side is at most `9/16`.
 
 Hypotheses of the statements that the proofs do not read: `IsClosed Keps`, the bounds by `pri` on `K_ε` and `pri ≤ ρ`
@@ -189,7 +192,7 @@ theorem lemmaDFI_holds : LemmaDFI := by
     ring
   exact ⟨hid, fun c c' e h1 h2 h3 => by linarith⟩
 
-/-- Lemma D.7. -/
+/-- The monotonicity lemma. -/
 theorem lemmaMON_holds : LemmaMON := by
   intro d Φ0 Ω Ωh S BR τ dev' hS hΩ hdev u t hut htτ y hy
   have hy' : y ∈ S u ∩ BR := ⟨hS u t hut hy.1, hy.2⟩
@@ -202,7 +205,7 @@ end AdversarialBco.Poly
 
 namespace AdversarialBco.Poly.Df2Det
 
-/-! ## Proposition D.8 -/
+/-! ## The region proposition -/
 
 theorem df2S_anti {d : ℕ} {μ : ℕ → Fin d → ℝ} {P : ℕ → Matrix (Fin d) (Fin d) ℝ} {r : ℝ} {u t : ℕ}
     (hut : u ≤ t) : df2S μ P r t ⊆ df2S μ P r u :=
@@ -243,7 +246,8 @@ theorem dfi_dist {d : ℕ} {P : Matrix (Fin d) (Fin d) ℝ} {Φ : (Fin d → ℝ
   obtain ⟨k, b, rfl⟩ := hΦ
   exact (lemmaDFI_holds _ k b P x y).2 c c' e hx hy hm
 
-/-- The core of Proposition D.8, for a general sequence of functions `Φ t` with Lemma D.7 and the lower bound of the
+/-- The core of the region proposition, for a general sequence of functions `Φ t` with the monotonicity lemma and the
+lower bound of the
 event of Lemma DQ as hypotheses. -/
 theorem inc2_core {d : ℕ} (Keps BR : Set (Fin d → ℝ)) (μ : ℕ → Fin d → ℝ) (P : ℕ → Matrix (Fin d) (Fin d) ℝ)
     (Φ : ℕ → (Fin d → ℝ) → ℝ) (τ : ℕ) (c dev' r : ℝ)
@@ -350,7 +354,7 @@ namespace AdversarialBco.Poly
 
 open Df2Det
 
-/-- Proposition D.8. -/
+/-- The region proposition. -/
 theorem propINC2_holds : PropINC2 := by
   intro d Keps BR μ P Φ0 Ω Ωh τ c1 ρ dev' pri r hKc _hKcl hKB hPD hquad hnew hΦ0 _hKpri hμ1 hΦμ1 hproj hΩ0 hΩmon
     hdev hdev0 hρ hc1 _hpri hrow
@@ -368,7 +372,7 @@ end AdversarialBco.Poly
 
 namespace AdversarialBco.Poly
 
-/-- Lemma D.10 (Lemma D.10 of the paper). -/
+/-- The dichotomy lemma (the paper's dichotomy lemma). -/
 theorem lemmaD2_holds : LemmaD2 := by
   intro α Q sReg T Th W Ξ κ a cup r η ν dev ρ'' π0 h e m hκa hacup hr hη hh he hi hii hiii hiv hv hup hlub
   have hak : 0 < a - κ := sub_pos.mpr hκa
@@ -492,7 +496,7 @@ namespace AdversarialBco.Poly
 
 open Df2Det
 
-/-- Lemma D.13, the deterministic core. -/
+/-- The online Newton step lemma, the deterministic core. -/
 theorem lemmaONS2Core_holds : LemmaONS2Core := by
   intro d P S H μ g ep η t y ht hP hPD hproj
   have key := telescope_ons t ht (fun s => η * (g s ⬝ᵥ (μ s - y) - (1 / 2) * df2Sq (H s) (y - μ s)))
@@ -513,7 +517,7 @@ theorem lemmaONS2Core_holds : LemmaONS2Core := by
     rw [hPs]
     exact ons2_step (P s) (H s) (S (s + 1)) (μ s) (g s) y η hsym hSP
 
-/-- Lemma D.18, the step that closes it. -/
+/-- The lemma of the centre of the test, the step that closes it. -/
 theorem lemmaZCore_holds : LemmaZCore := by
   intro d Sg b G η R δ hδpos hSg hb hGη hη
   have hη2 : 0 ≤ η / 2 := by linarith
@@ -531,7 +535,7 @@ theorem lemmaZCore_holds : LemmaZCore := by
     _ = (R / δ ^ 2) / δ := by ring
     _ = R / δ ^ 3 := by ring
 
-/-- The row of Lemma D.18 at `df2C0 = 36`. -/
+/-- The row of the lemma of the centre of the test at `df2C0 = 36`. -/
 theorem df2RowZ_holds : Df2RowZ := by
   intro d n x κ0 hd hn hx hκ0 hκ0le4
   have hd' : (1 : ℝ) ≤ (d : ℝ) := by exact_mod_cast hd

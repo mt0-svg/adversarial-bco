@@ -11,20 +11,20 @@ public import AdversarialBco.Conj1Lower.RuleS
 @[expose] public section
 
 /-!
-# The information: Lemma 9.6 and Lemma 9.9
+# The information: the chain-rule lemma and the count lemma
 
 One round: a law `π` of the tip `θ`, the genie's answer `c θ` in a finite set, the signal `s θ`, the observation
 `y = s θ + σ z`, `z ∼ N(0, 1)`. The normaliser of the Bayes update is `Z(a, y) = ∫ 1[c θ' = a] φ_σ(y - s θ') dπ(θ')`
 (`normZ`), the information density at the true tip is `ln(φ_σ(σ z)/Z(c θ, y))` (`infoDens`), and its mean is the
 information `J` of the round (`infoJ`), the mutual information of the tip and `(A, Y)`.
 
-* Lemma 9.6 in the form (S1) (`infoJ_chain`): for any constants `ĉ_a`,
+* The chain-rule lemma in the form (S1) (`infoJ_chain`): for any constants `ĉ_a`,
   `J ≤ H(A) + ∑_a ∫_{c = a} (s - ĉ_a)² dπ / (2σ²)`, with `H(A) = ∑_a p_a ln(1/p_a)` (`ansEntropy`). Gibbs on `ℝ`
   against `N(ĉ_a, σ²)`; no Gaussian maximum entropy.
 * Route (S2): the Kullback-Leibler divergence from the prior of a law with the density `ρ` on `π₀`,
   `K(ρ) = ∫ ρ ln ρ dπ₀` (`klDens`); after a round, `E K(ρ') = K(ρ) + J` (`kl_round`, the density recursion
   `updDens` of Bayes.lean's `dens`); `K ≥ 0`, `J ≥ 0`.
-* Lemma 9.9 (b) (`count_b`): on the prior uniform on `B(0, 1/2)`, a law with fewer than `d/2` eigenvalues of its
+* The count lemma (b) (`count_b`): on the prior uniform on `B(0, 1/2)`, a law with fewer than `d/2` eigenvalues of its
   covariance at least `w²` has `K ≥ N*` (`nStar` of Balance.lean): Gibbs against the Gaussian density whose precision
   is the clipped metric `M` of Frame.lean, the volume of the ball, crude Stirling (S3).
 * The game (`count_game`): `∑_{t < n} E J_t = E K(π_n) ≥ N* P(π_n dead)`, the field `count` of `GameFacts`.
@@ -389,30 +389,6 @@ theorem integral_log_gauss_ratio {sc : ℝ} (hsc : sc ≠ 0) (μ ĉ : ℝ) :
       simp [integral_id_gaussianReal]
     _ = (μ - ĉ) ^ 2 / (2 * sc ^ 2) := by ring
 
-/-- Gibbs on any measure: `∫ Z ln(q/Z) ≤ ∫ q - ∫ Z` for `Z ≥ 0`, `q > 0` integrable, `Z ln(q/Z)` integrable. -/
-theorem integral_mul_log_div_le {X : Type*} [MeasurableSpace X] (ν : Measure X) {Z q : X → ℝ}
-    (hZ0 : ∀ y, 0 ≤ Z y) (hq0 : ∀ y, 0 < q y) (hZ : Integrable Z ν) (hq : Integrable q ν)
-    (hZq : Integrable (fun y => Z y * Real.log (q y / Z y)) ν) :
-    ∫ y, Z y * Real.log (q y / Z y) ∂ν ≤ ∫ y, q y ∂ν - ∫ y, Z y ∂ν := by
-  have h_pointwise : ∀ y, Z y * Real.log (q y / Z y) ≤ q y - Z y := by
-    intro y
-    by_cases hz : Z y = 0
-    · rw [hz]
-      simpa using (hq0 y).le
-    · have hz_pos : 0 < Z y := lt_of_le_of_ne (hZ0 y) (Ne.symm hz)
-      have hpos : 0 < q y / Z y := div_pos (hq0 y) hz_pos
-      have hlog := Real.log_le_sub_one_of_pos hpos
-      calc
-        Z y * Real.log (q y / Z y) ≤ Z y * ((q y / Z y) - 1) :=
-          mul_le_mul_of_nonneg_left hlog (hZ0 y)
-        _ = q y - Z y := by
-          field_simp [hz]
-  have h_int_sub : Integrable (fun y => q y - Z y) ν := hq.sub hZ
-  calc
-    ∫ y, Z y * Real.log (q y / Z y) ∂ν ≤ ∫ y, q y - Z y ∂ν :=
-      MeasureTheory.integral_mono hZq h_int_sub h_pointwise
-    _ = (∫ y, q y ∂ν) - (∫ y, Z y ∂ν) := by rw [MeasureTheory.integral_sub hq hZ]
-
 /-- Tonelli for a round: the tip and the noise, read through the answer and the observation, as an integral over the
 observation of a sum over the answers. -/
 theorem lintegral_obs_noise [Fintype α] [MeasurableSingletonClass α] (π : Measure Θ) [SFinite π] {c : Θ → α}
@@ -424,7 +400,8 @@ theorem lintegral_obs_noise [Fintype α] [MeasurableSingletonClass α] (π : Mea
   refine lintegral_congr fun θ => ?_
   exact lintegral_gauss_affine (s θ) sc (hG.comp (measurable_const.prodMk (measurable_const.prodMk measurable_id)))
 
-/-- Lemma 9.5 for one round with the standard noise: the tip and the noise against the tip drawn again from the
+/-- The posterior lemma for one round with the standard noise: the tip and the noise against the tip drawn again from
+the
 posterior of the answer and of the observation. -/
 theorem lintegral_bayes_noise [Fintype α] [MeasurableSingletonClass α] (π : Measure Θ) [IsFiniteMeasure π]
     {c : Θ → α} {s : Θ → ℝ} (hc : Measurable c) (hs : Measurable s) {sc : ℝ} (hsc : sc ≠ 0)
@@ -1221,7 +1198,8 @@ theorem integral_bayes_step_aux {X : Type*} [MeasurableSpace X] {μ : Measure X}
         lintegral_add_left' hf.aemeasurable.ennreal_ofReal _
     _ < ∞ := ENNReal.add_lt_top.2 ⟨h1.lt_top, h2.lt_top⟩
 
-/-- Lemma 9.5 for one round, signed: a function of the tip, the answer and the observation, integrable at the true
+/-- The posterior lemma for one round, signed: a function of the tip, the answer and the observation, integrable at the
+true
 tip, has the same mean when the tip is drawn again from the posterior. -/
 theorem integral_bayes_step [Fintype α] [MeasurableSingletonClass α] (π : Measure Θ) [IsProbabilityMeasure π]
     {c : Θ → α} {s : Θ → ℝ} (hc : Measurable c) (hs : Measurable s) {sc : ℝ} (hsc : sc ≠ 0)
@@ -1284,7 +1262,7 @@ theorem integral_bayes_step [Fintype α] [MeasurableSingletonClass α] (π : Mea
   rw [integral_congr_ae hFeq, integral_sub hIp hIm, integral_toReal hAp.aemeasurable hae_p,
     integral_toReal hAm.aemeasurable hae_m, kp, km, integral_eq_lintegral_pos_part_sub_lintegral_neg_part hint]
 
-/-- Lemma 9.6 with the channel bound (S1): for any constants `ĉ_a`,
+/-- The chain-rule lemma with the channel bound (S1): for any constants `ĉ_a`,
 `J ≤ H(A) + ∑_a ∫_{c = a} (s - ĉ_a)² dπ / (2σ²)`. -/
 theorem infoJ_chain [Fintype α] [MeasurableSingletonClass α] (π : Measure Θ) [IsProbabilityMeasure π]
     {c : Θ → α} (hc : Measurable c) {s : Θ → ℝ} (hs : Measurable s) {S₀ : ℝ} (hsb : ∀ θ, |s θ| ≤ S₀) {sc : ℝ}
@@ -1700,7 +1678,7 @@ theorem kl_round [Fintype α] [MeasurableSingletonClass α] (π₀ : Measure Θ)
 
 end KLRound
 
-/-! ## Lemma 9.9 (b) -/
+/-! ## The count lemma (b) -/
 
 /-- Gibbs against a reference density: `∫ ρ ln G dπ₀ ≤ ∫ ρ ln ρ dπ₀` when `∫ ρ dπ₀ = 1` and `∫ G dπ₀ ≤ 1`. -/
 theorem gibbs_ref {Θ : Type*} [MeasurableSpace Θ] (π₀ : Measure Θ) [IsProbabilityMeasure π₀] {ρ : Θ → ℝ≥0∞}
@@ -2126,7 +2104,7 @@ theorem log_gamma_half_le {d : ℕ} (hd : 1 ≤ d) :
         linarith
       exact le_trans h_intermediate h_suffices
 
-/-- Lemma 9.9 (a) on the spectrum, clipped: if fewer than `d/2` of the `λ_i ≥ 0` are at least `w²`, their sum is
+/-- The count lemma (a) on the spectrum, clipped: if fewer than `d/2` of the `λ_i ≥ 0` are at least `w²`, their sum is
 at most `r₀²` and `w² ≤ 2 r₀²/(e d)`, then `∑_i ln max(λ_i, w²) ≤ (d/2) ln(2 r₀² w²/d)`. -/
 theorem count_a_spec {d : ℕ} (hd : 0 < d) (lam : Fin d → ℝ) (hlam : ∀ i, 0 ≤ lam i) {r₀ w : ℝ} (hw : 0 < w)
     (hsum : ∑ i, lam i ≤ r₀ ^ 2) (hX : w ^ 2 ≤ 2 * r₀ ^ 2 / (Real.exp 1 * d))
@@ -2687,7 +2665,7 @@ theorem integral_log_gaussRef {d : ℕ} {r₀ : ℝ} (hr : 0 < r₀) (A : E d �
     exact hsub
   exact h_int_sub
 
-/-- The arithmetic of Lemma 9.9 (b): the volume of the ball, the determinant of the clipped metric and `D_M ≤ d`
+/-- The arithmetic of the count lemma (b): the volume of the ball, the determinant of the clipped metric and `D_M ≤ d`
 give `N*`. -/
 theorem count_b_real {d : ℕ} (hd : 1 ≤ d) {w : ℝ} (hw : 0 < w) {lv la D : ℝ}
     (hlv : d * Real.log (1 / 2) + d / 2 * Real.log Real.pi -
@@ -2768,7 +2746,7 @@ theorem count_b_real {d : ℕ} (hd : 1 ≤ d) {w : ℝ} (hw : 0 < w) {lv la D : 
   -- Chain inequalities
   linarith
 
-/-- Lemma 9.9 (b) in the form (S2): on the prior uniform on `B(0, 1/2)`, a law with a bounded density `ρ` and
+/-- The count lemma (b) in the form (S2): on the prior uniform on `B(0, 1/2)`, a law with a bounded density `ρ` and
 fewer than `d/2` eigenvalues of its covariance at least `w²` lies at least `N*` from the prior. -/
 theorem count_b {d : ℕ} (hd : 1 ≤ d) {w : ℝ} (hw : 0 < w) (hX : Real.exp 1 / 2 ≤ xCount d w)
     {ρ : E d → ℝ≥0∞} (hρ : Measurable ρ) {C : ℝ≥0∞} (hC : C ≠ ∞) (hρC : ∀ θ, ρ θ ≤ C)
@@ -3053,7 +3031,7 @@ theorem sum_infoRound (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Mea
       rw [Finset.sum_range_succ, ih (Nat.le_of_succ_le hm), kl_step π0 μ R hR hsc hpol hsb (Nat.lt_of_succ_le hm)]
   exact key n le_rfl
 
-/-- Lemma 9.6 and Lemma 9.9 (b) over the game, the field `count` of `GameFacts`:
+/-- The chain-rule lemma and the count lemma (b) over the game, the field `count` of `GameFacts`:
 `N* P(π_n has fewer than d/2 live directions) ≤ ∑_{t < n} E J_t`. -/
 theorem count_game (hd : 1 ≤ d) (μ : Measure Ω) [IsProbabilityMeasure μ] (R : Rule d (Option Cell))
     (hR : R.Meas (prior d (1 / 2))) {sc : ℝ} (hsc : sc ≠ 0) {pol : Learner Ω d} {n : ℕ}

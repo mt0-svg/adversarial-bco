@@ -1,8 +1,0 @@
-{
-  "challenge_module": "AdversarialBco.Challenge",
-  "solution_module": "AdversarialBco.Solution",
-  "theorem_names": ["AdversarialBco.corollaryADV"],
-  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
-  "enable_nanoda": true,
-  "lean_kernel": false
-}

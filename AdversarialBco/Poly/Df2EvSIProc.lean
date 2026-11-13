@@ -15,11 +15,11 @@ public import AdversarialBco.Poly.Df2DetProof
 /-!
 # The increments of the events LQ, S-DF and DQ on setting (E)
 
-The state process `sig s = (θ, st_s)`, measurable in `𝒢 s` for `s ≤ m`; the extension `fF` and the gauge factor `fP`
-at the point `X = μ + (1 - λ) A z` of a state; the directions `phiL` (LQ) and `phiH` (S-DF, DQ); the coefficients
-`aOf = I fF φ`, `bOf = I fP φ` of `EvSI.cond_incr`, with `I` the bound condition `stB M` on the state (`|μ|² ≤ M`,
-`|A w|² ≤ M |w|²`, `|P w|² ≤ M |w|²`). They are measurable for `s < m` and of polynomial growth in `z` uniformly in
-the state, which is what `lemmaU_setE` asks.
+The extension `fF` and the gauge factor `fP` at the point `X = μ + (1 - λ) A z` of a state; the directions `phiL`
+(LQ) and `phiH` (S-DF, DQ); the coefficients `aOf = I fF φ`, `bOf = I fP φ` of `EvSI.cond_incr`, with `I` the bound
+condition `stB M` on the state (`|μ|² ≤ M`, `|A w|² ≤ M |w|²`, `|P w|² ≤ M |w|²`). They are measurable for `s < m`
+and of polynomial growth in `z` uniformly in the state, which is what `lemmaU_setE` asks. The state of a mode is a
+measurable function of its code (`stOr_eq`, `measurable_stOr`).
 -/
 
 open MeasureTheory ProbabilityTheory Matrix
@@ -315,7 +315,7 @@ theorem aOf_bOf_le {m : ℕ} (hbody : ∀ q, Df2Body d (df2oPar d n δ).R (Kθ q
   · simp only [abs_zero]
     exact ⟨by positivity, by positivity⟩
 
-/-! ## The state process -/
+/-! ## The state of a mode -/
 
 theorem stOr_eq (M : Df2Mode d) (dflt : Df2St d) : M.stOr dflt = if M.code.1 = 2 then M.code.2 else dflt := by
   cases M <;> simp [Df2Mode.stOr, Df2Mode.code]
@@ -329,53 +329,6 @@ theorem measurable_stOr (dflt : Df2St d) : Measurable fun M : Df2Mode d => M.stO
 
 variable (ap : ApFun d) {Ω : Type} (θ : Ω → Θ) (ξ : ℕ → Ω → Fin d → ℝ) (e : ℕ → Ω → ℝ)
 
-/-- The parameter and the state before round `s`. -/
-noncomputable def sig (s : ℕ) (ω : Ω) : Θ × Df2St d :=
-  (θ ω, (EvGY.ctxW n δ Kθ ap θ ω).st (EvGY.pathW gθ θ ξ e ω) s)
-
-theorem measurable_sig [MeasurableSpace Θ] {m : ℕ} [m0 : MeasurableSpace Ω] (𝒢 : Filtration ℕ m0)
-    (hmeas : Df2EpochMeas (df2oPar d n δ) n m Kθ gθ ap) (hθ : Measurable[𝒢 0] θ)
-    (hξ : ∀ s, Measurable[𝒢 (s + 1)] (ξ s)) (he : ∀ s, Measurable[𝒢 (s + 1)] (e s)) {s : ℕ} (hs : s ≤ m) :
-    Measurable[𝒢 s] (sig n δ Kθ gθ ap θ ξ e s) := by
-  have hM := EvGY.measurable_mode n δ Kθ gθ ap hmeas 𝒢 θ ξ e hθ hξ he s hs
-  have hst : Measurable[𝒢 s] fun ω =>
-      ((EvGY.ctxW n δ Kθ ap θ ω).mode (EvGY.pathW gθ θ ξ e ω) s).stOr (df2Init (df2oPar d n δ) d) :=
-    (measurable_stOr _).comp hM
-  exact (hθ.mono (𝒢.mono (Nat.zero_le s)) le_rfl).prodMk hst
-
-/-! ## The observation and the estimators on the path -/
-
-section path
-
-variable (ω : Ω) (s : ℕ)
-
-theorem Y_eq : (EvGY.ctxW n δ Kθ ap θ ω).Y (EvGY.pathW gθ θ ξ e ω) s =
-    fF n δ Kθ gθ s (sig n δ Kθ gθ ap θ ξ e s ω, ξ s ω) + fP n δ Kθ (sig n δ Kθ gθ ap θ ξ e s ω, ξ s ω) * e s ω := by
-  simp only [Df2Ctx.Y, Df2Ctx.pip, Df2Ctx.play, Df2Ctx.X, Df2Ctx.w, fF, fP, sig, EvGY.xOf, df2Ext, EvGY.ctxW,
-    EvGY.pathW, df2CtxAt, WithLp.toLp_smul]
-  ring
-
-theorem ghat_dot (y : Fin d → ℝ) :
-    (EvGY.ctxW n δ Kθ ap θ ω).ghat (EvGY.pathW gθ θ ξ e ω) s ⬝ᵥ
-        (y - ((EvGY.ctxW n δ Kθ ap θ ω).st (EvGY.pathW gθ θ ξ e ω) s).mu) =
-      (EvGY.ctxW n δ Kθ ap θ ω).Y (EvGY.pathW gθ θ ξ e ω) s * phiL n δ y (sig n δ Kθ gθ ap θ ξ e s ω).2 (ξ s ω) := by
-  simp only [Df2Ctx.ghat, Df2Ctx.u, Df2Ctx.w, phiL, lin, sig, smul_dotProduct, smul_eq_mul, EvGY.ctxW,
-    EvGY.pathW, df2CtxAt]
-  ring
-
-theorem shh_sq (hf : Df2St d → Fin d → ℝ) :
-    df2Sq ((EvGY.ctxW n δ Kθ ap θ ω).shh (EvGY.pathW gθ θ ξ e ω) s)
-        (hf ((EvGY.ctxW n δ Kθ ap θ ω).st (EvGY.pathW gθ θ ξ e ω) s)) =
-      (EvGY.ctxW n δ Kθ ap θ ω).Y (EvGY.pathW gθ θ ξ e ω) s * phiH n δ hf (sig n δ Kθ gθ ap θ ξ e s ω).2 (ξ s ω) := by
-  simp only [Df2Ctx.shh, sq_smul, sq_sub, phiH, lin, sig, Df2Ctx.u, Df2Ctx.w, EvGY.ctxW, EvGY.pathW, df2CtxAt]
-  have hv : ∀ (u v : Fin d → ℝ), df2Sq (vecMulVec u u) v = (u ⬝ᵥ v) ^ 2 := fun u v => by
-    simp only [df2Sq, vecMulVec_mulVec]
-    rw [op_smul_eq_smul, dotProduct_smul, smul_eq_mul, dotProduct_comm v u]; ring
-  rw [hv]
-  ring
-
-end path
-
 /-! ## The increments on the path -/
 
 /-- Under the bound condition, the mean of `aOf` is the Gaussian integral of `fF φ`. -/
@@ -383,18 +336,6 @@ theorem mean_aOf (M : ℝ) (s : ℕ) (φ : Df2St d → (Fin d → ℝ) → ℝ) 
     mean (aOf n δ Kθ gθ M s φ) σ = ∫ z, fF n δ Kθ gθ s (σ, z) * φ σ.2 z ∂(gam d) := by
   unfold mean aOf
   simp only [hst, ↓reduceIte]
-
-theorem zSeq_eq {ι : Type*} {m : ℕ} (M : ℝ) (φ : ι → Df2St d → (Fin d → ℝ) → ℝ) (c : ι) (ω : Ω) {s : ℕ}
-    (hs : s < m) (hst : stB M (sig n δ Kθ gθ ap θ ξ e s ω).2) :
-    zSeq m (fun c s => aOf n δ Kθ gθ M s (φ c)) (fun c _ => bOf n δ Kθ M (φ c)) (sig n δ Kθ gθ ap θ ξ e) ξ e c s ω =
-      (EvGY.ctxW n δ Kθ ap θ ω).Y (EvGY.pathW gθ θ ξ e ω) s * φ c (sig n δ Kθ gθ ap θ ξ e s ω).2 (ξ s ω) -
-        ∫ z, fF n δ Kθ gθ s (sig n δ Kθ gθ ap θ ξ e s ω, z) * φ c (sig n δ Kθ gθ ap θ ξ e s ω).2 z ∂(gam d) := by
-  rw [zSeq_of_lt _ _ _ _ _ _ hs]
-  unfold incr
-  rw [mean_aOf n δ Kθ gθ M s (φ c) _ hst, Y_eq n δ Kθ gθ ap θ ξ e ω s]
-  unfold aOf bOf
-  simp only [hst, ↓reduceIte]
-  ring
 
 /-- Under the bound condition, `A² + B² ≤ (fF² + fP²) φ²`. -/
 theorem sq_aOf_bOf_le (M : ℝ) (s : ℕ) (φ : Df2St d → (Fin d → ℝ) → ℝ) (x : (Θ × Df2St d) × (Fin d → ℝ)) :

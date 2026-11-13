@@ -165,21 +165,6 @@ theorem frameA_injective {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (h
   have h_ofLp_eq : x.ofLp = y.ofLp := hinj_mulVec h_ofLp
   exact WithLp.ofLp_injective 2 h_ofLp_eq
 
-theorem frameW_eq_cfc {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.IsHermitian) :
-    frameW w S = cfc (fun s : ℝ => s + w ^ 2) S := by
-  haveI hS_selfadj : IsSelfAdjoint S := hS.isSelfAdjoint
-  have h_cont_id : ContinuousOn (fun (x : ℝ) => x) (spectrum ℝ S) :=
-    continuous_id.continuousOn
-  have h_cfc_add := cfc_add_const (R := ℝ) (w ^ 2) (fun (s : ℝ) => s) S h_cont_id (ha := hS_selfadj)
-  calc
-    frameW w S = S + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ) := rfl
-    _ = S + algebraMap ℝ (Matrix (Fin d) (Fin d) ℝ) (w ^ 2) := by
-      rw [← Algebra.algebraMap_eq_smul_one (R := ℝ) (A := Matrix (Fin d) (Fin d) ℝ) (w ^ 2)]
-    _ = (cfc (fun (s : ℝ) => s) S) + algebraMap ℝ (Matrix (Fin d) (Fin d) ℝ) (w ^ 2) := by
-      rw [cfc_id' (R := ℝ) (ha := hS_selfadj)]
-    _ = cfc (fun s : ℝ => s + w ^ 2) S := by
-      rw [← h_cfc_add]
-
 theorem frameW_inv_eq_cfc {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.PosSemidef) (hw : w ≠ 0) :
     (frameW w S)⁻¹ = cfc (fun s : ℝ => (s + w ^ 2)⁻¹) S := by
   have hw_sq_pos : 0 < w ^ 2 := sq_pos_iff.mpr hw
@@ -274,11 +259,6 @@ theorem dLive_eq_card {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS :
   rw [trace_cfc_eq_sum _ S hS, Finset.card_filter, Nat.cast_sum]
   refine Finset.sum_congr rfl fun i _ => ?_
   split_ifs <;> simp
-
-/-- `D_M = Σ_i λ_i / max(λ_i, w²)`. -/
-theorem DM_eq_sum {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.IsHermitian) :
-    DM w S = ∑ i, hS.eigenvalues i / max (hS.eigenvalues i) (w ^ 2) := by
-  rw [DM_eq_trace_cfc w S hS, trace_cfc_eq_sum _ S hS]
 
 /-! ## The metric as a quadratic form -/
 
@@ -580,51 +560,6 @@ theorem DM_le {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.PosSe
   rw [DM]
   linarith
 
-/-- `0 ≤ D_M`. -/
-theorem DM_nonneg {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.PosSemidef) (hw : w ≠ 0) :
-    0 ≤ DM w S := by
-  -- From hS, S is Hermitian and has nonnegative spectrum
-  rcases (Matrix.posSemidef_iff_isHermitian_and_spectrum_nonneg.mp hS) with ⟨hS_herm, hS_spec⟩
-  have hS_selfadj : IsSelfAdjoint S := hS_herm.isSelfAdjoint
-  -- w^2 > 0 since w ≠ 0
-  have hw_sq_pos : 0 < w ^ 2 := sq_pos_iff.mpr hw
-  -- Functions are continuous on the finite spectrum
-  have h_cont_inv : ContinuousOn (fun s : ℝ => (max s (w ^ 2))⁻¹) (spectrum ℝ S) :=
-    (Matrix.finite_real_spectrum (A := S)).continuousOn _
-  have h_cont_id : ContinuousOn (fun s : ℝ => s) (spectrum ℝ S) :=
-    (Matrix.finite_real_spectrum (A := S)).continuousOn _
-  -- Express DM in terms of cfc
-  have hDM_eq : DM w S = trace (cfc (fun s : ℝ => s / max s (w ^ 2)) S) := by
-    dsimp [DM, clipM]
-    -- Goal: trace (cfc (fun s => (max s (w^2))⁻¹) S * S) = trace (cfc (fun s => s / max s (w^2)) S)
-    calc
-      trace (cfc (fun s : ℝ => (max s (w ^ 2))⁻¹) S * S)
-          = trace (cfc (fun s : ℝ => (max s (w ^ 2))⁻¹) S * cfc (fun x : ℝ => x) S) := by
-        rw [cfc_id' (R := ℝ) (ha := hS_selfadj)]
-      _ = trace (cfc (fun s : ℝ => (max s (w ^ 2))⁻¹ * s) S) := by
-        rw [← cfc_mul (fun s : ℝ => (max s (w ^ 2))⁻¹) (fun s : ℝ => s) S h_cont_inv h_cont_id]
-      _ = trace (cfc (fun s : ℝ => s / max s (w ^ 2)) S) := by
-        congr
-        ext s
-        simp [div_eq_mul_inv, mul_comm]
-  rw [hDM_eq]
-  -- Show cfc (fun s => s / max s (w^2)) S is nonnegative
-  have h_cfc_nonneg : 0 ≤ cfc (fun s : ℝ => s / max s (w ^ 2)) S := by
-    refine cfc_nonneg fun x hx => ?_
-    -- hx : x ∈ spectrum ℝ S, so x ≥ 0
-    have hx_nonneg : 0 ≤ x := hS_spec hx
-    -- denominator is nonnegative since max x (w^2) ≥ w^2 > 0
-    have h_den_nonneg : 0 ≤ max x (w ^ 2) :=
-      calc
-        0 ≤ w ^ 2 := by positivity
-        _ ≤ max x (w ^ 2) := le_max_right _ _
-    exact div_nonneg hx_nonneg h_den_nonneg
-  -- By Matrix.nonneg_iff_posSemidef, it's PosSemidef
-  have h_pos_semidef : (cfc (fun s : ℝ => s / max s (w ^ 2)) S).PosSemidef := by
-    rwa [← Matrix.nonneg_iff_posSemidef]
-  -- And trace of PosSemidef is nonnegative
-  exact Matrix.PosSemidef.trace_nonneg h_pos_semidef
-
 /-- The trace bound of (L4): `w² tr W⁻¹ ≤ d - d_live/2` (at most `1/2` per live direction, `1` per other). -/
 theorem sq_trace_frameW_inv_le {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.PosSemidef)
     (hw : w ≠ 0) : w ^ 2 * trace (frameW w S)⁻¹ ≤ d - dLive w S / 2 := by
@@ -643,7 +578,7 @@ theorem sq_trace_frameW_inv_le {d : ℕ} (w : ℝ) (S : Matrix (Fin d) (Fin d) �
 
 /-! ## The Lipschitz constant of the dent -/
 
-/-- The Lipschitz constant of the dent in the frame (Lemma 9.4): `κ r₁ ‖M^{1/2}‖ ≤ κ r₁ / w`. -/
+/-- The Lipschitz constant of the dent in the frame (the legality lemma): `κ r₁ ‖M^{1/2}‖ ≤ κ r₁ / w`. -/
 theorem lipschitz_const_le {d : ℕ} (w κ r₁ : ℝ) (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.IsHermitian)
     (hw : 0 < w) (hκ : 0 ≤ κ) (hr : 0 ≤ r₁) : κ * r₁ * ‖frameA w S‖ ≤ κ * r₁ / w := by
   have hnr : 0 ≤ κ * r₁ := mul_nonneg hκ hr

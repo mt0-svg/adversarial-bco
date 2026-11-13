@@ -13,7 +13,7 @@ public import AdversarialBco.Conj1Lower.Balance
 /-!
 # The fields of `RoundFacts` that come from the cells
 
-Lemma 9.7 and Lemma LEAK, in the shapes of the fields of `RoundFacts` (Balance.lean).
+The rest lemma and Lemma LEAK, in the shapes of the fields of `RoundFacts` (Balance.lean).
 One round, one path: the law `π` of the tip given `(G_{t-1}, U)`, the frame `(m, A)` with `D_M = DMv`, the play `x`;
 the parameters `κ = g/k`, `ε = k`, `r₁ = 5 d^{1/2}` of the strategy `S'(g, k, L, σ)`. The reals of `RoundFacts`:
 
@@ -21,9 +21,9 @@ the parameters `κ = g/k`, `ε = k`, `r₁ = 5 d^{1/2}` of the strategy `S'(g, k
 * `H = entAns`, the entropy of the answer: `∑_{c ripe} p_c ln(1/p_c) + p_rest ln(1/p_rest)`;
 * `Dbar = dentMean = ∫ D(x; θ) dπ(θ)`, `Drest = dentRest = ∫_{rest} D(x; θ) dπ(θ)`;
 * `Pay = ∑_{c ripe} P c`, `P c` the term of the ripe cell `c` in the payment `P'_t` (Ledger.lean proves the bounds (L3) to
-  (L5) of Lemma 9.8 on it, the hypotheses of `cells_leak`).
+  (L5) of the ledger lemma on it, the hypotheses of `cells_leak`).
 
-The field `price` is `Irest ≤ g/(σ² P_R) (Drest/pr)` when `pr ≥ 1/2`; Lemma 9.6 (Info.lean) gives
+The field `price` is `Irest ≤ g/(σ² P_R) (Drest/pr)` when `pr ≥ 1/2`; the chain-rule lemma (Info.lean) gives
 `Irest ≤ E[(q - D)² | rest]/(2σ²) = gapRest/pr/(2σ²)` (the (S1) bound with the centring constant `q(x)` of rest), and
 `cells_price` bounds the right side.
 -/
@@ -163,36 +163,7 @@ theorem cells_leak {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] 
     rw [Finset.mul_sum]
     exact Finset.sum_le_sum fun c hc => (hcell c hc).2
 
-/-! ## Lemma 9.7: `price`, `drest_nonneg`, `drest_le`, `floor`, `reg` -/
-
-/-- The second moment of `T` on the tail is finite when the tip has a second moment. -/
-theorem integrableOn_tail_readT_sq {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
-    [BorelSpace V] (π : Measure V) [IsFiniteMeasure π] (A : V →L[ℝ] V) (m : V) (k dd DMv : ℝ) (x : V)
-    (h2 : Integrable (fun θ => ‖θ‖ ^ 2) π) :
-    IntegrableOn (fun θ => readT A m θ x ^ 2) (cellSet A m k dd DMv x Cell.tail) π := by
-  refine Integrable.integrableOn ?_
-  have hbound : ∀ θ, readT A m θ x ^ 2 ≤ 2 * ‖A‖ ^ 2 * (‖θ‖ ^ 2 + ‖m‖ ^ 2) := by
-    intro θ
-    have hT : |readT A m θ x| ≤ ‖A (θ - m)‖ := by
-      unfold readT
-      rcases eq_or_lt_of_le (norm_nonneg (A (x - m))) with h | h
-      · rw [← h, div_zero, abs_zero]; exact norm_nonneg _
-      · rw [abs_div, abs_norm, div_le_iff₀ h]
-        calc _ ≤ ‖A (x - m)‖ * ‖A (θ - m)‖ := abs_real_inner_le_norm _ _
-          _ = _ := mul_comm _ _
-    have hA : ‖A (θ - m)‖ ≤ ‖A‖ * (‖θ‖ + ‖m‖) :=
-      (A.le_opNorm _).trans (mul_le_mul_of_nonneg_left (norm_sub_le _ _) (norm_nonneg _))
-    have hsq : readT A m θ x ^ 2 ≤ (‖A‖ * (‖θ‖ + ‖m‖)) ^ 2 := by
-      rw [← sq_abs]; exact pow_le_pow_left₀ (abs_nonneg _) (hT.trans hA) 2
-    have hAm : (‖A‖ * (‖θ‖ + ‖m‖)) ^ 2 ≤ 2 * ‖A‖ ^ 2 * (‖θ‖ ^ 2 + ‖m‖ ^ 2) := by
-      have := sq_nonneg (‖θ‖ - ‖m‖)
-      have := sq_nonneg ‖A‖
-      nlinarith
-    linarith
-  refine Integrable.mono' ((h2.add (integrable_const (‖m‖ ^ 2))).const_mul (2 * ‖A‖ ^ 2))
-    ((continuous_readT_tip A m x).pow 2).aestronglyMeasurable (ae_of_all _ fun θ => ?_)
-  rw [Real.norm_eq_abs, abs_of_nonneg (sq_nonneg _)]
-  exact hbound θ
+/-! ## The rest lemma: `price`, `drest_nonneg`, `drest_le`, `floor`, `reg` -/
 
 /-- The dent is integrable in the tip: it is measurable, between `0` and `q(x)`. -/
 theorem integrable_dent_tip {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
@@ -203,8 +174,8 @@ theorem integrable_dent_tip {V : Type*} [NormedAddCommGroup V] [InnerProductSpac
   rw [Real.norm_eq_abs, abs_of_nonneg (dent_nonneg A m κ ε r₁ hκ hε hr θ x)]
   exact dent_le_bowl A m κ ε r₁ hκ hε hr θ x
 
-/-- The price of rest (Lemma 9.7 (ii), the part of the cells): for `pr ≥ 1/2`,
-`E[(q - D)² | rest]/(2σ²) ≤ g/(σ² P_R) E[D | rest]`. With Lemma 9.6's
+/-- The price of rest (the rest lemma (ii), the part of the cells): for `pr ≥ 1/2`,
+`E[(q - D)² | rest]/(2σ²) ≤ g/(σ² P_R) E[D | rest]`. With the chain-rule lemma's
 `Irest ≤ gapRest/pr/(2σ²)` this is `RoundFacts.price`. -/
 theorem cells_price {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsProbabilityMeasure π] (A : V →L[ℝ] V) (m : V) (g σ k dd DMv : ℝ)
@@ -259,7 +230,7 @@ theorem cells_drest_le {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ
   exact setIntegral_le_integral (integrable_dent_tip π A m _ _ _ (div_nonneg hg hk) hk (by positivity) x)
     (ae_of_all _ fun θ => dent_nonneg A m _ _ _ (div_nonneg hg hk) hk (by positivity) θ x)
 
-/-- `RoundFacts.floor`: `π(regular) g/2 ≤ E[D]` (Lemma 9.7 (i), `q ≥ κ k = g`). -/
+/-- `RoundFacts.floor`: `π(regular) g/2 ≤ E[D]` (the rest lemma (i), `q ≥ κ k = g`). -/
 theorem cells_floor {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsFiniteMeasure π] (A : V →L[ℝ] V) (m : V) (g k dd DMv : ℝ) (hg : 0 < g)
     (hk : 0 < k) (hd : 2048 * k ≤ dd) (hDM : dd / 2 ≤ DMv) (x : V) :
@@ -270,7 +241,7 @@ theorem cells_floor {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
   unfold massReg dentMean
   linarith
 
-/-- `RoundFacts.reg`: `pr - 3k²/d² ≤ π(regular)` (Lemma 9.7 (i)). -/
+/-- `RoundFacts.reg`: `pr - 3k²/d² ≤ π(regular)` (the rest lemma (i)). -/
 theorem cells_reg {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsFiniteMeasure π] (A : V →L[ℝ] V) (m : V) (k dd DMv : ℝ) (hk : 1 ≤ k)
     (hd : 2048 * k ≤ dd) (x : V) :

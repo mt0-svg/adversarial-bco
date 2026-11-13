@@ -12,15 +12,13 @@ public import Mathlib
 /-!
 # One round of the Bayes core
 
-Lemma 9.5 for one round. A law `π` on the tips `Θ`; the genie's answer `c θ` in a
+The posterior lemma for one round. A law `π` on the tips `Θ`; the genie's answer `c θ` in a
 finite set `α`; an observation `y` of law `N(s θ, v)`. The posterior given `(a, y)` is `π` reweighted by the likelihood
 `lik c s v a y θ = 1[c θ = a] gaussianPDF (s θ) v y` and normalised, and `π` itself where the normaliser vanishes
 (`bayesUpd`, the null-normaliser convention).
 
 * `bayes_step`: the joint law of the tip and of `(c θ, y)` disintegrates along the posterior: for every measurable
   `G ≥ 0`, `∫ π(dθ) ∫ N(s θ, v)(dy) G(θ, c θ, y) = ∫ π(dθ) ∫ N(s θ, v)(dy) ∫ post(c θ, y)(dθ') G(θ', c θ, y)`.
-* `post_round`: the same in a game with a learner, on the explicit product `π ⊗ N(0, 1) ⊗ μ` (tip, noise, seed): the
-  play is `x = pol ω`, the answer `c x θ`, the observation `s x θ + sc z`.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -177,7 +175,7 @@ theorem measurable_lintegral_bayesUpd [Countable α] [MeasurableSingletonClass �
   refine Measurable.ite ?_ hG'.lintegral_prod_right' (hN.inv.mul (hlik.mul hG').lintegral_prod_right')
   exact (hN (measurableSet_singleton 0)).union (hN (measurableSet_singleton ∞))
 
-/-- Lemma 9.5 for one round: the joint law of the tip and of `(c θ, y)` disintegrates along the posterior. -/
+/-- The posterior lemma for one round: the joint law of the tip and of `(c θ, y)` disintegrates along the posterior. -/
 theorem bayes_step [Fintype α] [MeasurableSingletonClass α] (π : Measure Θ) [IsFiniteMeasure π]
     {c : Θ → α} {s : Θ → ℝ} (hc : Measurable c) (hs : Measurable s) {v : ℝ≥0} (hv : v ≠ 0)
     {G : Θ × α × ℝ → ℝ≥0∞} (hG : Measurable G) :
@@ -280,60 +278,6 @@ theorem lintegral_prod3 {Θ Z Ω : Type*} [MeasurableSpace Θ] [MeasurableSpace 
     (hf.comp ((measurable_fst.comp measurable_fst).prodMk
       (measurable_snd.prodMk (measurable_snd.comp measurable_fst)))).lintegral_prod_right'
   exact lintegral_lintegral_swap (f := fun θ ω => ∫⁻ z, f (θ, z, ω) ∂ν) hm.aemeasurable
-
-/-- Lemma 9.5 for one round of a game: tip `θ ~ π`, noise `z ~ N(0, 1)`, seed `ω ~ μ`; the learner plays
-`x = pol ω`, the genie answers `c x θ`, the learner observes `s x θ + sc z`. Given the play, the answer and the
-observation (and the seed), the tip has the law `bayesUpd π (lik ...)`. -/
-theorem post_round {Θ α Ω X : Type*} [MeasurableSpace Θ] [MeasurableSpace α] [MeasurableSpace Ω]
-    [MeasurableSpace X] [Fintype α] [MeasurableSingletonClass α] (π : Measure Θ) [IsFiniteMeasure π]
-    (μ : Measure Ω) [SFinite μ] {pol : Ω → X} (hpol : Measurable pol) {c : X → Θ → α} {s : X → Θ → ℝ}
-    (hc : Measurable (fun q : X × Θ => c q.1 q.2)) (hs : Measurable (fun q : X × Θ => s q.1 q.2))
-    {sc : ℝ} (hsc : sc ≠ 0) {F : Θ × (X × α × ℝ) × Ω → ℝ≥0∞} (hF : Measurable F) :
-    ∫⁻ p, F (p.1, (pol p.2.2, c (pol p.2.2) p.1, s (pol p.2.2) p.1 + sc * p.2.1), p.2.2)
-        ∂(π.prod ((gaussianReal 0 1).prod μ)) =
-      ∫⁻ p, ∫⁻ θ', F (θ', (pol p.2.2, c (pol p.2.2) p.1, s (pol p.2.2) p.1 + sc * p.2.1), p.2.2)
-        ∂bayesUpd π (lik (c (pol p.2.2)) (s (pol p.2.2)) (noiseVar sc) (c (pol p.2.2) p.1)
-          (s (pol p.2.2) p.1 + sc * p.2.1)) ∂(π.prod ((gaussianReal 0 1).prod μ)) := by
-  have hpω : Measurable (fun p : Θ × ℝ × Ω => pol p.2.2) := hpol.comp (measurable_snd.comp measurable_snd)
-  have hcp : Measurable (fun q : (Θ × ℝ × Ω) × Θ => c (pol q.1.2.2) q.2) :=
-    hc.comp ((hpω.comp measurable_fst).prodMk measurable_snd)
-  have hsp : Measurable (fun q : (Θ × ℝ × Ω) × Θ => s (pol q.1.2.2) q.2) :=
-    hs.comp ((hpω.comp measurable_fst).prodMk measurable_snd)
-  have ha : Measurable (fun p : Θ × ℝ × Ω => c (pol p.2.2) p.1) := hc.comp (hpω.prodMk measurable_fst)
-  have hy : Measurable (fun p : Θ × ℝ × Ω => s (pol p.2.2) p.1 + sc * p.2.1) :=
-    (hs.comp (hpω.prodMk measurable_fst)).add (measurable_const.mul (measurable_fst.comp measurable_snd))
-  have hH : Measurable (fun p : Θ × ℝ × Ω =>
-      (pol p.2.2, c (pol p.2.2) p.1, s (pol p.2.2) p.1 + sc * p.2.1)) := hpω.prodMk (ha.prodMk hy)
-  have hL : Measurable (fun p : Θ × ℝ × Ω =>
-      F (p.1, (pol p.2.2, c (pol p.2.2) p.1, s (pol p.2.2) p.1 + sc * p.2.1), p.2.2)) :=
-    hF.comp (measurable_fst.prodMk (hH.prodMk (measurable_snd.comp measurable_snd)))
-  have hR := measurable_lintegral_bayesUpd_param π (c := fun p : Θ × ℝ × Ω => c (pol p.2.2))
-    (s := fun p : Θ × ℝ × Ω => s (pol p.2.2)) hcp hsp (noiseVar sc) ha hy
-    (G := fun q => F (q.2, (pol q.1.2.2, c (pol q.1.2.2) q.1.1, s (pol q.1.2.2) q.1.1 + sc * q.1.2.1), q.1.2.2))
-    (hF.comp (measurable_snd.prodMk ((hH.comp measurable_fst).prodMk
-      (measurable_snd.comp (measurable_snd.comp measurable_fst)))))
-  rw [lintegral_prod3 _ _ _ hL, lintegral_prod3 _ _ _ hR]
-  refine lintegral_congr fun ω => ?_
-  have hcx : Measurable (c (pol ω)) := hc.comp (measurable_prodMk_left (x := pol ω))
-  have hsx : Measurable (s (pol ω)) := hs.comp (measurable_prodMk_left (x := pol ω))
-  have hG : Measurable (fun q : Θ × α × ℝ => F (q.1, (pol ω, q.2.1, q.2.2), ω)) :=
-    hF.comp (measurable_fst.prodMk ((measurable_const.prodMk measurable_snd).prodMk measurable_const))
-  calc ∫⁻ θ, ∫⁻ z, F (θ, (pol ω, c (pol ω) θ, s (pol ω) θ + sc * z), ω) ∂gaussianReal 0 1 ∂π
-      = ∫⁻ θ, ∫⁻ y, F (θ, (pol ω, c (pol ω) θ, y), ω) ∂gaussianReal (s (pol ω) θ) (noiseVar sc) ∂π :=
-        lintegral_congr fun θ => lintegral_gauss_affine _ _ (f := fun y => F (θ, (pol ω, c (pol ω) θ, y), ω))
-          (hG.comp (measurable_const.prodMk (measurable_const.prodMk measurable_id)))
-    _ = ∫⁻ θ, ∫⁻ y, ∫⁻ θ', F (θ', (pol ω, c (pol ω) θ, y), ω)
-          ∂bayesUpd π (lik (c (pol ω)) (s (pol ω)) (noiseVar sc) (c (pol ω) θ) y)
-          ∂gaussianReal (s (pol ω) θ) (noiseVar sc) ∂π :=
-        bayes_step π hcx hsx (noiseVar_ne_zero hsc) hG
-    _ = _ := by
-        refine lintegral_congr fun θ => (lintegral_gauss_affine _ _ ?_).symm
-        exact measurable_lintegral_bayesUpd_param π (P := ℝ) (c := fun _ => c (pol ω))
-          (s := fun _ => s (pol ω)) (hcx.comp measurable_snd) (hsx.comp measurable_snd) (noiseVar sc)
-          (a := fun _ => c (pol ω) θ) (y := id) measurable_const measurable_id
-          (G := fun q => F (q.2, (pol ω, c (pol ω) θ, q.1), ω))
-          (hF.comp (measurable_snd.prodMk ((measurable_const.prodMk (measurable_const.prodMk measurable_fst)).prodMk
-            measurable_const)))
 
 end Game
 

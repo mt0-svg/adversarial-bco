@@ -11,32 +11,17 @@ public import AdversarialBco.Gauss.Concentration
 @[expose] public section
 
 /-!
-# The ramp and Stein's identity on `ℝ^d`
+# Stein's identity on `ℝ^d`
 
-The functions of the field of Proposition 2.2: `χ(t) = 1/(4 √(1 + t^2))`, the ramp
-`kr = 1/2 + t χ - χ'` and the tail parameter `Tfun`; integrability under the standard Gaussian of functions of
-exponential growth; Stein's identity `E[⟨v, g⟩ Φ(g)] = E[Φ'(g) v]` for a `C^1` function of exponential growth.
+Integrability under the standard Gaussian of functions of exponential growth (`integrable_of_abs_le_exp`); Stein's
+identity `E[⟨v, g⟩ Φ(g)] = E[Φ'(g) v]` for a `C^1` function of exponential growth, along a coordinate
+(`stein_coord`) and along a direction (`stein_dir`).
 -/
 
 open MeasureTheory ProbabilityTheory Real
 open scoped RealInnerProductSpace NNReal
 
 namespace AdversarialBco.Body
-
-/-- `χ(t) = 1/(4 √(1 + t^2))`. -/
-noncomputable def chi (t : ℝ) : ℝ := 1 / (4 * Real.sqrt (1 + t ^ 2))
-
-/-- `χ'(t) = -t/(4 (1 + t^2)^{3/2})`. -/
-noncomputable def chi' (t : ℝ) : ℝ := -t / (4 * ((1 + t ^ 2) * Real.sqrt (1 + t ^ 2)))
-
-/-- The ramp of the field, `kr = 1/2 + t χ - χ'`: values in `[0, 1]`, Gaussian mean `1/2`. -/
-noncomputable def kr (t : ℝ) : ℝ := 1 / 2 + t * chi t - chi' t
-
-/-- `kr'(t) = (2 - t^2)/(4 (1 + t^2)^{5/2})`. -/
-noncomputable def kr' (t : ℝ) : ℝ := (2 - t ^ 2) / (4 * ((1 + t ^ 2) ^ 2 * Real.sqrt (1 + t ^ 2)))
-
-/-- The tail parameter: `Tfun r = 5 + 2 √(log (1 + r))`. -/
-noncomputable def Tfun (r : ℝ) : ℝ := 5 + 2 * Real.sqrt (Real.log (1 + r))
 
 theorem integrable_of_abs_le_exp {d : ℕ} (f : EuclideanSpace ℝ (Fin d) → ℝ)
     (hf : AEStronglyMeasurable f (stdGaussian (EuclideanSpace ℝ (Fin d)))) (A B : ℝ)

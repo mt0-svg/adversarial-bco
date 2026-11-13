@@ -10,9 +10,10 @@ public import AdversarialBco.Poly.Df2R1
 @[expose] public section
 
 /-!
-# DF2, Lemma D.2: proofs
+# DF2, the rank-one round lemma: proofs
 
-Proofs of the interface statements `LemmaR1i` to `LemmaR1v` of `AdversarialBco/Poly/Df2R1.lean` (Lemma D.2 of the paper), as
+Proofs of the interface statements `LemmaR1i` to `LemmaR1v` of `AdversarialBco/Poly/Df2R1.lean` (the paper's rank-one
+round lemma), as
 `lemmaR1i` to `lemmaR1v`.
 
 The route: from `A Aᵀ = S` and `S P = 1`, `A (Aᵀ P) = 1`, so `A⁻¹ = Aᵀ P` and `Aᵀ P A = 1`; then `Aᵀ u = ξ` and the

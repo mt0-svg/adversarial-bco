@@ -10,11 +10,10 @@ public import AdversarialBco.Conj1Lower.Top
 @[expose] public section
 
 /-!
-# Theorem 1.4 of the paper: the lower bound
+# The hypotheses of the lower bound on a body between two balls, discharged
 
-The solution module of config-conj1-lower.json: `TheoremConj1Lower` (StatementConj1Lower.lean) from
-`Lower.Top.theoremConj1Lower_of_inputs`, its hypotheses `Lower.Top.Inputs` filled with the theorems of Moments.lean,
-Ledger.lean and Info.lean.
+`lowerTopInputs`: the hypotheses `Lower.Top.Inputs` of `Lower.Top.lowerBody_of_inputs`, filled with the theorems of
+Moments.lean, Ledger.lean and Info.lean.
 -/
 
 open MeasureTheory
@@ -34,8 +33,5 @@ theorem lowerTopInputs : Lower.Top.Inputs where
   integrable_infoRound := fun π0 _ μ _ R hR _ hsc _ _ hpol _ hsb _ ht =>
     Lower.integrable_infoRound π0 μ R hR hsc hpol hsb ht
   count_game := fun hd μ _ R hR _ hsc _ _ hpol _ hsb _ hw hX => Lower.count_game hd μ R hR hsc hpol hsb hw hX
-
-theorem theoremConj1Lower : TheoremConj1Lower :=
-  Lower.Top.theoremConj1Lower_of_inputs lowerTopInputs
 
 end AdversarialBco

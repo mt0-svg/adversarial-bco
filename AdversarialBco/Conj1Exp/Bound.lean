@@ -14,8 +14,7 @@ public import AdversarialBco.StatementConj1
 
 Each loss of a round `t < n` has values in `[0, 1]` on `K`, so the sum of the losses at the points played is in
 `[0, n]` when those points are in `K`, and so is the sum at every point of `K`, hence its infimum over `K` (`0` for an
-empty `K`, by `Real.sInf_empty`). The losses that a strategy of `Strats K n` chooses are losses of the class on every
-history (`lossAd_adm`).
+empty `K`, by `Real.sInf_empty`): `regretPts_le_of_mem`, `neg_le_regretPts_of_mem`.
 -/
 
 namespace AdversarialBco
@@ -56,11 +55,6 @@ theorem neg_le_regretPts_of_mem (hf : ∀ t < n, AdmLoss K (f t)) (hx : ∀ t < 
             Finset.sum_le_sum fun t ht => ((hf t (Finset.mem_range.1 ht)).2 y hy).2
         _ = n := by simp
   linarith
-
-/-- The losses that a strategy of the class chooses are losses of the class, whatever the points and the noise. -/
-theorem lossAd_adm {σ : Strategy d} (hσ : σ ∈ Strats K n) (ε : ℕ → ℝ) (x : ℕ → E d) :
-    ∀ t < n, AdmLoss K (lossAd σ ε x t) :=
-  fun t ht => (hσ t ht).1 _ _
 
 end RealRAM
 

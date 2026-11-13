@@ -10,7 +10,8 @@ public import AdversarialBco.Conj1Lower.Dent
 @[expose] public section
 
 /-!
-# The cells of Section 9 of the paper: Lemma REGULAR, ripeness, the pointwise bounds of Lemma 9.7, the ratios of
+# The cells of the paper's section on the lower bound: Lemma REGULAR, ripeness, the pointwise bounds of the rest lemma,
+the ratios of
 Lemma LEAK
 
 The parameters of the strategy: `ε = k`, `r₁ = 5 d^{1/2}`, `κ = g/k`; here `dd` is the dimension as a real number and `DMv`
@@ -18,12 +19,13 @@ the value of `D_M = tr(M Σ)` of the frame (Frame.lean, `DM`). The frame `(m, A)
 tip. `T = readT A m θ x`, `R² = ‖A (θ - m)‖²`.
 
 * `cellOf`: tail (`T > (2k)^{1/2}`), else outer (`R² > 4d`), else inner (`R² < D_M/64`), else regular; a partition
-  by construction, with the regular cell of Section 9 (`cellOf_regular_iff`).
+  by construction, with the regular cell of the section on the lower bound (`cellOf_regular_iff`).
 * `ripe π`: the tail is ripe if its mass is at least `ε₁ = k³/d³` or `E_π[T²; tail] ≥ ε₃ = k³/d²`; the outer and the
   inner cell if their mass is at least `ε₂ = k²/d²`; the regular cell never. `answer`: the cell of the tip if it is
   ripe, `none` (the cell rest) otherwise.
 * Lemma REGULAR: `regular_closed` (i), `regular_dev` and `regular_const` (ii), `regular_half` (iii).
-* Lemma 9.7, pointwise: the gap `q(x) - D(x; θ)` is in `[0, κ φ(a)]` (`gap_nonneg`, `gap_le_bowl`), at most `2κk` off
+* The rest lemma, pointwise: the gap `q(x) - D(x; θ)` is in `[0, κ φ(a)]` (`gap_nonneg`, `gap_le_bowl`), at most `2κk`
+  off
   the tail (`gap_nontail`), `κ² (4T² + r₁T) φ(a)` squared on the tail (`gap_sq_tail`), `κ² 2^20 (k³/d²) φ(a)` squared
   on the regular cell (`gap_sq_regular`); the arithmetic of its proof (`rest_mass_arith`, `rest_shell_arith`,
   `rest_tail_arith`, `rest_ratio_arith`, `rest_price_arith`).
@@ -180,7 +182,7 @@ theorem cellOf_inner_iff {V : Type*} [NormedAddCommGroup V] [InnerProductSpace �
         · intro h; injection h
         · intro h; rcases h with ⟨_, _, hge⟩; linarith
 
-/-- The regular cell is that of Section 9: `T ≤ (2k)^{1/2}` and `D_M/64 ≤ R² ≤ 4d`. -/
+/-- The regular cell is that of the section on the lower bound: `T ≤ (2k)^{1/2}` and `D_M/64 ≤ R² ≤ 4d`. -/
 theorem cellOf_regular_iff {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] (A : V →L[ℝ] V)
     (m : V) (k dd DMv : ℝ) (x θ : V) :
     cellOf A m k dd DMv x θ = Cell.regular ↔
@@ -226,14 +228,6 @@ theorem answer_eq_some_iff {V : Type*} [NormedAddCommGroup V] [InnerProductSpace
       have h_ripe' : ripe π A m k dd DMv x (cellOf A m k dd DMv x θ) := by
         simpa [h_cell] using h_ripe
       exact absurd h_ripe' h
-
-theorem answer_eq_none_iff {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
-    (π : Measure V) (A : V →L[ℝ] V) (m : V) (k dd DMv : ℝ) (x θ : V) :
-    answer π A m k dd DMv x θ = none ↔ ¬ ripe π A m k dd DMv x (cellOf A m k dd DMv x θ) := by
-  unfold answer
-  split_ifs with h
-  · simp [h]
-  · simp [h]
 
 /-! ## Lemma REGULAR -/
 
@@ -363,7 +357,7 @@ theorem regular_half {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V
     linarith
   linarith
 
-/-! ## Lemma 9.7, pointwise -/
+/-! ## The rest lemma, pointwise -/
 
 theorem gap_nonneg {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] (A : V →L[ℝ] V) (m : V)
     (κ ε r₁ : ℝ) (hκ : 0 ≤ κ) (hε : 0 ≤ ε) (hr : 0 ≤ r₁) (θ x : V) :
@@ -595,7 +589,7 @@ theorem rest_tail_arith (k dd S M : ℝ) (hk : 0 < k) (hd : 0 < dd) (hS : S ≤ 
     nlinarith
   nlinarith
 
-/-- Lemma 9.7 (i), the ratio: `p_rest ≥ 1/2` and `π(regular) ≥ p_rest - 3k²/d²` give `π(regular)/p_rest ≥ 1/2`. -/
+/-- The rest lemma (i), the ratio: `p_rest ≥ 1/2` and `π(regular) ≥ p_rest - 3k²/d²` give `π(regular)/p_rest ≥ 1/2`. -/
 theorem rest_ratio_arith (k dd preg pr : ℝ) (hk : 1 ≤ k) (hd : 2048 * k ≤ dd) (hpr : 1 / 2 ≤ pr)
     (hreg : pr - 3 * k ^ 2 / dd ^ 2 ≤ preg) : 1 / 2 ≤ preg / pr := by
   have hpr_pos : 0 < pr := by linarith
@@ -626,7 +620,7 @@ theorem rest_ratio_arith (k dd preg pr : ℝ) (hk : 1 ≤ k) (hd : 2048 * k ≤ 
   rw [le_div_iff₀ hpr_pos]
   nlinarith
 
-/-- Lemma 9.7 (ii), the final arithmetic: `I ≤ κ² V/(2σ²)`, `V ≤ (2^20 + 17)(k³/d²) φ / p_rest`, `κ φ ≤ 4 Dbar`,
+/-- The rest lemma (ii), the final arithmetic: `I ≤ κ² V/(2σ²)`, `V ≤ (2^20 + 17)(k³/d²) φ / p_rest`, `κ φ ≤ 4 Dbar`,
 `p_rest ≥ 1/2`, `κ = g/k` give `I ≤ g/(σ² P_R) Dbar` with `P_R = d²/(4194372 k²)`. -/
 theorem rest_price_arith (g k dd σ φ Dbar pr I Vr : ℝ) (hg : 0 < g) (hk : 0 < k) (hd : 0 < dd) (hσ : 0 < σ)
     (hpr : 1 / 2 ≤ pr) (hφ : 0 ≤ φ) (hI : I ≤ (g / k) ^ 2 * Vr / (2 * σ ^ 2))
@@ -685,7 +679,7 @@ theorem rest_price_arith (g k dd σ φ Dbar pr I Vr : ℝ) (hg : 0 < g) (hk : 0 
         field_simp [h_const]
         ring
 
-/-! ## Lemma 9.7, integrated against the law of the tip -/
+/-! ## The rest lemma, integrated against the law of the tip -/
 
 theorem continuous_readT_tip {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] (A : V →L[ℝ] V)
     (m x : V) : Continuous fun θ => readT A m θ x := by
@@ -784,7 +778,7 @@ theorem measurable_dent_tip {V : Type*} [NormedAddCommGroup V] [InnerProductSpac
     exact continuous_const
   exact h_cont.measurable
 
-/-- Lemma 9.7 (i), the mass: `π(regular) ≥ π(rest) - 3k²/d²` (the cells of rest outside the regular cell are not
+/-- The rest lemma (i), the mass: `π(regular) ≥ π(rest) - 3k²/d²` (the cells of rest outside the regular cell are not
 ripe). -/
 theorem rest_regular_mass {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsFiniteMeasure π] (A : V →L[ℝ] V) (m : V) (k dd DMv : ℝ) (hk : 1 ≤ k)
@@ -987,7 +981,7 @@ theorem rest_regular_mass {V : Type*} [NormedAddCommGroup V] [InnerProductSpace 
       _ = π.real (cellSet A m k dd DMv x Cell.regular) := by ring
       _ ≤ π.real (cellSet A m k dd DMv x Cell.regular) := le_rfl
 
-/-- Lemma 9.7 (i), the floor: `E[D; rest] ≥ π(regular) q(x)/2` on a live round. -/
+/-- The rest lemma (i), the floor: `E[D; rest] ≥ π(regular) q(x)/2` on a live round. -/
 theorem rest_floor {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsFiniteMeasure π] (A : V →L[ℝ] V) (m : V) (κ k dd DMv : ℝ) (hκ : 0 < κ)
     (hk : 0 < k) (hd : 2048 * k ≤ dd) (hDM : dd / 2 ≤ DMv) (x : V) :
@@ -1129,7 +1123,7 @@ theorem tail_first_moment {V : Type*} [NormedAddCommGroup V] [InnerProductSpace 
   have h4 : I ^ 2 ≤ p * Q := by nlinarith
   exact absurd ((Real.le_sqrt' hI0).2 h4) (not_le.2 hcon)
 
-/-- Lemma 9.7 (ii), the second moment of the gap on rest, on a live round:
+/-- The rest lemma (ii), the second moment of the gap on rest, on a live round:
 `E[(q - D)²; rest] ≤ κ² (2^20 + 17) (k³/d²) φ(a)`. -/
 theorem rest_second_moment {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsProbabilityMeasure π] (A : V →L[ℝ] V) (m : V) (κ k dd DMv : ℝ)
@@ -1613,7 +1607,8 @@ theorem leak_shell (k dd p P : ℝ) (hk : 1 ≤ k) (hd : 2048 * k ≤ dd) (hp : 
         mul_le_mul_of_nonneg_right h_ineq hPpos
   exact And.intro h_first h_second
 
-/-- The floor of a round (Proposition 9.10, "the floor"): `E_π[D(x; θ)] ≥ π(regular) g/2` with `g = κ k`, on a live
+/-- The floor of a round (the balance proposition, "the floor"): `E_π[D(x; θ)] ≥ π(regular) g/2` with `g = κ k`, on a
+live
 round. -/
 theorem floor_round {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     [BorelSpace V] (π : Measure V) [IsFiniteMeasure π] (A : V →L[ℝ] V) (m : V) (κ k dd DMv : ℝ) (hκ : 0 < κ)
@@ -1642,7 +1637,7 @@ theorem floor_round {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
         linarith
     _ ≤ ∫ θ, f θ ∂π := setIntegral_le_integral hfint (ae_of_all _ hf0)
 
-/-- Lemma LEAK for one ripe cell, against its ledger term `P` (the bounds (L3) to (L5) of Lemma 9.8 as
+/-- Lemma LEAK for one ripe cell, against its ledger term `P` (the bounds (L3) to (L5) of the ledger lemma as
 hypotheses): `p (ln(1/p) + 1) ≤ (4 (3 ln d + 1)/k) P` and `p ≤ (4/k) P`, `p` the mass of the cell. -/
 theorem leak_cell {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] [MeasurableSpace V]
     (π : Measure V) [IsProbabilityMeasure π] (A : V →L[ℝ] V) (m : V) (k dd DMv : ℝ) (hk : 1 ≤ k)

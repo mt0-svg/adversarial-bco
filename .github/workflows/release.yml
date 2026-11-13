@@ -133,7 +133,7 @@ jobs:
           set -eu
           d="verification-$TAG"
           run="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/${{ needs.ci-run.outputs.run }}"
-          for k in source-scan challenges build up-to-date axioms comparator comparator-explicit comparator-body comparator-conj1 comparator-poly comparator-conj1-exp comparator-conj1-lower comparator-conj1-poly comparator-conj1-poly-exp; do
+          for k in source-scan challenges build up-to-date axioms comparator-conj1-bit comparator-conj1-bit-exp comparator-conj1-lower-poly; do
             [ -f "verify/results/$k.tsv" ] || { echo "missing run: $k"; ls verify/results; exit 1; }
           done
           if cut -f4 verify/results/*.tsv | grep -v '^PASS'; then echo "a run did not pass"; exit 1; fi

@@ -11,7 +11,7 @@ public import AdversarialBco.Conj1Lower.BayesRound
 @[expose] public section
 
 /-!
-# The Bayes core: Lemma 9.5 over the whole game
+# The Bayes core: the posterior lemma over the whole game
 
 Route (S7): the Gaussian game lives on an explicit product, the sample
 `s = (x°, Z, ω) : Sample d Ω` with the law `gameLaw π0 μ = π0 ⊗ gaussStream ⊗ μ` (the tip, the Gaussian stream of
@@ -21,16 +21,18 @@ it; no conditional expectation, no Ionescu-Tulcea.
 * `Hist d α`: points played, observations and answers of every round, indexed by `ℕ`; the rounds not yet played hold
   `0` and `default`. One type for every round, in place of fixed-length histories.
 * `Rule d α`: a genie rule, which gives, from the law `π` of the tip before a round and the play `x`, the answer
-  `ans π x θ` and the signal `sig π x θ` (the loss without its noise) at each tip `θ`. The strategy S' of Section 9 is
+  `ans π x θ` and the signal `sig π x θ` (the loss without its noise) at each tip `θ`. The strategy S' of the section on
+  the lower bound is
   one (its dead rounds have a constant answer and a constant signal, so that the posterior does not move).
-  `Rule.Meas`: the rule is measurable along every measurable family of probability densities on `π0` (Lemma 9.3); the only hypothesis of the core on the rule.
+  `Rule.Meas`: the rule is measurable along every measurable family of probability densities on `π0` (the measurability
+  lemma of the lower bound); the only hypothesis of the core on the rule.
 * `dens t h`: the density, on the prior `π0`, of the law `post t h` of the tip before round `t` given the history `h`
   (its rounds `0, ..., t - 1`): the recursion `π_{t+1} ∝ π_t 1[θ in the cell A_t] φ_σ(Y_t - s(θ))`, with
   `π_{t+1} = π_t` where the normaliser is `0` (the null-normaliser convention; `∞` never occurs).
 * `hist t s`: the history after `t` rounds on the sample `s`: in round `t` the learner plays `x = pol t ω (...)` from
   the points and observations before `t`, the genie answers `ans (post t h) x x°`, the learner observes
   `sig (post t h) x x° + sc Z_t`.
-* Lemma 9.5 (`post_disintegrates`): for `t ≤ n` and every measurable `F ≥ 0`,
+* The posterior lemma (`post_disintegrates`): for `t ≤ n` and every measurable `F ≥ 0`,
   `E F(x°, Z_t, G_t, ω) = E ∫ post t G_t (dθ) ∫ N(0, 1)(dz) F(θ, z, G_t, ω)`: given the history and the seed, the tip
   has the law `post t`, and `Z_t` is a standard Gaussian independent of both. Proof by induction on `t` with
   `bayes_step` (BayesRound.lean) for the round.
@@ -573,7 +575,7 @@ theorem lintegral_gameLaw_coord (π0 : Measure (E d)) [SFinite π0] (μ : Measur
 
 end Stream
 
-/-! ## Lemma 9.5 -/
+/-! ## The posterior lemma -/
 
 section POST
 
@@ -586,11 +588,6 @@ noncomputable def roundPush (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) (po
   Hist.push p.2.2.1 t (play pol t p.2.2.2 p.2.2.1)
     (R.sig (post π0 R sc t p.2.2.1) (play pol t p.2.2.2 p.2.2.1) p.1 + sc * p.2.1)
     (R.ans (post π0 R sc t p.2.2.1) (play pol t p.2.2.2 p.2.2.1) p.1)
-
-omit [Fintype α] [MeasurableSingletonClass α] [MeasurableSpace α] [MeasurableSpace Ω] in
-theorem hist_succ_roundPush (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) (pol : Learner Ω d) (t : ℕ)
-    (s : Sample d Ω) :
-    hist π0 R sc pol (t + 1) s = roundPush π0 R sc pol t (s.1, s.2.1 t, hist π0 R sc pol t s, s.2.2) := rfl
 
 omit [Inhabited α] in
 theorem measurable_roundPush (π0 : Measure (E d)) [IsProbabilityMeasure π0] (R : Rule d α) (hR : R.Meas π0)
@@ -683,7 +680,8 @@ theorem post_step (π0 : Measure (E d)) [IsProbabilityMeasure π0] (R : Rule d �
             (G := fun q => G (q.2, R.ans (post π0 R sc t h) x θ, q.1))
             (hG.comp (measurable_snd.prodMk (measurable_const.prodMk measurable_fst)))
 
-/-- Lemma 9.5: given the history after `t` rounds and the seed, the tip has the law `post t` and the noise of round
+/-- The posterior lemma: given the history after `t` rounds and the seed, the tip has the law `post t` and the noise of
+round
 `t` is a standard Gaussian independent of both. -/
 theorem post_disintegrates (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [SFinite μ]
     (R : Rule d α) (hR : R.Meas π0) {sc : ℝ} (hsc : sc ≠ 0) {pol : Learner Ω d} {n : ℕ}
@@ -758,7 +756,8 @@ theorem post_disintegrates (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ 
       _ = _ := lintegral_congr e3
       _ = _ := e4.symm
 
-/-- Lemma 9.5 without the noise: given the history after `t` rounds and the seed, the tip has the law `post t`. -/
+/-- The posterior lemma without the noise: given the history after `t` rounds and the seed, the tip has the law
+`post t`. -/
 theorem post_disintegrates' (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [SFinite μ]
     (R : Rule d α) (hR : R.Meas π0) {sc : ℝ} (hsc : sc ≠ 0) {pol : Learner Ω d} {n : ℕ}
     (hpol : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2)
@@ -799,7 +798,7 @@ theorem hist_succ_expand (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : 
   have h := post_disintegrates π0 μ R hR hsc hpol ht.le hF
   exact h
 
-/-- Lemma 9.5, Bochner form, for a bounded measurable real function. -/
+/-- The posterior lemma, Bochner form, for a bounded measurable real function. -/
 theorem post_disintegrates_integral (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω)
     [IsProbabilityMeasure μ] (R : Rule d α) (hR : R.Meas π0) {sc : ℝ} (hsc : sc ≠ 0) {pol : Learner Ω d} {n : ℕ}
     (hpol : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2)

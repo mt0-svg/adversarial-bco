@@ -14,18 +14,18 @@ public import AdversarialBco.Poly.Df2Run
 /-!
 # Tools for Proposition G of DF2-O
 
-Generic facts read by `Df2PropGProof.lean`, the proof of `Df2PropG` of `Df2Layer2.lean` (PO Lemma TV and
-Proposition G; the route).
+Generic facts on Gaussian laws, gauges and the noise, read by `Df2PropGProof.lean` and by files of `Bit/`.
 
 * One-dimensional Gaussian bounds, elementary, with no Pinsker inequality and no relative entropy: a scale
   `(1 + u)` costs `u` (the density of the wider law is at least `1/(1 + u)` times the other), a shift of the mean by
   `c` costs `|c|/(2 b)` (`gauss_affine_le`). PO's Lemma TV reaches `u/2^{1/2} + |m̂ - m|/(2a)` through Pinsker; the
   bound here has `u` in place of `u/2^{1/2}`, which the margin of the row `n η_g (R + 7)/ε ≤ δ₁` absorbs at
   `ε ≤ 1/2`.
-* Resampling one coordinate of the Gaussian stream does not move the law of the world (`world_resample`).
 * Lemma G (iii): a convex loss with values in `[0, 1]` is `(1/ε)`-Lipschitz on `(1 - ε) K'`
   (`convex_lip_eps`); the gauge facts that place the points played in the interior of the body.
 * `E|ε_t| ≤ 1` under the noise hypothesis (`noise_abs_lintegral`).
+* The positioned body cut by `B_R`: the gauge factor of a play (`gauge_pt_le`), `df2Kp` as a body in a position
+  (`kp_eq_posBody`), convex and closed (`kp_convex_of`, `kp_closed_of`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -254,79 +254,6 @@ theorem gauss_affine_le (a1 a0 b0 u : ℝ) (hb0 : 0 < b0) (hu : 0 ≤ u) (S : Se
     _ = gaussianReal a0 (b0 ^ 2).toNNReal S + ENNReal.ofReal (u + |a1 - a0| / (2 * b0)) := by
         rw [add_assoc, ← ENNReal.ofReal_add (by positivity) hu, add_comm (|a1 - a0| / (2 * b0))]
 
-/-! ## Resampling one coordinate of the stream -/
-
-theorem infinitePi_update (i : ℕ) :
-    ((Measure.infinitePi fun _ : ℕ => gaussianReal 0 1).prod (gaussianReal 0 1)).map
-        (fun p : (ℕ → ℝ) × ℝ => Function.update p.1 i p.2) =
-      Measure.infinitePi fun _ : ℕ => gaussianReal 0 1 := by
-  classical
-  refine Measure.eq_infinitePi _ fun s t ht => ?_
-  have hm : Measurable fun p : (ℕ → ℝ) × ℝ => Function.update p.1 i p.2 := measurable_update' (a := i)
-  rw [Measure.map_apply hm (MeasurableSet.pi s.countable_toSet fun j _ => ht j)]
-  have hpre : (fun p : (ℕ → ℝ) × ℝ => Function.update p.1 i p.2) ⁻¹' Set.pi (↑s) t =
-      Set.pi (↑(s.erase i)) t ×ˢ (if i ∈ s then t i else Set.univ) := by
-    ext p
-    simp only [Set.mem_preimage, Set.mem_pi, Finset.mem_coe, Set.mem_prod, Finset.mem_erase]
-    constructor
-    · intro h
-      refine ⟨fun j ⟨hji, hj⟩ => ?_, ?_⟩
-      · have := h j hj
-        rwa [Function.update_of_ne hji] at this
-      · split_ifs with hi
-        · have := h i hi
-          rwa [Function.update_self] at this
-        · trivial
-    · rintro ⟨h1, h2⟩ j hj
-      by_cases hji : j = i
-      · subst hji
-        rw [Function.update_self]
-        simpa [hj] using h2
-      · rw [Function.update_of_ne hji]
-        exact h1 j ⟨hji, hj⟩
-  rw [hpre, Measure.prod_prod, Measure.infinitePi_pi _ (fun j _ => ht j)]
-  split_ifs with hi
-  · rw [Finset.prod_erase_mul _ _ hi]
-  · rw [Finset.erase_eq_of_notMem hi, measure_univ, mul_one]
-
-theorem world_resample (ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure ν] (i : ℕ)
-    (E : Set ((ℕ → ℝ) × (ℕ → ℝ))) (hE : MeasurableSet E) :
-    (gaussStream.prod ν) E =
-      ∫⁻ ω, gaussianReal 0 1 {z | (Function.update ω.1 i z, ω.2) ∈ E} ∂(gaussStream.prod ν) := by
-  classical
-  set γ : Measure ℝ := gaussianReal 0 1
-  have hgs : gaussStream = Measure.infinitePi fun _ : ℕ => γ := rfl
-  have : IsProbabilityMeasure gaussStream := by rw [hgs]; infer_instance
-  have hupd : Measurable fun p : (ℕ → ℝ) × ℝ => Function.update p.1 i p.2 := measurable_update' (a := i)
-  have hΦ : Measurable fun q : ((ℕ → ℝ) × (ℕ → ℝ)) × ℝ => (Function.update q.1.1 i q.2, q.1.2) :=
-    (hupd.comp ((measurable_fst.comp measurable_fst).prodMk measurable_snd)).prodMk
-      (measurable_snd.comp measurable_fst)
-  have key : ((gaussStream.prod ν).prod γ).map
-      (fun q : ((ℕ → ℝ) × (ℕ → ℝ)) × ℝ => (Function.update q.1.1 i q.2, q.1.2)) = gaussStream.prod ν := by
-    refine (Measure.prod_eq fun A B hA hB => ?_).symm
-    rw [Measure.map_apply hΦ (hA.prod hB), Measure.prod_apply (hΦ (hA.prod hB))]
-    have hsec : ∀ ω : (ℕ → ℝ) × (ℕ → ℝ),
-        γ (Prod.mk ω ⁻¹' ((fun q : ((ℕ → ℝ) × (ℕ → ℝ)) × ℝ => (Function.update q.1.1 i q.2, q.1.2)) ⁻¹'
-          (A ×ˢ B))) =
-        γ (Prod.mk ω.1 ⁻¹' ((fun p : (ℕ → ℝ) × ℝ => Function.update p.1 i p.2) ⁻¹' A)) * B.indicator 1 ω.2 := by
-      intro ω
-      by_cases hb : ω.2 ∈ B
-      · rw [Set.indicator_of_mem hb, Pi.one_apply, mul_one]
-        congr 1
-        ext z
-        simp [hb]
-      · rw [Set.indicator_of_notMem hb, mul_zero]
-        convert measure_empty (μ := γ)
-        ext z
-        simp [hb]
-    simp_rw [hsec]
-    rw [lintegral_prod_mul (measurable_measure_prodMk_left (hupd hA)).aemeasurable
-      ((measurable_one.indicator hB).aemeasurable), lintegral_indicator_one hB,
-      ← Measure.prod_apply (hupd hA), ← Measure.map_apply hupd hA, hgs, infinitePi_update]
-  conv_lhs => rw [← key]
-  rw [Measure.map_apply hΦ hE, Measure.prod_apply (hΦ hE)]
-  rfl
-
 /-! ## Lemma G and the gauge -/
 
 theorem convex_lip_eps {d : ℕ} (K' : Set (EuclideanSpace ℝ (Fin d))) (hK' : Convex ℝ K')
@@ -514,33 +441,6 @@ theorem posBody_interior {d : ℕ} (K : Set (EuclideanSpace ℝ (Fin d))) (P : P
     interior_maximal h_subset_K h_open_image
   exact h_subset_interior hy_image
 
-/-- The comparison of the two gauges `pip = max (1, π/(1 - ε))` and `pt = max (1, π~/(1 - ε))`. -/
-theorem pt_pip (gA gB ε η : ℝ) (hε : ε < 1) (h0 : 0 ≤ gA) (hAB : gA ≤ gB) (hB : gB ≤ (1 + η) * gA)
-    (hη : 0 ≤ η) :
-    1 ≤ max 1 (gA / (1 - ε)) ∧ max 1 (gA / (1 - ε)) ≤ max 1 (gB / (1 - ε)) ∧
-      max 1 (gB / (1 - ε)) ≤ (1 + η) * max 1 (gA / (1 - ε)) := by
-  have hpos : 0 < 1 - ε := sub_pos.mpr hε
-  have hpos' : 0 ≤ 1 - ε := le_of_lt hpos
-  have hdiv : gA / (1 - ε) ≤ gB / (1 - ε) :=
-    div_le_div_of_nonneg_right hAB hpos'
-  have h1 : 1 ≤ max 1 (gA / (1 - ε)) := le_max_left _ _
-  have h2 : max 1 (gA / (1 - ε)) ≤ max 1 (gB / (1 - ε)) :=
-    max_le_max (le_refl 1) hdiv
-  have hη' : 0 ≤ 1 + η := by linarith
-  have h3 : max 1 (gB / (1 - ε)) ≤ (1 + η) * max 1 (gA / (1 - ε)) := by
-    calc
-      max 1 (gB / (1 - ε)) ≤ max 1 ((1 + η) * gA / (1 - ε)) :=
-        max_le_max (le_refl 1) (div_le_div_of_nonneg_right hB hpos')
-      _ = max 1 ((1 + η) * (gA / (1 - ε))) := by ring_nf
-      _ ≤ (1 + η) * max 1 (gA / (1 - ε)) := by
-        refine max_le ?_ ?_
-        · calc
-            1 = 1 * 1 := by ring
-            _ ≤ (1 + η) * max 1 (gA / (1 - ε)) :=
-              mul_le_mul (by linarith) h1 (by linarith) (by linarith)
-        · exact mul_le_mul_of_nonneg_left (le_max_right _ _) hη'
-  exact ⟨h1, h2, h3⟩
-
 /-! ## The noise -/
 
 theorem noise_abs_lintegral (ν : Measure (ℕ → ℝ)) (hν : NoiseOK ν) (t : ℕ) :
@@ -588,7 +488,7 @@ theorem noise_abs_lintegral (ν : Measure (ℕ → ℝ)) (hν : NoiseOK ν) (t :
     _ = ENNReal.ofReal (1 : ℝ) := by norm_num
     _ = 1 := ENNReal.ofReal_one
 
-/-! ## Leaves of `Df2PropGProof.lean` -/
+/-! ## The gauge factor and the positioned body -/
 
 section Leaves
 
@@ -614,146 +514,6 @@ theorem gauge_pt_le {d : ℕ} (Kp : Set (EuclideanSpace ℝ (Fin d))) (hc : Conv
       linarith
     calc (1 - ε) / g * gauge Kp X ≤ (1 - ε) / g * g := mul_le_mul_of_nonneg_left hg (by positivity)
       _ = 1 - ε := by field_simp
-
-/-- The losses at the two points `X/pt₀` and `X/pt_J` of `(1 - ε) K'` differ by at most `R (pt_J/pt₀ - 1)/ε`. -/
-theorem pts_lip {d : ℕ} (Kp : Set (EuclideanSpace ℝ (Fin d))) (R : ℝ) (hsub : Kp ⊆ Metric.closedBall 0 R)
-    (F : EuclideanSpace ℝ (Fin d) → ℝ) (ε : ℝ) (hε : 0 < ε) (hε1 : ε < 1)
-    (hlip : ∀ a b : EuclideanSpace ℝ (Fin d), (1 - ε)⁻¹ • a ∈ Kp → (1 - ε)⁻¹ • b ∈ Kp → F b - F a ≤ ‖b - a‖ / ε)
-    (X : EuclideanSpace ℝ (Fin d)) (pt0 ptJ : ℝ) (h1 : 1 ≤ pt0) (h2 : pt0 ≤ ptJ)
-    (hy0 : (1 - ε)⁻¹ • (pt0⁻¹ • X) ∈ Kp) (hyJ : (1 - ε)⁻¹ • (ptJ⁻¹ • X) ∈ Kp) :
-    |F (ptJ⁻¹ • X) - F (pt0⁻¹ • X)| ≤ R * (ptJ / pt0 - 1) / ε := by
-  have h0 : 0 < pt0 := by linarith
-  have hJ : 0 < ptJ := by linarith
-  have h1e : 0 < 1 - ε := by linarith
-  -- `‖X/pt0‖ ≤ R`
-  have hn0 : ‖pt0⁻¹ • X‖ ≤ R := by
-    have h := mem_closedBall_zero_iff.1 (hsub hy0)
-    rw [norm_smul, Real.norm_of_nonneg (inv_nonneg.2 h1e.le)] at h
-    have hle : ‖pt0⁻¹ • X‖ ≤ (1 - ε)⁻¹ * ‖pt0⁻¹ • X‖ := by
-      have : 1 ≤ (1 - ε)⁻¹ := by rw [one_le_inv₀ h1e]; linarith
-      nlinarith [norm_nonneg (pt0⁻¹ • X)]
-    linarith
-  have hdist : ‖ptJ⁻¹ • X - pt0⁻¹ • X‖ ≤ R * (ptJ / pt0 - 1) := by
-    have he : ptJ⁻¹ • X - pt0⁻¹ • X = (pt0 / ptJ - 1) • (pt0⁻¹ • X) := by
-      rw [smul_smul, ← sub_smul]
-      congr 1
-      field_simp
-    rw [he, norm_smul, Real.norm_eq_abs, abs_of_nonpos (by rw [sub_nonpos, div_le_one hJ]; exact h2)]
-    have hR : 0 ≤ R := (norm_nonneg _).trans hn0
-    have hc : -(pt0 / ptJ - 1) ≤ ptJ / pt0 - 1 := by
-      rw [neg_sub, show 1 - pt0 / ptJ = (ptJ - pt0) / ptJ by field_simp,
-        show ptJ / pt0 - 1 = (ptJ - pt0) / pt0 by field_simp]
-      exact div_le_div_of_nonneg_left (by linarith) h0 h2
-    calc -(pt0 / ptJ - 1) * ‖pt0⁻¹ • X‖ ≤ (ptJ / pt0 - 1) * R :=
-          mul_le_mul hc hn0 (norm_nonneg _) (by rw [sub_nonneg, le_div_iff₀ h0]; linarith)
-      _ = R * (ptJ / pt0 - 1) := mul_comm _ _
-  have hab := hlip _ _ hy0 hyJ
-  have hba := hlip _ _ hyJ hy0
-  rw [norm_sub_rev] at hba
-  rw [abs_le]
-  constructor
-  · have : ‖ptJ⁻¹ • X - pt0⁻¹ • X‖ / ε ≤ R * (ptJ / pt0 - 1) / ε := div_le_div_of_nonneg_right hdist hε.le
-    linarith
-  · have : ‖ptJ⁻¹ • X - pt0⁻¹ • X‖ / ε ≤ R * (ptJ / pt0 - 1) / ε := div_le_div_of_nonneg_right hdist hε.le
-    linarith
-
-/-- The cost of one round: the scale `pt_J/pt₀ - 1` and the shift of the observation over twice its scale. -/
-theorem step_arith (pt0 ptJ η F0 FJ e R ε : ℝ) (h1 : 1 ≤ pt0) (h2 : pt0 ≤ ptJ) (h3 : ptJ ≤ (1 + η) * pt0)
-    (hε : 0 < ε) (hR : 0 ≤ R) (hFJ0 : 0 ≤ FJ) (hFJ1 : FJ ≤ 1) (hF : |FJ - F0| ≤ R * (ptJ / pt0 - 1) / ε) :
-    (ptJ / pt0 - 1) + |(ptJ * (FJ + e) / 2 + 2 * (ptJ - 1) / ε) - (pt0 * (F0 + e) / 2 + 2 * (pt0 - 1) / ε)| /
-      (2 * (pt0 / 4)) ≤ η * (2 + |e| + (R + 4) / ε) := by
-  have h0 : 0 < pt0 := by linarith
-  set u := ptJ / pt0 - 1 with hu
-  have hu0 : 0 ≤ u := by rw [hu, sub_nonneg, le_div_iff₀ h0]; linarith
-  have huη : u ≤ η := by rw [hu, sub_le_iff_le_add, div_le_iff₀ h0]; linarith
-  have hdiff : ptJ - pt0 = u * pt0 := by rw [hu]; field_simp
-  -- the difference of the two observations
-  have hD : (ptJ * (FJ + e) / 2 + 2 * (ptJ - 1) / ε) - (pt0 * (F0 + e) / 2 + 2 * (pt0 - 1) / ε) =
-      (u * pt0 * (FJ + e) + pt0 * (FJ - F0)) / 2 + 2 * (u * pt0) / ε := by
-    rw [← hdiff]; field_simp; ring
-  have hFe : |FJ + e| ≤ 1 + |e| := by
-    calc |FJ + e| ≤ |FJ| + |e| := abs_add_le _ _
-      _ ≤ 1 + |e| := by rw [abs_of_nonneg hFJ0]; linarith
-  have hbound : |(u * pt0 * (FJ + e) + pt0 * (FJ - F0)) / 2 + 2 * (u * pt0) / ε| ≤
-      pt0 / 2 * (u * (1 + |e|) + R * u / ε + 4 * u / ε) := by
-    have hA : |u * pt0 * (FJ + e)| ≤ u * pt0 * (1 + |e|) := by
-      rw [abs_mul, abs_of_nonneg (by positivity)]
-      exact mul_le_mul_of_nonneg_left hFe (by positivity)
-    have hB : |pt0 * (FJ - F0)| ≤ pt0 * (R * u / ε) := by
-      rw [abs_mul, abs_of_pos h0]
-      exact mul_le_mul_of_nonneg_left hF h0.le
-    have hC : |2 * (u * pt0) / ε| = 2 * (u * pt0) / ε := abs_of_nonneg (by positivity)
-    calc |(u * pt0 * (FJ + e) + pt0 * (FJ - F0)) / 2 + 2 * (u * pt0) / ε|
-        ≤ |(u * pt0 * (FJ + e) + pt0 * (FJ - F0)) / 2| + |2 * (u * pt0) / ε| := abs_add_le _ _
-      _ ≤ (|u * pt0 * (FJ + e)| + |pt0 * (FJ - F0)|) / 2 + 2 * (u * pt0) / ε := by
-          rw [hC, abs_div, abs_two]
-          gcongr
-          exact abs_add_le _ _
-      _ ≤ (u * pt0 * (1 + |e|) + pt0 * (R * u / ε)) / 2 + 2 * (u * pt0) / ε := by gcongr
-      _ = pt0 / 2 * (u * (1 + |e|) + R * u / ε + 4 * u / ε) := by field_simp; ring
-  rw [hD]
-  have hden : 0 < 2 * (pt0 / 4) := by positivity
-  calc u + |(u * pt0 * (FJ + e) + pt0 * (FJ - F0)) / 2 + 2 * (u * pt0) / ε| / (2 * (pt0 / 4))
-      ≤ u + pt0 / 2 * (u * (1 + |e|) + R * u / ε + 4 * u / ε) / (2 * (pt0 / 4)) := by gcongr
-    _ = u * (2 + |e| + (R + 4) / ε) := by field_simp; ring
-    _ ≤ η * (2 + |e| + (R + 4) / ε) := mul_le_mul_of_nonneg_right huη (by positivity)
-
-/-- The bound of one round integrated over the world. -/
-theorem lintegral_noise_le (μ ν : Measure (ℕ → ℝ)) [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] (k : ℕ)
-    (hν : ∫⁻ e, ENNReal.ofReal |e k| ∂ν ≤ 1) (a b : ℝ) (ha : 0 ≤ a) (hb : 0 ≤ b) :
-    ∫⁻ ω, ENNReal.ofReal (a + b * |ω.2 k|) ∂(μ.prod ν) ≤ ENNReal.ofReal (a + b) := by
-  have hm : Measurable fun e : ℕ → ℝ => ENNReal.ofReal |e k| :=
-    ENNReal.measurable_ofReal.comp (measurable_pi_apply k).abs
-  have hpt : ∀ ω : (ℕ → ℝ) × (ℕ → ℝ), ENNReal.ofReal (a + b * |ω.2 k|) =
-      ENNReal.ofReal a + ENNReal.ofReal b * ENNReal.ofReal |ω.2 k| := by
-    intro ω
-    rw [ENNReal.ofReal_add ha (by positivity), ENNReal.ofReal_mul hb]
-  simp_rw [hpt]
-  rw [lintegral_add_left measurable_const, lintegral_const, measure_univ, mul_one,
-    lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
-  have hsnd : ∫⁻ ω, ENNReal.ofReal |ω.2 k| ∂(μ.prod ν) = ∫⁻ e, ENNReal.ofReal |e k| ∂ν := by
-    rw [← lintegral_map hm measurable_snd, Measure.map_snd_prod, measure_univ, one_smul]
-  rw [hsnd, ENNReal.ofReal_add ha hb]
-  gcongr
-  calc ENNReal.ofReal b * ∫⁻ e, ENNReal.ofReal |e k| ∂ν ≤ ENNReal.ofReal b * 1 := by gcongr
-    _ = ENNReal.ofReal b := mul_one _
-
-/-- A convex function is continuous on the interior of its domain, so its restriction there is measurable. -/
-theorem measurable_indicator_interior {d : ℕ} (K : Set (EuclideanSpace ℝ (Fin d)))
-    (f : EuclideanSpace ℝ (Fin d) → ℝ) (hf : ConvexOn ℝ K f) : Measurable ((interior K).indicator f) := by
-  have hc : ContinuousOn f (interior K) := hf.continuousOn_interior
-  rw [← Set.piecewise_eq_indicator]
-  exact hc.measurable_piecewise continuousOn_const isOpen_interior.measurableSet
-
-theorem convexOn_posBody {d : ℕ} (K : Set (EuclideanSpace ℝ (Fin d))) (μ : EuclideanSpace ℝ (Fin d))
-    (A : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) (f : EuclideanSpace ℝ (Fin d) → ℝ)
-    (hf : ConvexOn ℝ K f) : ConvexOn ℝ (posBody K μ A) (fun y => f (μ + A y)) := by
-  have haff : ∀ (a b : ℝ) (x y : EuclideanSpace ℝ (Fin d)), a + b = 1 →
-      μ + A (a • x + b • y) = a • (μ + A x) + b • (μ + A y) := by
-    intro a b x y hab
-    rw [map_add, map_smul, map_smul, smul_add, smul_add]
-    have : μ = a • μ + b • μ := by rw [← add_smul, hab, one_smul]
-    conv_lhs => rw [this]
-    abel
-  refine ⟨?_, ?_⟩
-  · intro x hx y hy a b ha hb hab
-    show μ + A (a • x + b • y) ∈ K
-    rw [haff a b x y hab]
-    exact hf.1 hx hy ha hb hab
-  · intro x hx y hy a b ha hb hab
-    simp only [smul_eq_mul]
-    rw [haff a b x y hab]
-    exact hf.2 hx hy ha hb hab
-
-/-- The rational infimum of `gauge_eq_iInf_rat`, for a family of sets with a measurable graph. -/
-theorem gaugeRat_meas {X : Type*} [MeasurableSpace X] {d : ℕ} (Kf : X → Set (EuclideanSpace ℝ (Fin d)))
-    (hK : MeasurableSet {q : X × EuclideanSpace ℝ (Fin d) | q.2 ∈ Kf q.1}) :
-    Measurable fun q : X × EuclideanSpace ℝ (Fin d) =>
-      ⨅ r : ℚ, if 0 < r ∧ (r : ℝ)⁻¹ • q.2 ∈ Kf q.1 then (r : ℝ) else ‖q.2‖ := by
-  refine Measurable.iInf fun r => Measurable.ite ?_ measurable_const (measurable_norm.comp measurable_snd)
-  have hm : Measurable fun q : X × EuclideanSpace ℝ (Fin d) => (q.1, (r : ℝ)⁻¹ • q.2) :=
-    measurable_fst.prodMk (by fun_prop)
-  exact (MeasurableSet.const (0 < r)).inter (hm hK)
 
 theorem kp_eq_posBody {d : ℕ} (K : Set (E d)) (Ps : PgSp d) (R : ℝ)
     (h : posBody K (pgMu Ps) (pgOp Ps) ⊆ Metric.closedBall 0 R) : df2Kp K Ps R = posBody K (pgMu Ps) (pgOp Ps) := by
@@ -786,121 +546,6 @@ theorem kp_closed_of {d : ℕ} (K : Set (E d)) (hK : IsClosed K) (Ps : PgSp d) (
     hK.preimage (continuous_const.add (pgOp Ps).continuous)
   have h2 : IsClosed {y : E d | ‖y‖ ≤ R} := isClosed_le continuous_norm continuous_const
   exact h1.inter h2
-
-theorem kp_sub_ball {d : ℕ} (K : Set (E d)) (Ps : PgSp d) (R : ℝ) : df2Kp K Ps R ⊆ Metric.closedBall 0 R := by
-  intro y hy
-  exact mem_closedBall_zero_iff.2 hy.2
-
-theorem par_eps_pos (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) (hδ1 : δ < 1) :
-    0 < (df2oPar d n δ).eps := by
-  simp only [df2oPar]
-  have hpos : 0 < min (δ / 3) (Real.exp (-14) / ((d : ℝ) * n) ^ 3) := by
-    have hd' : (1 : ℝ) ≤ d := by exact_mod_cast hd
-    have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
-    exact lt_min (by positivity) (div_pos (Real.exp_pos _) (by positivity))
-  set δ1 := min (δ / 3) (Real.exp (-14) / ((d : ℝ) * n) ^ 3) with hδ1def
-  have hd' : (1 : ℝ) ≤ d := by exact_mod_cast hd
-  have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
-  have hle : δ1 ≤ δ / 3 := min_le_left _ _
-  have hδe0 : 0 < 4 * δ1 / (5 * n) := by positivity
-  have hδe1 : 4 * δ1 / (5 * n) < 1 := by
-    rw [div_lt_one (by positivity)]
-    nlinarith
-  have hlog : 0 < Real.log (1 / (4 * δ1 / (5 * n))) := by
-    apply Real.log_pos
-    rw [one_div, one_lt_inv₀ hδe0]
-    exact hδe1
-  have hC : (0 : ℝ) < df2C0 := by norm_num [df2C0]
-  have hCl : (0 : ℝ) < df2oClam := by norm_num [df2oClam]
-  have hsd : 0 < Real.sqrt d := Real.sqrt_pos.2 (by linarith)
-  have hsn : 0 < Real.sqrt n := Real.sqrt_pos.2 (by linarith)
-  positivity
-
-theorem par_one_le_R (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) : 1 ≤ (df2oPar d n δ).R := by
-  simp only [df2oPar]
-  have hd' : (1 : ℝ) ≤ d := by exact_mod_cast hd
-  have hlog : 1 ≤ Real.log (2 * d + 2) := by
-    rw [Real.le_log_iff_exp_le (by positivity)]
-    have : Real.exp 1 < 4 := lt_trans Real.exp_one_lt_d9 (by norm_num)
-    linarith
-  have hs : 1 ≤ Real.sqrt (Real.log (2 * d + 2)) := by
-    rw [show (1 : ℝ) = Real.sqrt 1 by rw [Real.sqrt_one]]
-    exact Real.sqrt_le_sqrt hlog
-  nlinarith
-
-theorem par_δ1_pos (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) : 0 < (df2oPar d n δ).δ1 := by
-  simp only [df2oPar]
-  have hd' : (1 : ℝ) ≤ d := by exact_mod_cast hd
-  have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
-  exact lt_min (by positivity) (div_pos (Real.exp_pos _) (by positivity))
-
-theorem par_δ1_le (d n : ℕ) (δ : ℝ) (hδ1 : δ < 1) : (df2oPar d n δ).δ1 ≤ 1 := by
-  simp only [df2oPar]
-  exact (min_le_left _ _).trans (by linarith)
-
-/-- The row `n η_g (R + 7)/ε ≤ δ₁` with `η_g = R 2^{-j}`, `j = ⌈log₂ (n R (R + 7)/(δ₁ ε))⌉`. -/
-theorem par_sum (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) (hδ1 : δ < 1) :
-    n * ((df2oPar d n δ).R / 2 ^ (df2oPar d n δ).j * ((df2oPar d n δ).R + 7) / (df2oPar d n δ).eps) ≤
-      (df2oPar d n δ).δ1 := by
-  have he := par_eps_pos d n δ hd hn hδ0 hδ1
-  have hR := par_one_le_R d n δ hd
-  have hp := par_δ1_pos d n δ hd hn hδ0
-  set p := df2oPar d n δ with hpdef
-  have hj : p.j = ⌈Real.logb 2 (n * p.R * (p.R + 7) / (p.δ1 * p.eps))⌉₊ := by rw [hpdef]; rfl
-  have hn' : (1 : ℝ) ≤ n := by exact_mod_cast hn
-  set x := n * p.R * (p.R + 7) / (p.δ1 * p.eps) with hx
-  have hx0 : 0 < x := by positivity
-  have h2j : x ≤ 2 ^ p.j := by
-    rw [hj]
-    calc x = (2 : ℝ) ^ Real.logb 2 x := (Real.rpow_logb (by norm_num) (by norm_num) hx0).symm
-      _ ≤ (2 : ℝ) ^ (⌈Real.logb 2 x⌉₊ : ℝ) :=
-          Real.rpow_le_rpow_of_exponent_le (by norm_num) (Nat.le_ceil _)
-      _ = 2 ^ ⌈Real.logb 2 x⌉₊ := Real.rpow_natCast _ _
-  have h2 : (0 : ℝ) < 2 ^ p.j := by positivity
-  have hkey : n * (p.R / 2 ^ p.j * (p.R + 7) / p.eps) = x * p.δ1 / 2 ^ p.j := by
-    rw [hx]; field_simp
-  rw [hkey, div_le_iff₀ h2]
-  nlinarith
-
-theorem idxA_lt (J W Ns r k c d : ℕ) (hr : r < J) (hk : k < Ns) (hNs : Ns ≤ W) (hc : c < d) :
-    (r * W + k) * d + c < J * W * d := by
-  have h1 : r * W + k + 1 ≤ J * W := by
-    have : (r + 1) * W ≤ J * W := Nat.mul_le_mul_right _ hr
-    nlinarith
-  have h2 : (r * W + k + 1) * d ≤ J * W * d := Nat.mul_le_mul_right _ h1
-  nlinarith
-
-theorem idxT_lt (J Ns mT NT r v k c d : ℕ) (hr : r < J) (hv : v < mT) (hk : k < NT) (hc : c < d) :
-    (r * (Ns + mT * NT) + Ns + v * NT + k) * d + c < J * (Ns + mT * NT) * d := by
-  have h0 : v * NT + k + 1 ≤ mT * NT := by
-    have : (v + 1) * NT ≤ mT * NT := Nat.mul_le_mul_right _ hv
-    nlinarith
-  have h1 : r * (Ns + mT * NT) + Ns + v * NT + k + 1 ≤ J * (Ns + mT * NT) := by
-    have : (r + 1) * (Ns + mT * NT) ≤ J * (Ns + mT * NT) := Nat.mul_le_mul_right _ hr
-    nlinarith
-  have h2 : (r * (Ns + mT * NT) + Ns + v * NT + k + 1) * d ≤ J * (Ns + mT * NT) * d := Nat.mul_le_mul_right _ h1
-  nlinarith
-
-theorem sum_range_add_lt (B : ℕ → ℕ) (i m x : ℕ) (hi : i < m) (hx : x < B i) :
-    ∑ i' ∈ Finset.range i, B i' + x < ∑ i' ∈ Finset.range m, B i' := by
-  calc ∑ i' ∈ Finset.range i, B i' + x < ∑ i' ∈ Finset.range i, B i' + B i := by omega
-    _ = ∑ i' ∈ Finset.range (i + 1), B i' := (Finset.sum_range_succ _ _).symm
-    _ ≤ ∑ i' ∈ Finset.range m, B i' := Finset.sum_le_sum_of_subset (Finset.range_subset_range.2 hi)
-
-/-- A draw of round `t` is never the dither of round `k`. -/
-theorem round_idx_ne (N0 d k t c : ℕ) (hc : c < d) : N0 + t * (d + 1) + c ≠ N0 + k * (d + 1) + d := by
-  intro h
-  have h' : t * (d + 1) + c = k * (d + 1) + d := by omega
-  have h1 := congrArg (· % (d + 1)) h'
-  simp only [Nat.mul_add_mod_self_right] at h1
-  rw [Nat.mod_eq_of_lt (by omega), Nat.mod_eq_of_lt (by omega)] at h1
-  omega
-
-/-- The dithers of two rounds are two terms. -/
-theorem round_idx_ne_dither (N0 d k t : ℕ) (ht : t ≠ k) : N0 + t * (d + 1) + d ≠ N0 + k * (d + 1) + d := by
-  intro h
-  have : t * (d + 1) = k * (d + 1) := by omega
-  exact ht (Nat.eq_of_mul_eq_mul_right (Nat.succ_pos d) this)
 
 end Leaves
 

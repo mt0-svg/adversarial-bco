@@ -11,12 +11,12 @@ public import AdversarialBco.Conj1Lower.Frame
 @[expose] public section
 
 /-!
-# The dent in the frame: the geometric part of Lemma 9.4
+# The dent in the frame: the geometric part of the legality lemma
 
 The dent of Dent.lean with the square root `A = frameA w S` of the clipped metric of Frame.lean, on `ℝ^d`: convex
 (Lemma D (a)), Lipschitz with the constant `κ r₁ / w` (Lemma D (b) and (F1)), between `0` and
 `κ (r₁ ‖x - m‖ / w + ε)` (Lemma D (a), `φ(a) ≤ r₁ a + ε` and (F1)), and `0` at the tip. With `w = w* = κ r₁ / L`
-this is the Lipschitz constant `L` and the range `3L/2 + g` of Lemma 9.4 on the unit ball when `‖m‖ ≤ 1/2`.
+this is the Lipschitz constant `L` and the range `3L/2 + g` of the legality lemma on the unit ball when `‖m‖ ≤ 1/2`.
 -/
 
 open Matrix

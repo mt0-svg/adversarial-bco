@@ -12,7 +12,8 @@ public import AdversarialBco.Poly.Df2
 /-!
 # The play `p'` of DF2: proofs
 
-Proofs of `PlayShift`, `LemmaUBPrime` and `PlayHess` of `AdversarialBco/Poly/Df2.lean` (Appendix D.3
+Proofs of `PlayShift`, `LemmaUBPrime` and `PlayHess` of `AdversarialBco/Poly/Df2.lean` (the subsection on the surrogate
+and its estimators
 of the paper), as `playShift_holds`, `lemmaUBPrime_holds`, `playHess_holds`.
 
 * `playShift_holds`: the shift of the play.

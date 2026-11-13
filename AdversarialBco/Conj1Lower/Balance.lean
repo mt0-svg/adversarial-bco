@@ -10,9 +10,9 @@ public import Mathlib
 @[expose] public section
 
 /-!
-# The balance of Proposition 9.10 and the arithmetic of Proposition 9.11
+# The balance of the balance proposition and the arithmetic of the game proposition
 
-Propositions 9.10 and 9.11 of the paper, with
+The paper's balance and game propositions, with
 the channel bound (S1): every answer cell carries at most
 `B = (3L/2 + g)²/(8σ²)` nats. Pure arithmetic on reals: no measure, no probability.
 
@@ -23,12 +23,12 @@ Two layers, matching the interface `round`
   them into three linear inequalities, the case split on `p_rest` done.
 * `GameFacts`: the expectations over the game, round by round (each quantity times the indicator that the round is
   live): the three inequalities of `round_bound` in mean, the live count, the payment and the count.
-  `ripe_balance` is Proposition 9.10's two bounds, `ripe_rate` its rate, `ripeB_balance` Proposition 9.11 in the form
-  of `TheoremConj1Lower`.
+  `ripe_balance` is the balance proposition's two bounds.
 
 Rounds are indexed by `t ∈ Finset.range n`. Who discharges what: CellsRound.lean, Ledger.lean and Info.lean
 the fields of `RoundFacts`; Top.lean integrates `round_bound` over the live event, proves the live count, the
-regret identity `E R_n = ∑ Dm t` (Lemma 9.4) and the coupling `E R_n(bounded) ≥ E R_n(Gaussian) - 1/n`; Ledger.lean the
+regret identity `E R_n = ∑ Dm t` (the legality lemma) and the coupling `E R_n(bounded) ≥ E R_n(Gaussian) - 1/n`;
+Ledger.lean the
 payment, Info.lean the count.
 -/
 
@@ -38,7 +38,7 @@ namespace AdversarialBco.Lower
 
 /-! ## Constants of the strategy `S'(g, k, L, σ)` -/
 
-/-- The price of rest of Lemma 9.7 (ii), `P_R = d²/(4194372 k²)`. -/
+/-- The price of rest of the rest lemma (ii), `P_R = d²/(4194372 k²)`. -/
 noncomputable def priceR (dd k : ℝ) : ℝ := dd ^ 2 / (4194372 * k ^ 2)
 
 /-- The floor `w* = κ r₁ / L` with `κ = g/k`, `r₁ = 5 d^{1/2}`. -/
@@ -47,7 +47,7 @@ noncomputable def wStar (dd k L g : ℝ) : ℝ := g / k * (5 * Real.sqrt dd) / L
 /-- `X = r₀²/(d w²)`, `r₀ = 1/2` (the count at `w`). -/
 noncomputable def xCount (dd w : ℝ) : ℝ := (1 / 2) ^ 2 / (dd * w ^ 2)
 
-/-- The count of Lemma 9.9 (b), `N* = (d/4) ln(r₀²/(2 d w²)) - (1/2) ln(π d) - 1/d`, `r₀ = 1/2`
+/-- The count of the count lemma (b), `N* = (d/4) ln(r₀²/(2 d w²)) - (1/2) ln(π d) - 1/d`, `r₀ = 1/2`
 (Binet's remainder gives `1/(6d)`; `1/d` is what the crude Stirling bound of route (S3) gives for every
 `d ≥ 1`, and (C1) to (C3) hold with it). -/
 noncomputable def nStar (dd w : ℝ) : ℝ :=
@@ -61,16 +61,16 @@ noncomputable def ledgerR (dd w : ℝ) : ℝ := dd / 2 * Real.log (1 + (1 / 2) ^
 information is at most `(3L/2 + g)²/(8σ²)`. -/
 noncomputable def chanB (L g σ : ℝ) : ℝ := (3 * L / 2 + g) ^ 2 / (8 * σ ^ 2)
 
-/-- The scale of Proposition 9.10's rate, `k = 120 ln d + 68`. -/
+/-- The scale of the balance proposition's rate, `k = 120 ln d + 68`. -/
 noncomputable def kRipe (dd : ℝ) : ℝ := 120 * Real.log dd + 68
 
-/-- The noise scale of Proposition 9.11, `σ = L = 1/(8 (6 ln n)^{1/2})`. -/
+/-- The noise scale of the game proposition, `σ = L = 1/(8 (6 ln n)^{1/2})`. -/
 noncomputable def sigB (nn : ℝ) : ℝ := 1 / (8 * Real.sqrt (6 * Real.log nn))
 
 /-- `Γ = ln(n/d⁵)`. -/
 noncomputable def gamR (dd nn : ℝ) : ℝ := Real.log (nn / dd ^ 5)
 
-/-- The depth of Proposition 9.10's rate, `g = 2·10⁻⁴ σ d^{3/2} Γ^{1/2}/(k n^{1/2})`. -/
+/-- The depth of the balance proposition's rate, `g = 2·10⁻⁴ σ d^{3/2} Γ^{1/2}/(k n^{1/2})`. -/
 noncomputable def gRipe (dd nn σ : ℝ) : ℝ :=
   2 / 10 ^ 4 * σ * (dd * Real.sqrt dd) * Real.sqrt (gamR dd nn) / (kRipe dd * Real.sqrt nn)
 
@@ -94,7 +94,7 @@ structure RoundFacts (dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ)
   mass : a + pr = 1
   a_nonneg : 0 ≤ a
   pr_nonneg : 0 ≤ pr
-  /-- Lemma 9.6: `J_t = H(A_t) + ∑_c p_c I_{t,c}` over the ripe cells and rest (Info.lean). -/
+  /-- The chain-rule lemma: `J_t = H(A_t) + ∑_c p_c I_{t,c}` over the ripe cells and rest (Info.lean). -/
   chain : J ≤ H + Iann + pr * Irest
   /-- (S1) on each ripe cell: `I_{t,c} ≤ B` (Info.lean). -/
   ann_le : Iann ≤ B * a
@@ -104,15 +104,15 @@ structure RoundFacts (dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ)
   leak : H ≤ 4 * (3 * Real.log dd + 1) / k * Pay
   /-- Lemma LEAK, the mass: `∑_{c ripe} p_c ≤ (4/k) P'_t`. -/
   leak_mass : a ≤ 4 / k * Pay
-  /-- Lemma 9.7 (ii), the price: `I_{t,rest} ≤ g E[D | rest]/(σ² P_R)` when `p_rest ≥ 1/2`. -/
+  /-- The rest lemma (ii), the price: `I_{t,rest} ≤ g E[D | rest]/(σ² P_R)` when `p_rest ≥ 1/2`. -/
   price : 1 / 2 ≤ pr → Irest ≤ g / (σ ^ 2 * priceR dd k) * (Drest / pr)
   /-- The dent is nonnegative (Lemma D (a)). -/
   drest_nonneg : 0 ≤ Drest
   /-- The dent is nonnegative off rest (Lemma D (a)). -/
   drest_le : Drest ≤ Dbar
-  /-- Lemma 9.7 (i) and `q ≥ g`, the floor: `E[D | G_{t-1}, U] ≥ π(regular) g/2`. -/
+  /-- The rest lemma (i) and `q ≥ g`, the floor: `E[D | G_{t-1}, U] ≥ π(regular) g/2`. -/
   floor : preg * g / 2 ≤ Dbar
-  /-- Lemma 9.7 (i), the mass: `π(regular) ≥ p_rest - 3k²/d²`. -/
+  /-- The rest lemma (i), the mass: `π(regular) ≥ p_rest - 3k²/d²`. -/
   reg : pr - 3 * k ^ 2 / dd ^ 2 ≤ preg
 
 /-- The expectations over the game, round by round, `t ∈ range n`, each quantity times the indicator that round
@@ -130,7 +130,8 @@ structure GameFacts (dd k g σ B w : ℝ) (n : ℕ) (p : ℝ) (Jm Pm am Dm lm : 
   live : ∀ t < n, 1 - p ≤ lm t
   /-- Lemma LEAK, last claim ((L2) summed): `E ∑_{t < τ} P'_t ≤ R_L` (Ledger.lean). -/
   payment : ∑ t ∈ range n, Pm t ≤ ledgerR dd w
-  /-- Lemma 9.6 and Lemma 9.9 (b) at `π_τ` on `{τ ≤ n}`: `E ∑_{t < τ} J_t ≥ N* P(τ ≤ n)` (Info.lean). -/
+  /-- The chain-rule lemma and the count lemma (b) at `π_τ` on `{τ ≤ n}`: `E ∑_{t < τ} J_t ≥ N* P(τ ≤ n)`
+  (Info.lean). -/
   count : nStar dd w * p ≤ ∑ t ∈ range n, Jm t
 
 /-! ## One round -/
@@ -143,12 +144,6 @@ theorem three_k_sq_le (k dd : ℝ) (hk : 0 < k) (hd : 2048 * k ≤ dd) : 3 * k ^
   have h1000 : (0 : ℝ) < 1000 := by norm_num
   rw [div_le_div_iff₀ hddsq h1000]
   nlinarith
-
-theorem priceR_nonneg (dd k : ℝ) : 0 ≤ priceR dd k := by
-  unfold priceR
-  apply div_nonneg
-  · apply pow_two_nonneg
-  · positivity
 
 /-- The information of a round: the case split on `p_rest`. -/
 theorem round_J {dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ} (hk : 0 < k) (hg : 0 ≤ g) (hB : 0 ≤ B)
@@ -362,9 +357,9 @@ theorem sum_live (n : ℕ) (p : ℝ) (lm : ℕ → ℝ) (h : ∀ t < n, 1 - p �
     rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul] : ∑ t ∈ range n, (1 - p) = (n : ℝ) * (1 - p))]
   exact Finset.sum_le_sum fun t ht => h t (Finset.mem_range.mp ht)
 
-/-! ## Proposition 9.10: the balance -/
+/-! ## The balance proposition: the balance -/
 
-/-- Proposition 9.10, the two bounds:
+/-- The balance proposition, the two bounds:
 `E R_n ≥ max((σ² P_R/g) N* (p - 0.3), (g/2)(0.999 n (1 - p) - 12 N*/k))`, under (R1) and (R2). -/
 theorem ripe_balance {dd k g σ L B : ℝ} {n : ℕ} {p : ℝ} {Jm Pm am Dm lm : ℕ → ℝ} (hk : 1 ≤ k) (hg : 0 < g)
     (hσ : 0 < σ) (hL : 0 < L) (hB : 0 ≤ B) (hR1 : 40 * (3 * Real.log dd + 1 + 2 * B) ≤ k) (hR1' : 2048 * k ≤ dd)
@@ -414,7 +409,7 @@ theorem ripe_balance {dd k g σ L B : ℝ} {n : ℕ} {p : ℝ} {Jm Pm am Dm lm :
     apply mul_le_mul_of_nonneg_left _ (by positivity)
     nlinarith
 
-/-! ## Proposition 9.10: the rate, `L = σ`, `k = 120 ln d + 68`, `g = gRipe d n σ` -/
+/-! ## The balance proposition: the rate, `L = σ`, `k = 120 ln d + 68`, `g = gRipe d n σ` -/
 
 theorem kRipe_ge (dd : ℝ) (hd1 : 1 ≤ dd) (hd : 2048 * kRipe dd ≤ dd) : 240 ≤ kRipe dd ∧ 491520 ≤ dd := by
   have hlog_nonneg : 0 ≤ Real.log dd := Real.log_nonneg hd1
@@ -478,21 +473,6 @@ theorem xCount_ripe (dd nn σ : ℝ) (hd : 0 < dd) (hk : 0 < kRipe dd) (hσ : 0 
   subst hs hr hu
   field_simp
   ring
-
-theorem log_x_ripe_ge (dd nn k : ℝ) (hk : 1 ≤ k) (hd : 0 < dd) (hn : 0 < nn) (hΓ : 0 < gamR dd nn) :
-    gamR dd nn / 2 ≤ Real.log (k ^ 4 * nn / (4 / 10 ^ 6 * dd ^ 5 * gamR dd nn) / 2) := by
-  have hE : nn / dd ^ 5 = Real.exp (gamR dd nn) := by rw [gamR, Real.exp_log (by positivity)]
-  generalize gamR dd nn = Γ at *
-  have harg : k ^ 4 * nn / (4 / 10 ^ 6 * dd ^ 5 * Γ) / 2 = k ^ 4 * Real.exp Γ / (8 / 10 ^ 6 * Γ) := by
-    rw [← hE]; field_simp; ring
-  rw [harg, Real.le_log_iff_exp_le (by positivity)]
-  have he2 : Real.exp Γ = Real.exp (Γ / 2) ^ 2 := by rw [← Real.exp_nat_mul]; ring_nf
-  have h1 := Real.add_one_le_exp (Γ / 2)
-  have hk4 : 1 ≤ k ^ 4 := one_le_pow₀ hk
-  have hE2 := Real.exp_pos (Γ / 2)
-  have h3 : 8 / 10 ^ 6 * Γ ≤ Real.exp (Γ / 2) := by linarith
-  rw [le_div_iff₀ (by positivity), he2]
-  nlinarith [mul_le_mul_of_nonneg_left h3 hE2.le, mul_le_mul_of_nonneg_left hk4 (sq_nonneg (Real.exp (Γ / 2)))]
 
 theorem log_x_ripe_le (dd nn k : ℝ) (hk : 1 ≤ k) (hd : 0 < dd) (hn : 0 < nn) (hΓ : 1 ≤ gamR dd nn) :
     Real.log (k ^ 4 * nn / (4 / 10 ^ 6 * dd ^ 5 * gamR dd nn) / 2) ≤ gamR dd nn + 4 * Real.log k + 118 / 10 := by
@@ -655,48 +635,7 @@ theorem rate_lo (dd nn k σ Γ g N p : ℝ) (hd : 0 < dd) (hk : 0 < k) (hσ : 0 
   field_simp
   ring
 
-/-- Proposition 9.10, the rate: `E R_n ≥ 2.5·10⁻⁵ σ d^{3/2} (n ln(n/d⁵))^{1/2}/(120 ln d + 68)` for `L = σ ≤ 1/4`,
-`n ≥ e⁴ d⁵` and `d ≥ 2048 (120 ln d + 68)`. -/
-theorem ripe_rate {dd σ : ℝ} {n : ℕ} {p : ℝ} {Jm Pm am Dm lm : ℕ → ℝ} (hd1 : 1 ≤ dd) (hσ : 0 < σ)
-    (hσ' : σ ≤ 1 / 4) (hn : Real.exp 4 * dd ^ 5 ≤ n) (hd : 2048 * kRipe dd ≤ dd)
-    (h : GameFacts dd (kRipe dd) (gRipe dd n σ) σ (chanB σ (gRipe dd n σ) σ)
-      (wStar dd (kRipe dd) σ (gRipe dd n σ)) n p Jm Pm am Dm lm) :
-    25 / 10 ^ 6 * σ * (dd * Real.sqrt dd) * Real.sqrt (n * gamR dd n) / kRipe dd ≤ ∑ t ∈ range n, Dm t := by
-  obtain ⟨hk240, hd491⟩ := kRipe_ge dd hd1 hd
-  have hd0 : 0 < dd := by linarith
-  have hn0 : (0 : ℝ) < n := lt_of_lt_of_le (by positivity) hn
-  have hΓ : 4 ≤ gamR dd n := gamR_ge dd n hd0 hn
-  have hg : 0 < gRipe dd n σ := gRipe_pos dd n σ hd1 hd hσ hn
-  have hgle : gRipe dd n σ ≤ σ / 81920 := gRipe_le dd n σ hd1 hd hσ hn
-  have hB := chanB_ripe σ (gRipe dd n σ) hσ hg.le hgle
-  have hB0 : 0 ≤ chanB σ (gRipe dd n σ) σ := by unfold chanB; positivity
-  obtain ⟨hhi, hlo⟩ := ripe_balance (by linarith) hg hσ hσ hB0 (R1_ripe dd _ hB) hd
-    (R2_ripe dd n σ hd1 hd hσ hn) h
-  set w := wStar dd (kRipe dd) σ (gRipe dd n σ) with hw
-  have hX : xCount dd w = kRipe dd ^ 4 * n / (4 / 10 ^ 6 * dd ^ 5 * gamR dd n) :=
-    xCount_ripe dd n σ hd0 (by linarith) hσ hn0 (by linarith)
-  have hd12 : 12288 ≤ dd := by linarith
-  have hNge : 1248 / 10000 * dd * gamR dd n ≤ nStar dd w := by
-    apply nStar_ripe_ge dd _ _ hd0 hΓ
-    have h1 := nStar_ge_x dd w hd12
-    have h2 := log_x_ripe_ge dd n (kRipe dd) (by linarith) hd0 hn0 (by linarith)
-    rw [hX] at h1
-    nlinarith
-  have hNle : nStar dd w ≤ dd / 4 * (gamR dd n + 4 * Real.log (kRipe dd) + 118 / 10) := by
-    have h1 := nStar_le_x dd w hd1
-    have h2 := log_x_ripe_le dd n (kRipe dd) (by linarith) hd0 hn0 (by linarith)
-    rw [hX] at h1
-    nlinarith
-  by_cases hp : 1 / 2 ≤ p
-  · exact (rate_hi dd n (kRipe dd) σ (gamR dd n) (gRipe dd n σ) (nStar dd w) p hd0 (by linarith) hσ hn0
-      (by linarith) rfl hNge hp).trans hhi
-  · rw [not_le] at hp
-    have hsmall := nStar_ripe_small dd n (kRipe dd) (gamR dd n) (nStar dd w) hk240 (by linarith) hd491 hΓ
-      (n_eq_exp dd n hd0 hn0) hNle
-    exact (rate_lo dd n (kRipe dd) σ (gamR dd n) (gRipe dd n σ) (nStar dd w) p hd0 (by linarith) hσ hn0
-      (by linarith) rfl hsmall hp).trans hlo
-
-/-! ## Proposition 9.11: `σ = 1/(8 (6 ln n)^{1/2})`, `n ≥ d^{10}`, `d ≥ 4·10⁶` -/
+/-! ## The game proposition: `σ = 1/(8 (6 ln n)^{1/2})`, `n ≥ d^{10}`, `d ≥ 4·10⁶` -/
 
 theorem ripeB_log (dd : ℝ) (hd : 4000000 ≤ dd) : 15 ≤ Real.log dd := by
   rw [Real.le_log_iff_exp_le (by linarith)]
@@ -716,27 +655,6 @@ theorem ripeB_dim (dd : ℝ) (hd : 4000000 ≤ dd) : 2048 * kRipe dd ≤ dd := b
   rw [h4] at h1
   norm_num at h5
   linarith
-
-/-- `d ≥ 2048 (120 ln d + 68)` from `d ≥ 3866946` (the exact threshold is `3866945.66`). -/
-theorem ripeB_dim_sharp (dd : ℝ) (hd : 3866946 ≤ dd) : 2048 * kRipe dd ≤ dd := by
-  unfold kRipe
-  have hc : (0:ℝ) < 3866946 := by norm_num
-  have hd0 : 0 < dd := by linarith
-  have h1 : Real.log dd ≤ Real.log 3866946 + dd / 3866946 - 1 := by
-    have := Real.log_le_sub_one_of_pos (div_pos hd0 hc)
-    rw [Real.log_div hd0.ne' hc.ne'] at this
-    linarith
-  have hx : |(327358 / 4194304 : ℝ)| < 1 := by rw [abs_lt]; constructor <;> norm_num
-  have h2 := Real.abs_log_sub_add_sum_range_le hx 6
-  have h3 : Real.log 3866946 = 22 * Real.log 2 + Real.log (1 - 327358 / 4194304) := by
-    rw [show (22:ℝ) * Real.log 2 = Real.log (2 ^ 22) by rw [Real.log_pow]; norm_num,
-      ← Real.log_mul (by positivity) (by norm_num)]
-    norm_num
-  have h4 := Real.log_two_lt_d9
-  rw [abs_le] at h2
-  simp only [Finset.sum_range_succ, Finset.sum_range_zero] at h2
-  norm_num at h2 h4
-  linarith [h2.2]
 
 theorem ripeB_gam (dd nn : ℝ) (hd : 1 ≤ dd) (hn : dd ^ 10 ≤ nn) : Real.log nn / 2 ≤ gamR dd nn := by
   have hddpos : 0 < dd := by linarith
@@ -909,9 +827,10 @@ theorem rpow_three_halves (dd : ℝ) (hd : 0 ≤ dd) : dd ^ (3 / 2 : ℝ) = dd *
     _ = dd * dd ^ (1/2 : ℝ) := by rw [Real.rpow_one dd]
     _ = dd * Real.sqrt dd := by rw [Real.sqrt_eq_rpow]
 
-/-- The parameters of Proposition 9.11 satisfy the hypotheses of the strategy and of the lemmas of the other modules:
-`σ ∈ (0, 1/4]`, `0 < g ≤ σ/81920`, `3σ/2 + g ≤ 1/2` (Lemma 9.4), `k ≥ 240`, `d ≥ 2048 k` (Lemmas REGULAR, REST,
-LEAK), `X ≥ 16` at the floor (Lemma 9.9, (C1) to (C3)), `B ≤ 0.2813` and (R1), `n ≥ e⁴ d⁵`. -/
+/-- The parameters of the game proposition satisfy the hypotheses of the strategy and of the lemmas of the other
+modules:
+`σ ∈ (0, 1/4]`, `0 < g ≤ σ/81920`, `3σ/2 + g ≤ 1/2` (the legality lemma), `k ≥ 240`, `d ≥ 2048 k` (Lemmas REGULAR, REST,
+LEAK), `X ≥ 16` at the floor (the count lemma, (C1) to (C3)), `B ≤ 0.2813` and (R1), `n ≥ e⁴ d⁵`. -/
 theorem ripeB_params {d n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) :
     0 < sigB n ∧ sigB n ≤ 1 / 4 ∧ 0 < gRipe d n (sigB n) ∧ gRipe d n (sigB n) ≤ sigB n / 81920 ∧
       3 * sigB n / 2 + gRipe d n (sigB n) ≤ 1 / 2 ∧ 240 ≤ kRipe d ∧ 2048 * kRipe d ≤ d ∧
@@ -932,36 +851,5 @@ theorem ripeB_params {d n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) :
   refine ⟨hs0, hs4, hg, hgle, by linarith, hk240, hdim, ?_, hB, R1_ripe _ _ hB, hn4⟩
   exact xCount_wStar_ge d (kRipe d) (sigB n) _ (by linarith) (by linarith) hs0 hg
     (R2_ripe d n _ hd1 hdim hs0 hn4)
-
-/-- Proposition 9.11, the arithmetic, in the form of `TheoremConj1Lower`: the expectations of the Gaussian game at
-the parameters of Proposition 9.11 satisfy `GameFacts`, and the bounded game's mean regret `ER` is at least the Gaussian one
-minus `1/n` (the coupling); then `ER ≥ 7·10⁻⁹ d^{3/2} n^{1/2}/ln d`. -/
-theorem ripeB_balance {d n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) {p : ℝ} {Jm Pm am Dm lm : ℕ → ℝ}
-    (h : GameFacts d (kRipe d) (gRipe d n (sigB n)) (sigB n) (chanB (sigB n) (gRipe d n (sigB n)) (sigB n))
-      (wStar d (kRipe d) (sigB n) (gRipe d n (sigB n))) n p Jm Pm am Dm lm)
-    {ER : ℝ} (hER : ∑ t ∈ range n, Dm t - 1 / n ≤ ER) :
-    7 / 10 ^ 9 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n / Real.log d ≤ ER := by
-  have hdR : (4000000 : ℝ) ≤ d := by exact_mod_cast hd
-  have hnR : (d : ℝ) ^ 10 ≤ n := by exact_mod_cast hn
-  obtain ⟨hs0, hs4⟩ := ripeB_sig d n hdR hnR
-  have hdim := ripeB_dim d hdR
-  have hd1 : (1 : ℝ) ≤ d := by linarith
-  have hn4 := ripeB_n d n hdR hnR
-  have hrate := ripe_rate hd1 hs0 hs4 hn4 hdim h
-  obtain ⟨hk240, -⟩ := kRipe_ge d hd1 hdim
-  have hn1 : (1 : ℝ) < n := by
-    have : (1 : ℝ) < (d : ℝ) ^ 10 := one_lt_pow₀ (by linarith) (by norm_num)
-    linarith
-  have hcoef := ripeB_coef n (gamR d n) hn1 (ripeB_gam d n hd1 hnR)
-  have hfin := ripeB_final d n hdR hnR
-  rw [rpow_three_halves d (by linarith)]
-  have hdd : 0 ≤ (d : ℝ) * Real.sqrt d := by positivity
-  have h1 : 9 / 10 ^ 7 * ((d : ℝ) * Real.sqrt d) * Real.sqrt n / kRipe d ≤ ∑ t ∈ range n, Dm t := by
-    refine le_trans ?_ hrate
-    rw [div_le_div_iff_of_pos_right (by linarith)]
-    have h2 : 9 / 10 ^ 7 * Real.sqrt n ≤ 25 / 10 ^ 6 * sigB n * Real.sqrt (n * gamR d n) :=
-      le_trans (by nlinarith [Real.sqrt_nonneg (n : ℝ)]) hcoef
-    nlinarith [mul_le_mul_of_nonneg_left h2 hdd]
-  linarith
 
 end AdversarialBco.Lower

@@ -12,7 +12,7 @@ public import AdversarialBco.Poly.Df2DetRegion
 /-!
 # DET, the sandwich and the deviations
 
-Appendix D.6 of the paper (part 1 of Q at `κ`) on the run, for a round `t ≤ τ` and a point `y` of the past
+The paper's subsection on the test (part 1 of Q at `κ`) on the run, for a round `t ≤ τ` and a point `y` of the past
 ellipsoids `S_t` (and of `B_R` for the deviations); the sums run over the rounds `u ≤ t`, index `t + 1`:
 
 * (i) `sReg ≤ T + ν` (prop:ons:q-lower, X5), `ν = n δ_e/λ²`;
@@ -56,9 +56,6 @@ theorem ss_le (H : DetHyp c δ π m) {t u : ℕ} (hu : u ≤ t) {y : Fin d → �
   have := hy u hu; have hL := H.Le_pos
   calc _ ≤ 1 / (2 * c.p.Le) := this
     _ ≤ 1 / c.p.Le := by gcongr; linarith
-
-theorem Wt_nonneg (H : DetHyp c δ π m) {t : ℕ} (ht : t ≤ c.tau π m) (y : Fin d → ℝ) : 0 ≤ c.Wt π (t + 1) y :=
-  Finset.sum_nonneg fun u hu => sq_nonneg_of_psd (H.sHess_psd (by have := Finset.mem_range.1 hu; omega)) _
 
 theorem OmT_eq (H : DetHyp c δ π m) (t : ℕ) (y : Fin d → ℝ) : c.OmT π t y = c.p.eta / 8 * c.Wt π t y := by
   unfold Df2Ctx.OmT Df2Ctx.Wt; rw [H.kap]; ring

@@ -15,7 +15,8 @@ public import AdversarialBco.Poly.Df2DetState
 On the event G, at every round `s ≤ τ`: the play is in `K~`,
 `|Y_s| ≤ L/(2ε)`, `|ξ_s|² ≤ (32/9) d log(1/δ_e)`, `a_s ≥ 1/2` and `q_s ≥ 1/4`. The closure: condition 3 at
 `τ`, from S-DF, the monotonicity of `P̄` and X8 (condition (d)). So conditions 2 and 3 hold at every round `s ≤ τ`, the
-update `P'` is positive definite with inverse `Σ'` and factor `A'` there (Lemma D.2), and the first two guards do not
+update `P'` is positive definite with inverse `Σ'` and factor `A'` there (the rank-one round lemma), and the first two
+guards do not
 act.
 -/
 
@@ -281,14 +282,14 @@ theorem c3_tau (H : DetHyp c δ π m) : c.C3 π (c.tau π m) := by
     have := mul_le_mul_of_nonneg_left hsum hek.le
     nlinarith
 
-/-! ### Conditions 2 and 3, and Lemma D.2, at every round up to `τ` -/
+/-! ### Conditions 2 and 3, and the rank-one round lemma, at every round up to `τ` -/
 
 theorem c3_le_tau (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) : c.C3 π s := by
   rcases lt_or_eq_of_le hs with h | h
   · exact (H.cond_lt_tau s h).2.2.1
   · rw [h]; exact H.c3_tau
 
-/-- Lemma D.2 at a round `s ≤ τ`: `P'` positive definite, `Σ' P' = 1`, `A' A'ᵀ = Σ'`, `A'` invertible. -/
+/-- The rank-one round lemma at a round `s ≤ τ`: `P'` positive definite, `Σ' P' = 1`, `A' A'ᵀ = Σ'`, `A'` invertible. -/
 theorem r1_le_tau (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) :
     (c.Pn π s).PosDef ∧ c.Sn π s * c.Pn π s = 1 ∧ c.An π s * (c.An π s)ᵀ = c.Sn π s ∧ (c.An π s).det ≠ 0 := by
   have hI := H.stInv_le_tau s hs

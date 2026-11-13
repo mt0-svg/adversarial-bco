@@ -13,13 +13,14 @@ public import AdversarialBco.Body2.Gauss2
 @[expose] public section
 
 /-!
-# Lemma F.1 and Proposition F.2: proofs
+# The Gaussian position lemma and the certificate proposition: proofs
 
 Proofs of the interface statements of `AdversarialBco/Poly/PosGauss.lean`. The leaves, then
-Proposition F.2 (a) (`propCa_main`, from
-the bathtub bound, integration by parts and the a.e. gauge derivative bounds), Lemma F.1 (`lemmaLOfMin_main`,
+the certificate proposition (a) (`propCa_main`, from
+the bathtub bound, integration by parts and the a.e. gauge derivative bounds), the Gaussian position lemma
+(`lemmaLOfMin_main`,
 `lemmaL_main`: a minimiser from `ec_min_exists`, `k = κ` by scaling, `b = 0` and `Q = (κ/d) I` from the first order
-conditions), the radii bound `lemmaLRadii_main`, and one assembly per interface `Prop`.
+conditions), the radii bound `lemmaLRadii_main`, and the assemblies.
 -/
 
 open AdversarialBco.Poly MeasureTheory ProbabilityTheory
@@ -2785,7 +2786,7 @@ theorem AdversarialBco.Poly.ibp_lip2 {d : ℕ} (F : EuclideanSpace ℝ (Fin d) �
   exact tendsto_nhds_unique hLeft hRight'
 
 
-/-! ## Proposition F.2 (a), Lemma F.1 and the assemblies -/
+/-! ## The certificate proposition (a), the Gaussian position lemma and the assemblies -/
 
 namespace AdversarialBco.Poly
 
@@ -2848,7 +2849,7 @@ theorem integrable_inner_gauss {d : ℕ} (v : EuclideanSpace ℝ (Fin d)) :
   have h := (integrable_moments (fun _ => (1 : ℝ)) 0 (LipschitzWith.const 1) v v).1
   simpa using h
 
-/-- Proposition F.2 (a), before the choice of the radius. -/
+/-- The certificate proposition (a), before the choice of the radius. -/
 theorem propCa_main : PropCa := by
   intro d K r0 α μ A hK hA q t y0 hy0 hQ y hy
   obtain ⟨hK0, hKc, ⟨Lπ, hπL⟩, hπc⟩ := posBody_facts hK
@@ -2962,7 +2963,7 @@ theorem posK_nonneg {d : ℕ} (K : Set (EuclideanSpace ℝ (Fin d))) (μ : Eucli
     (A : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) : 0 ≤ posK K μ A :=
   integral_nonneg fun _ => gauge_nonneg _
 
-/-- Proposition F.2 (a). -/
+/-- The certificate proposition (a). -/
 theorem propCaBound_main : PropCaBound := by
   intro d K r0 α μ A hK hA q t hq hQ h6 y hy
   obtain ⟨y0, hy0⟩ := exists_preimage_of_det A hA (-μ)
@@ -3045,7 +3046,7 @@ theorem lemmaLOfMin_main : LemmaLOfMin := by
     simp only [zero_add, ContinuousLinearMap.smulRight_apply, innerSL_apply_apply, map_smul, smul_eq_mul]
     rw [hg.2 w]
 
-/-- Lemma F.1: existence of the minimiser and its value forms. -/
+/-- The Gaussian position lemma: existence of the minimiser and its value forms. -/
 theorem lemmaL_main : LemmaL := by
   intro d hd K r0 α κ hK hκ
   obtain ⟨hK0, -, ⟨Lπ, hπL⟩, -⟩ := posBody_facts hK
@@ -3062,7 +3063,7 @@ theorem lemmaL_main : LemmaL := by
     (inv_pos.2 hR'pos) hcoer (κ / d) (div_pos hκ hdpos)
   exact ⟨μ, A, hA, fun μ' A' hA' => hmin μ' A' hA', lemmaLOfMin_main d hd K r0 α κ μ A hK hκ hA hmin⟩
 
-/-- Lemma F.1 (a) to (c) from Proposition F.2 at the value forms of the minimiser. -/
+/-- The Gaussian position lemma (a) to (c) from the certificate proposition at the value forms of the minimiser. -/
 theorem lemmaLRadii_main : LemmaLRadii := by
   intro d hd K r0 α κ μ A hK hA hκ hκ1 hk hb hQ
   have hdpos : (0 : ℝ) < d := by exact_mod_cast hd
@@ -3081,19 +3082,9 @@ theorem lemmaLRadii_main : LemmaLRadii := by
 
 /-! ## The statements of `AdversarialBco/Poly/PosGauss.lean` -/
 
-theorem gaussAbsCont : GaussAbsCont := gauss_abs_cont
-
-theorem gaussAeDiff : GaussAeDiff := gauss_ae_diff
-
 theorem ibpLip : IbpLip := fun _ F L hL hc v w => ⟨ibp_lip1 F L hL hc v, ibp_lip2 F L hL hc v w⟩
 
-theorem bathtubBound : BathtubBound := bathtub
-
-theorem bathCNonneg : BathCNonneg := bathC_nonneg
-
 theorem gaussConst : GaussConst := gauss_const
-
-theorem propCa : PropCa := propCa_main
 
 theorem propCaBound : PropCaBound := propCaBound_main
 

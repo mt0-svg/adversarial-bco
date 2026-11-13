@@ -5,15 +5,14 @@ Authors: mt0-svg
 -/
 module
 
-public import AdversarialBco.Body.Ramp
+public import AdversarialBco.Body.Basic
 
 @[expose] public section
 
 /-!
 # The standard Gaussian of `ℝ^d`
 
-Laws of linear forms, moments, Stein's identity for `ψ(⟨u, g⟩) H(g)` and in radial form, the mean of the ramp and
-the second moment of the score of Lemma 3.3.
+Laws of linear forms, moments, and Stein's identity for `ψ(⟨u, g⟩) H(g)` and in radial form.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -204,168 +203,6 @@ theorem AdversarialBco.Body.integral_inner_sq {d : ℕ} (u : EuclideanSpace ℝ 
     _ = ‖innerSL ℝ u‖ ^ 2 := h_var_norm
     _ = ‖u‖ ^ 2 := by rw [h_norm]
 
-
-theorem AdversarialBco.Body.integral_kr {d : ℕ} (u : EuclideanSpace ℝ (Fin d)) (hu : ‖u‖ = 1) :
-    ∫ g, AdversarialBco.Body.kr ⟪u, g⟫ ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) = 1 / 2 := by
-  let μ := stdGaussian (EuclideanSpace ℝ (Fin d))
-  let ν := gaussianReal (0 : ℝ) (1 : NNReal)
-  have hmeas : AEMeasurable (fun (g : EuclideanSpace ℝ (Fin d)) => ⟪u, g⟫) μ :=
-    (innerSL ℝ u).continuous.aemeasurable
-  have hkr_cont : Continuous AdversarialBco.Body.kr := by
-    unfold AdversarialBco.Body.kr
-    have h_chi_cont : Continuous AdversarialBco.Body.chi := by
-      unfold AdversarialBco.Body.chi
-      have h_num : Continuous (fun (t : ℝ) => (1 : ℝ)) := continuous_const
-      have h_denom : Continuous (fun (t : ℝ) => 4 * Real.sqrt (1 + t ^ 2)) := by
-        continuity
-      have h_ne_zero : ∀ x, 4 * Real.sqrt (1 + x ^ 2) ≠ 0 := by
-        intro x; positivity
-      exact h_num.div h_denom h_ne_zero
-    have h_chi'_cont : Continuous AdversarialBco.Body.chi' := by
-      unfold AdversarialBco.Body.chi'
-      have h_num : Continuous (fun (t : ℝ) => -t) := by continuity
-      have h_denom : Continuous (fun (t : ℝ) => 4 * ((1 + t ^ 2) * Real.sqrt (1 + t ^ 2))) := by
-        continuity
-      have h_ne_zero : ∀ x, 4 * ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2)) ≠ 0 := by
-        intro x; positivity
-      exact h_num.div h_denom h_ne_zero
-    have h_sum : Continuous (fun (t : ℝ) => (1/2 : ℝ) + t * AdversarialBco.Body.chi t) := by
-      continuity
-    exact h_sum.sub h_chi'_cont
-  have hkrae : AEStronglyMeasurable AdversarialBco.Body.kr (Measure.map (fun (g : EuclideanSpace ℝ (Fin d)) => ⟪u, g⟫) μ) :=
-    hkr_cont.aestronglyMeasurable
-  rw [← MeasureTheory.integral_map hmeas hkrae]
-  rw [AdversarialBco.Body.map_inner_stdGaussian u hu]
-  -- goal: ∫ x, AdversarialBco.Body.kr x ∂ν = 1 / 2
-  have hchi_cont : Continuous AdversarialBco.Body.chi := by
-    unfold AdversarialBco.Body.chi
-    have h_num : Continuous (fun (t : ℝ) => (1 : ℝ)) := continuous_const
-    have h_denom : Continuous (fun (t : ℝ) => 4 * Real.sqrt (1 + t ^ 2)) := by
-      continuity
-    have h_ne_zero : ∀ x, 4 * Real.sqrt (1 + x ^ 2) ≠ 0 := by
-      intro x; positivity
-    exact h_num.div h_denom h_ne_zero
-  have hchi'_cont : Continuous AdversarialBco.Body.chi' := by
-    unfold AdversarialBco.Body.chi'
-    have h_num : Continuous (fun (t : ℝ) => -t) := by continuity
-    have h_denom : Continuous (fun (t : ℝ) => 4 * ((1 + t ^ 2) * Real.sqrt (1 + t ^ 2))) := by
-      continuity
-    have h_ne_zero : ∀ x, 4 * ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2)) ≠ 0 := by
-      intro x; positivity
-    exact h_num.div h_denom h_ne_zero
-  have h_bound_chi : ∀ x, ‖AdversarialBco.Body.chi x‖ ≤ (1/4 : ℝ) := by
-    intro x
-    rw [Real.norm_eq_abs]
-    have hsqrt : 1 ≤ Real.sqrt (1 + x ^ 2) := by
-      calc
-        1 = Real.sqrt 1 := by norm_num
-        _ ≤ Real.sqrt (1 + x ^ 2) := Real.sqrt_le_sqrt (by nlinarith)
-    have hpos : 0 < AdversarialBco.Body.chi x := by
-      rw [AdversarialBco.Body.chi]
-      refine div_pos (by norm_num) ?_
-      positivity
-    rw [abs_of_pos hpos, AdversarialBco.Body.chi]
-    calc
-      1 / (4 * Real.sqrt (1 + x ^ 2)) ≤ 1 / 4 := by
-        refine (one_div_le_one_div ?_ ?_).mpr ?_
-        · positivity
-        · positivity
-        · nlinarith
-      _ = 1/4 := by norm_num
-  have h_int_chi : Integrable AdversarialBco.Body.chi ν := by
-    have h_norm : ‖(1/4 : ℝ)‖ = (1/4 : ℝ) := by norm_num
-    refine ((integrable_const (1/4 : ℝ)).mono
-      (hchi_cont.aestronglyMeasurable) ?_)
-    filter_upwards with x
-    have hx := h_bound_chi x
-    simpa [h_norm] using hx
-  have h_bound_chi' : ∀ x, ‖AdversarialBco.Body.chi' x‖ ≤ (1/4 : ℝ) := by
-    intro x
-    rw [Real.norm_eq_abs]
-    have hsqrt : 1 ≤ Real.sqrt (1 + x ^ 2) := by
-      calc
-        1 = Real.sqrt 1 := by norm_num
-        _ ≤ Real.sqrt (1 + x ^ 2) := Real.sqrt_le_sqrt (by nlinarith)
-    by_cases hx : 0 ≤ x
-    · have h_nonpos : AdversarialBco.Body.chi' x ≤ 0 := by
-        rw [AdversarialBco.Body.chi']
-        refine div_nonpos_of_nonpos_of_nonneg (by nlinarith) (by positivity)
-      rw [abs_of_nonpos h_nonpos, AdversarialBco.Body.chi', neg_div]
-      simp
-      have hx_bound : x ≤ (1 + x ^ 2) * Real.sqrt (1 + x ^ 2) := by
-        have hx' : x ≤ 1 + x ^ 2 := by nlinarith
-        nlinarith
-      have hposD : 0 ≤ 4 * ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2)) := by positivity
-      have htemp := div_le_div_of_nonneg_right hx_bound hposD
-      have hcalc : ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2)) / (4 * ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2))) = 1/4 := by
-        field_simp
-      rw [hcalc] at htemp
-      simpa using htemp
-    · have h_nonneg : 0 ≤ AdversarialBco.Body.chi' x := by
-        rw [AdversarialBco.Body.chi']
-        refine div_nonneg (by nlinarith) (by positivity)
-      rw [abs_of_nonneg h_nonneg, AdversarialBco.Body.chi']
-      have hx_bound : -x ≤ (1 + x ^ 2) * Real.sqrt (1 + x ^ 2) := by
-        have hx' : -x ≤ 1 + x ^ 2 := by nlinarith
-        nlinarith
-      have hposD : 0 ≤ 4 * ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2)) := by positivity
-      have htemp := div_le_div_of_nonneg_right hx_bound hposD
-      have hcalc : ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2)) / (4 * ((1 + x ^ 2) * Real.sqrt (1 + x ^ 2))) = 1/4 := by
-        field_simp
-      rw [hcalc] at htemp
-      simpa using htemp
-  have h_int_chi' : Integrable AdversarialBco.Body.chi' ν := by
-    have h_norm : ‖(1/4 : ℝ)‖ = (1/4 : ℝ) := by norm_num
-    refine ((integrable_const (1/4 : ℝ)).mono
-      (hchi'_cont.aestronglyMeasurable) ?_)
-    filter_upwards with x
-    have hx := h_bound_chi' x
-    simpa [h_norm] using hx
-  have h_bound_xchi : ∀ x, ‖x * AdversarialBco.Body.chi x‖ ≤ (1/4 : ℝ) := by
-    intro x
-    rw [Real.norm_eq_abs, abs_mul]
-    have hx_bound : |x| ≤ Real.sqrt (1 + x ^ 2) := by
-      have hx_sq : x ^ 2 ≤ 1 + x ^ 2 := by nlinarith
-      calc
-        |x| = Real.sqrt (x ^ 2) := by rw [Real.sqrt_sq_eq_abs]
-        _ ≤ Real.sqrt (1 + x ^ 2) := Real.sqrt_le_sqrt hx_sq
-    rw [AdversarialBco.Body.chi]
-    have hpos : 0 < 1 / (4 * Real.sqrt (1 + x ^ 2)) :=
-      div_pos (by norm_num) (by positivity)
-    calc
-      |x| * |1 / (4 * Real.sqrt (1 + x ^ 2))| =
-          |x| * (1 / (4 * Real.sqrt (1 + x ^ 2))) := by rw [abs_of_pos hpos]
-      _ ≤ Real.sqrt (1 + x ^ 2) * (1 / (4 * Real.sqrt (1 + x ^ 2))) := by
-        refine mul_le_mul_of_nonneg_right hx_bound (by positivity)
-      _ = 1/4 := by
-        field_simp
-  have h_int_xchi : Integrable (fun x => x * AdversarialBco.Body.chi x) ν := by
-    have h_norm : ‖(1/4 : ℝ)‖ = (1/4 : ℝ) := by norm_num
-    refine ((integrable_const (1/4 : ℝ)).mono
-      ((continuous_id.mul hchi_cont).aestronglyMeasurable) ?_)
-    filter_upwards with x
-    have hx := h_bound_xchi x
-    simpa [h_norm] using hx
-  have h_gibp := AdversarialBco.gaussian_ibp_1d AdversarialBco.Body.chi AdversarialBco.Body.chi'
-    AdversarialBco.Body.hasDerivAt_chi h_int_xchi h_int_chi' h_int_chi
-  -- h_gibp: ∫ x, x * chi x ∂ν = ∫ x, chi' x ∂ν
-  unfold AdversarialBco.Body.kr
-  -- goal: ∫ x, (1/2 + x * chi x - chi' x) ∂ν = 1/2
-  have h_int_sum : Integrable (fun x => (1/2 : ℝ) + x * AdversarialBco.Body.chi x) ν :=
-    (integrable_const (1/2 : ℝ)).add h_int_xchi
-  rw [integral_sub h_int_sum h_int_chi']
-  -- goal: (∫ x, (1/2 + x*chi x) ∂ν) - (∫ x, chi' x ∂ν) = 1/2
-  rw [integral_add (integrable_const (1/2 : ℝ)) h_int_xchi]
-  -- goal: (∫ x, 1/2 ∂ν + ∫ x, x*chi x ∂ν) - ∫ x, chi' x ∂ν = 1/2
-  have h_int_const : ∫ x, (1/2 : ℝ) ∂ν = (1/2 : ℝ) := by
-    rw [integral_const]
-    have h_univ : ν.real Set.univ = 1 := MeasureTheory.probReal_univ
-    simp [h_univ]
-  rw [h_int_const]
-  -- goal: (1/2 + ∫ x, x*chi x ∂ν) - ∫ x, chi' x ∂ν = 1/2
-  rw [h_gibp]
-  -- goal: (1/2 + ∫ x, chi' x ∂ν) - ∫ x, chi' x ∂ν = 1/2
-  ring
 
 namespace AdversarialBco.Body
 

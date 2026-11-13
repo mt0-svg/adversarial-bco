@@ -10,9 +10,9 @@ public import Mathlib
 @[expose] public section
 
 /-!
-# Lemma D.14, the restart wrapper: definitions and interface statement
+# The restart-wrapper lemma, the restart wrapper: definitions and interface statement
 
-Interface: Lemma D.14, deterministic and
+Interface: the restart-wrapper lemma, deterministic and
 learner-free. Rounds `1, ..., τ` carry convex functions `s u` on a convex set `Keps` and reals `σ u`;
 `S t = ∑_{u ∈ [1, t]} s u`, `sReg t x = ∑_{u ∈ [1, t]} σ u - S t x`, and `xs t` minimises `S t` on `Keps`. With the
 regions `Kτ1 ⊆ Kτ ⊆ Keps`, the bonus `β`, the quantity `E`, the test outcome `Fire` and the constants `A₁, A₂, A₅, κs,
@@ -38,7 +38,7 @@ def wrapS {E : Type*} (s : ℕ → E → ℝ) (t : ℕ) (x : E) : ℝ :=
 def wrapReg {E : Type*} (s : ℕ → E → ℝ) (σ : ℕ → ℝ) (t : ℕ) (x : E) : ℝ :=
   ∑ u ∈ Finset.Icc 1 t, σ u - wrapS s t x
 
-/-- Lemma D.14. -/
+/-- The restart-wrapper lemma. -/
 def LemmaW : Prop :=
   ∀ (E : Type) [NormedAddCommGroup E] [NormedSpace ℝ E] (Keps Kτ Kτ1 : Set E) (τ : ℕ) (s : ℕ → E → ℝ)
     (σ : ℕ → ℝ) (xs : ℕ → E) (β : E → ℝ) (Ereg A₁ A₂ A₅ κs κc b : ℝ) (Fire : Prop),

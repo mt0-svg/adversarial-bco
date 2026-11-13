@@ -13,17 +13,18 @@ public import Mathlib
 # The dent: Lemma D
 
 The dent is the lower convex hull of a bowl `q` and of the point `(θ, 0)`. Everything here is on a real inner product
-space `V` (the game uses `V = ℝ^d`); the metric of Section 9, `|v|_M = (vᵀ M v)^{1/2}`, is `‖A v‖` for the square root
+space `V` (the game uses `V = ℝ^d`); the metric of the section on the lower bound, `|v|_M = (vᵀ M v)^{1/2}`, is `‖A v‖`
+for the square root
 `A = M^{1/2}` (`AdversarialBco.Lower.frameA` in Frame.lean), and `⟨u, v⟩_M = ⟪A u, A v⟫`.
 
 * `hull q θ x = inf_{λ ∈ (0, 1]} λ q(θ + (x - θ)/λ)`: for `q ≥ 0` this is the
   `inf {λ q(y) : λ ∈ [0, 1], x = θ + λ (y - θ)}` (at `x = θ` both are `0`).
 * `huber r₁ ε`: the profile `φ`; `bowl A m κ ε r₁ x = κ φ(|x - m|_M)`; `dent = hull ∘ bowl`.
-* `hq`, `rho`, `devq`, `readT`, `hgen`: the `h`, `ρ`, `dev`, `T`, `hgen` of Section 9.
+* `hq`, `rho`, `devq`, `readT`, `hgen`: the `h`, `ρ`, `dev`, `T`, `hgen` of the section on the lower bound.
 
 Statements: Lemma D (a) `dent_convexOn`, `dent_nonneg`, `dent_le_bowl`, `dent_self`; (b) `dent_lipschitz`;
 (c) `dent_closed_form`, `devq_bounds`, `dent_closed_form_bound`; (d) `dent_tangent`; (d1) `hgen_le_two_k`;
-(d2) `hgen_tail`; the infimum over rational `λ` (`dent_eq_iInf_rat`, for Lemma 9.3).
+(d2) `hgen_tail`; the infimum over rational `λ` (`dent_eq_iInf_rat`, for the measurability lemma of the lower bound).
 -/
 
 open scoped RealInnerProductSpace
@@ -1489,7 +1490,7 @@ theorem hgen_tail {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] (
   rw [h_inner]
   exact d2_scalar k r₁ ‖A (x - m)‖ (readT A m θ x) hk hr (norm_nonneg _) hT
 
-/-- The dent as an infimum over rational `λ ∈ (0, 1]` (Lemma 9.3). -/
+/-- The dent as an infimum over rational `λ ∈ (0, 1]` (the measurability lemma of the lower bound). -/
 theorem dent_eq_iInf_rat {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V] (A : V →L[ℝ] V)
     (m : V) (κ ε r₁ : ℝ) (hκ : 0 ≤ κ) (hε : 0 ≤ ε) (hr : 0 ≤ r₁) (θ x : V) :
     dent A m κ ε r₁ θ x = ⨅ r : {r : ℚ // 0 < r ∧ r ≤ 1},

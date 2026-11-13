@@ -1,0 +1,8 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeConj1LowerPoly",
+  "solution_module": "AdversarialBco.Conj1LowerPoly.Main",
+  "theorem_names": ["AdversarialBco.theoremConj1LowerPoly_holds", "AdversarialBco.Lower.Sanity.constLearner_mem_of_mem", "AdversarialBco.Lower.Sanity.zeroStrat_fails_of_nonempty"],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

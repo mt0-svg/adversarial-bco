@@ -10,12 +10,12 @@ public import AdversarialBco.Body.Basic
 @[expose] public section
 
 /-!
-# Smooth convex approximation for Proposition 2.2
+# Smooth convex approximation
 
-`smooth_convex`: a convex `L`-Lipschitz function on `ℝ^d` is
-uniformly approximated, within `ε`, by a convex `L`-Lipschitz `C^2` function with Lipschitz gradient. Mollification by
-a normed bump of radius `ε / (L + 1)`; the derivative of the convolution is the convolution with the derivative of the
-bump, which gives the Lipschitz constant `L ∫ ‖Dψ‖` of the gradient. Used by the transfer half of Proposition 2.2.
+`smooth_convex`: a convex `L`-Lipschitz function on `ℝ^d` is uniformly approximated, within `ε`, by a convex
+`L`-Lipschitz `C^2` function with Lipschitz gradient. Mollification by a normed bump of radius `ε / (L + 1)`; the
+derivative of the convolution is the convolution with the derivative of the bump, which gives the Lipschitz constant
+`L ∫ ‖Dψ‖` of the gradient. Used by the proofs of the Gaussian position lemma and of the lemmas of Procedure PG.
 -/
 
 open MeasureTheory ProbabilityTheory

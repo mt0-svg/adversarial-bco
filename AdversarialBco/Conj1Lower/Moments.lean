@@ -14,7 +14,8 @@ public import Mathlib.Analysis.Matrix.Order
 /-!
 # Moments of a law on `ℝ^d` and the prior
 
-For Section 9 of the paper: the frame reads the mean and the covariance of the law of the tip; the ledger
+For the paper's section on the lower bound: the frame reads the mean and the covariance of the law of the tip; the
+ledger
 `Λ(π) = (1/2) ln det(Σ(π) + w² I)` and the cell moments `S_c`; the prior, uniform on `r₀ B^d`.
 
 * `meanV π = ∫ θ dπ`; `secMom π m = ∫ (θ - m)(θ - m)ᵀ dπ` (the second moment about the point `m`, as a matrix;

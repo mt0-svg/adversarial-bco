@@ -10,13 +10,14 @@ public import Mathlib
 @[expose] public section
 
 /-!
-# DF2, Lemma D.2: the rank-one updates of one round (interface)
+# DF2, the rank-one round lemma: the rank-one updates of one round (interface)
 
-Interface of Lemma D.2: the update `P' = a P + c u uᵀ` of the precision, its inverse
+Interface of the rank-one round lemma: the update `P' = a P + c u uᵀ` of the precision, its inverse
 `Σ' = (Σ - (c/q) w wᵀ)/a` and its factor `A' = a^{-1/2} (A - c' w ξᵀ)`, written in coordinates (`Matrix (Fin d) (Fin d) ℝ`,
 vectors `Fin d → ℝ`). Pure algebra: no probability, no other file of the project.
 
-Notation of Appendix D: `P` positive definite, `A Aᵀ = Σ = P⁻¹`, `ξ ∈ ℝ^d`, `w = A ξ`, `u = P w`, `c ∈ ℝ`, `a = 1 - c`,
+Notation of the appendix on one epoch of the online Newton method: `P` positive definite, `A Aᵀ = Σ = P⁻¹`, `ξ ∈ ℝ^d`,
+`w = A ξ`, `u = P w`, `c ∈ ℝ`, `a = 1 - c`,
 `q = a + c |ξ|²`, `P' = a P + c u uᵀ`, `c' = (c/q)/(1 + (a/q)^{1/2})`, `κ₀ = (1 - λ)^{-2}`, `ĝ = Y u/(1 - λ)`.
 
 * `LemmaR1i`: `Aᵀ u = ξ` (that is `u = A^{-T} ξ`), `Σ u = w`, `⟨u, w⟩ = |ξ|²`,
@@ -64,11 +65,11 @@ noncomputable def r1C' {d : ℕ} (c : ℝ) (ξ : Fin d → ℝ) : ℝ :=
 noncomputable def r1A' {d : ℕ} (A : Matrix (Fin d) (Fin d) ℝ) (ξ : Fin d → ℝ) (c : ℝ) : Matrix (Fin d) (Fin d) ℝ :=
   (Real.sqrt (1 - c))⁻¹ • (A - r1C' c ξ • vecMulVec (r1W A ξ) ξ)
 
-/-- The standing hypotheses of Lemma D.2: `P` positive definite and `A Aᵀ = Σ = P⁻¹`. -/
+/-- The standing hypotheses of the rank-one round lemma: `P` positive definite and `A Aᵀ = Σ = P⁻¹`. -/
 def R1Hyp {d : ℕ} (P S A : Matrix (Fin d) (Fin d) ℝ) : Prop :=
   P.PosDef ∧ A * Aᵀ = S ∧ S * P = 1
 
-/-- Lemma D.2 (i). -/
+/-- The rank-one round lemma (i). -/
 def LemmaR1i : Prop :=
   ∀ (d : ℕ) (P S A : Matrix (Fin d) (Fin d) ℝ) (ξ : Fin d → ℝ) (c : ℝ), R1Hyp P S A →
     Aᵀ *ᵥ r1U P A ξ = ξ ∧ S *ᵥ r1U P A ξ = r1W A ξ ∧ r1U P A ξ ⬝ᵥ r1W A ξ = ξ ⬝ᵥ ξ ∧
@@ -76,19 +77,20 @@ def LemmaR1i : Prop :=
       (0 < 1 - c → 0 < r1Q c ξ → (r1P' P A ξ c).PosDef) ∧
       (1 ≤ d → (r1P' P A ξ c).det = (1 - c) ^ (d - 1) * r1Q c ξ * P.det)
 
-/-- Lemma D.2 (ii): `Σ'` is the inverse of `P'`. -/
+/-- The rank-one round lemma (ii): `Σ'` is the inverse of `P'`. -/
 def LemmaR1ii : Prop :=
   ∀ (d : ℕ) (P S A : Matrix (Fin d) (Fin d) ℝ) (ξ : Fin d → ℝ) (c : ℝ), R1Hyp P S A →
     0 < 1 - c → 0 < r1Q c ξ → r1S' S A ξ c * r1P' P A ξ c = 1 ∧ r1P' P A ξ c * r1S' S A ξ c = 1
 
-/-- Lemma D.2 (iii): `c'` solves `c'² |ξ|² - 2 c' + c/q = 0`, and `A'` is an invertible factor of `Σ'`. -/
+/-- The rank-one round lemma (iii): `c'` solves `c'² |ξ|² - 2 c' + c/q = 0`, and `A'` is an invertible factor of
+`Σ'`. -/
 def LemmaR1iii : Prop :=
   ∀ (d : ℕ) (P S A : Matrix (Fin d) (Fin d) ℝ) (ξ : Fin d → ℝ) (c : ℝ), R1Hyp P S A →
     0 < 1 - c → 0 < r1Q c ξ →
       r1C' c ξ ^ 2 * (ξ ⬝ᵥ ξ) - 2 * r1C' c ξ + c / r1Q c ξ = 0 ∧
         r1A' A ξ c * (r1A' A ξ c)ᵀ = r1S' S A ξ c ∧ (r1A' A ξ c).det ≠ 0
 
-/-- Lemma D.2 (iv): the Newton step and the size of the gradient estimate `ĝ = Y u/(1 - λ)` in `Σ'`. -/
+/-- The rank-one round lemma (iv): the Newton step and the size of the gradient estimate `ĝ = Y u/(1 - λ)` in `Σ'`. -/
 def LemmaR1iv : Prop :=
   ∀ (d : ℕ) (P S A : Matrix (Fin d) (Fin d) ℝ) (ξ : Fin d → ℝ) (c Y l : ℝ), R1Hyp P S A →
     0 < 1 - c → 0 < r1Q c ξ → l ≠ 1 →
@@ -96,7 +98,7 @@ def LemmaR1iv : Prop :=
         ((Y / (1 - l)) • r1U P A ξ) ⬝ᵥ (r1S' S A ξ c *ᵥ ((Y / (1 - l)) • r1U P A ξ)) =
           ((1 - l) ^ 2)⁻¹ * Y ^ 2 * (ξ ⬝ᵥ ξ) / r1Q c ξ
 
-/-- Lemma D.2 (v): the traces. -/
+/-- The rank-one round lemma (v): the traces. -/
 def LemmaR1v : Prop :=
   ∀ (d : ℕ) (P S A : Matrix (Fin d) (Fin d) ℝ) (ξ : Fin d → ℝ) (c : ℝ), R1Hyp P S A →
     (r1P' P A ξ c).trace = (1 - c) * P.trace + c * (r1U P A ξ ⬝ᵥ r1U P A ξ) ∧

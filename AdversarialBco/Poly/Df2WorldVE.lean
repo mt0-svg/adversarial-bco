@@ -12,18 +12,18 @@ public import AdversarialBco.Poly.PgProcBase
 @[expose] public section
 
 /-!
-# Lemma 8.8 on the world
+# The instance of an epoch on the world
 
-`df2VEWorldOf_holds : Df2VEWorldOf`. For a start round `a < n`, the world with the filtration `𝒢w` of
-Df2WorldLay.lean is an instance of setting (E) (`setE_world`) with the position as parameter. The body of the
-instance at a position `q` is `kTh q = K~ ∩ B_R` when `q` meets `PgGood`, else `B_R`; its losses are
-`f_{a+s}(S⁻¹ ·)/2`, else `0`. On the case of the analysis the context and the path of the instance are those of
-D0 (`df2zCtx`, `df2zPath`) at the rounds `s < n - a`, and the epoch reads no other round (`ctx_epochOK_congr`).
-
-(L1) for the instance (`epochMeas_world`) comes from `Df2ApCallMeas` and `PgGoodMeas` alone: the gauge of a family
-of convex bodies containing `B̄(0, 1)` is measurable once membership is (`gauge_family_measurable`); the extension
-reads the loss at `x/pip(x)`, of gauge at most `1 - ε`, so inside the body, whose image under `S⁻¹` lies in the
-interior of `K` (`play_interior`), where a convex loss agrees with the measurable `(interior K).piecewise f 0`.
+* Locality: the modes of an epoch and the event `EpochOK` at the horizon `m` read the rounds `s < m` of the path only
+  (`ctx_mode_congr`, `ctx_epochOK_congr`).
+* The body of the instance at a position `q` is `kTh q = K~ ∩ B_R` when `q` meets `PgGood`, else `B_R`; its losses
+  are `gTh`, `f_{a+s}(S⁻¹ ·)/2`, else `0`. The body is a body of the analysis (`body_kTh`) and its losses are
+  admissible (`adm_gTh`).
+* Toward (L1) for the instance: membership in `kTh q` is jointly measurable in `(q, y)` (`mem_kTh_meas`), hence so is
+  its gauge (`gauge_kTh_meas`, from `gauge_family_measurable`); the extension reads the loss at `x/pip(x)`, of gauge at
+  most `1 - ε`, so inside the body, whose image under `S⁻¹` lies in the interior of `K` (`play_interior`), where a
+  convex loss agrees with the measurable `(interior K).piecewise f 0` (`measurable_piecewise_interior`).
+* `eps_pos_of_rows`: the rows give `ε > 0`.
 -/
 
 open MeasureTheory ProbabilityTheory Matrix
@@ -219,113 +219,7 @@ theorem measurable_piecewise_interior {K : Set (E d)} {g : E d → ℝ} (hg : Co
   exact ContinuousOn.measurable_piecewise hg.continuousOn_interior continuousOn_const
     isOpen_interior.measurableSet
 
-theorem ext_kTh_meas {n : ℕ} {δ : ℝ} {K : Set (E d)} (hKc : IsClosed K) (hKconv : Convex ℝ K)
-    (hG : PgGoodMeas) (hR : 1 ≤ (df2oPar d n δ).R) (hmw : 1 / (df2oPar d n δ).R ≤ df2Mw d)
-    (heps0 : 0 < (df2oPar d n δ).eps) (heps1 : (df2oPar d n δ).eps < 1) {f : ℕ → E d → ℝ} {a s : ℕ}
-    (hf : ConvexOn ℝ K (f (a + s))) :
-    Measurable fun p : PgSp d × E d => df2Ext (df2oPar d n δ) (kTh n δ K p.1) (gTh n δ K f a s p.1) p.2 := by
-  classical
-  set P : PgSp d × E d → ℝ := fun p => df2Pip (df2oPar d n δ) (kTh n δ K p.1) p.2 with hPdef
-  have hP : Measurable P :=
-    measurable_const.max ((gauge_kTh_meas hKc hKconv hG hR hmw).div_const _)
-  set F := (interior K).piecewise (f (a + s)) 0
-  have hF : Measurable F := measurable_piecewise_interior hf
-  have hGs : MeasurableSet {p : PgSp d × E d | PgGood d K (df2oPar d n δ).R (some p.1)} :=
-    measurable_fst (hG d K _ hKconv hKc)
-  have hpt : Measurable fun p : PgSp d × E d => pgMu p.1 + pgOp p.1 ((P p)⁻¹ • p.2) :=
-    (pg_continuous d).2.2.measurable.comp (measurable_fst.prodMk (hP.inv.smul measurable_snd))
-  have heq : (fun p : PgSp d × E d => df2Ext (df2oPar d n δ) (kTh n δ K p.1) (gTh n δ K f a s p.1) p.2) =
-      fun p => P p * (if PgGood d K (df2oPar d n δ).R (some p.1) then F (pgMu p.1 + pgOp p.1 ((P p)⁻¹ • p.2)) / 2 else 0) +
-        2 * (P p - 1) / (df2oPar d n δ).eps := by
-    funext p
-    by_cases hq : PgGood d K (df2oPar d n δ).R (some p.1)
-    · have hin := play_interior hKconv hq heps0 heps1 p.2
-      have hk := kTh_good (n := n) (δ := δ) hq
-      simp only [hPdef, hk, df2Ext, gTh, hq, ↓reduceIte, F]
-      rw [Set.piecewise_eq_of_mem _ _ _ hin]
-    · simp [df2Ext, hPdef, gTh, hq]
-  rw [heq]
-  exact (hP.mul (Measurable.ite hGs ((hF.comp hpt).div_const 2) measurable_const)).add
-    (((hP.sub measurable_const).const_mul 2).div_const _)
-
-theorem next_kTh_meas {n : ℕ} {δ : ℝ} {K : Set (E d)} (hd : 1 ≤ d) (hKc : IsClosed K) (hKconv : Convex ℝ K)
-    (hG : PgGoodMeas) (hAp : Df2ApCallMeas) :
-    Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
-      df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (kTh n δ K x.1) (df2oPar d n δ).eps) x.2.1 x.2.2.1
-        (x.2.1.A *ᵥ x.2.2.1) x.2.2.2 := by
-  classical
-  have h1 := hAp d n δ K hd hKc hKconv
-  have h2 := (hAp d n δ Set.univ hd isClosed_univ convex_univ).comp
-    (measurable_const.prodMk measurable_snd : Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
-      ((0 : PgSp d), x.2))
-  have heq : (fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
-      df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (kTh n δ K x.1) (df2oPar d n δ).eps) x.2.1 x.2.2.1
-        (x.2.1.A *ᵥ x.2.2.1) x.2.2.2) = fun x =>
-      if PgGood d K (df2oPar d n δ).R (some x.1) then
-        df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (df2Kp K x.1 (df2oPar d n δ).R) (df2oPar d n δ).eps) x.2.1
-          x.2.2.1 (x.2.1.A *ᵥ x.2.2.1) x.2.2.2
-      else df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (df2Kp Set.univ 0 (df2oPar d n δ).R)
-          (df2oPar d n δ).eps) x.2.1 x.2.2.1 (x.2.1.A *ᵥ x.2.2.1) x.2.2.2 := by
-    funext x
-    by_cases hq : PgGood d K (df2oPar d n δ).R (some x.1) <;> simp [kTh, hq]
-  rw [heq]
-  exact Measurable.ite (measurable_fst (hG d K _ hKconv hKc)) h1 h2
-
-/-- (L1) for the instance of the world. -/
-theorem epochMeas_world {n : ℕ} {δ : ℝ} {K : Set (E d)} (hd : 1 ≤ d) (hKc : IsClosed K) (hKconv : Convex ℝ K)
-    (hG : PgGoodMeas) (hAp : Df2ApCallMeas) (hR : 1 ≤ (df2oPar d n δ).R)
-    (hmw : 1 / (df2oPar d n δ).R ≤ df2Mw d) (heps0 : 0 < (df2oPar d n δ).eps) (heps1 : (df2oPar d n δ).eps < 1)
-    {f : ℕ → E d → ℝ} (hf : f ∈ Advs K n) (a : ℕ) :
-    Df2EpochMeas (df2oPar d n δ) n (n - a) (kTh n δ K) (fun s => gTh n δ K f a s) apCall :=
-  ⟨gauge_kTh_meas hKc hKconv hG hR hmw,
-    fun s hs => ext_kTh_meas hKc hKconv hG hR hmw heps0 heps1 (hf (a + s) (by omega)).1,
-    next_kTh_meas hd hKc hKconv hG hAp⟩
-
 /-! ## The position as parameter -/
-
-theorem measurable_pi_gen {Ω ι : Type*} {β : ι → Type*} [∀ i, MeasurableSpace (β i)] {m : MeasurableSpace Ω}
-    {g : Ω → ∀ i, β i} (h : ∀ i, Measurable[m] fun x => g x i) : Measurable[m] g :=
-  measurable_pi_iff.mpr h
-
-/-- The stream of PG is measurable before round `0` of every instance: PG never reads the indices of `lay`. -/
-theorem omega_meas_𝒢w (n : ℕ) (r0 R0 δ1 : ℝ) (a : ℕ) :
-    Measurable[𝒢w (df2oN0 d r0 R0 δ1) (df2oSpare d n r0 R0 δ1) n d a 0]
-      fun ω : WΩ => df2oOmega d n r0 R0 δ1 ω.1 := by
-  have hW : ∀ i, df2oPgW d (df2oPgDelta r0 R0 δ1) i = pgNs d (pgRhoStage d i) +
-      pgMT (df2oPgDelta r0 R0 δ1) * pgNT d (pgRhoStage d i) := fun _ => rfl
-  have hN0 : df2oN0 d r0 R0 δ1 =
-      mrOff (pgJr (df2oPgDelta r0 R0 δ1)) d (df2oPgW d (df2oPgDelta r0 R0 δ1)) (pgStages r0 R0) := rfl
-  have hS : df2oSpare d n r0 R0 δ1 = mrOff (pgJr (df2oPgDelta r0 R0 δ1)) d (df2oPgW d (df2oPgDelta r0 R0 δ1))
-      (pgStages r0 R0) + n * (d + 1) := rfl
-  have hA : ∀ i r k (c : Fin d), gσ (df2oIdxA d n r0 R0 δ1 i r k c) ≤
-      𝒢w (df2oN0 d r0 R0 δ1) (df2oSpare d n r0 R0 δ1) n d a 0 := fun i r k c =>
-    gσ_le_𝒢w _ _ _ _ 0 _ (by
-      rintro ⟨s', _, c', h⟩
-      rw [idxA_eq, hN0] at h
-      exact mrA_ne_lay _ _ _ _ _ _ _ _ _ hW hS i r k c a s' c' h.symm)
-  have hT : ∀ i r v k (c : Fin d), gσ (df2oIdxT d n r0 R0 δ1 i r v k c) ≤
-      𝒢w (df2oN0 d r0 R0 δ1) (df2oSpare d n r0 R0 δ1) n d a 0 := fun i r v k c =>
-    gσ_le_𝒢w _ _ _ _ 0 _ (by
-      rintro ⟨s', _, c', h⟩
-      rw [idxT_eq, hN0] at h
-      exact mrT_ne_lay _ _ _ _ _ _ _ _ _ hW hS i r v k c a s' c' h.symm)
-  unfold df2oOmega
-  refine measurable_pi_gen fun i => measurable_pi_gen fun r => Measurable.prodMk
-    (measurable_pi_gen fun k => ?_) (measurable_pi_gen fun v => measurable_pi_gen fun k => ?_)
-  · exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_of fun c => meas_coord _ (hA i r k c))
-  · exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_of fun c => meas_coord _ (hT i r v k c))
-
-theorem theta_meas (hPG : PgMeas) {n : ℕ} {r0 R0 δ : ℝ} {K : Set (E d)} (hKc : IsClosed K) (f : ℕ → E d → ℝ)
-    (a : ℕ) : Measurable[𝒢w (df2oN0 d r0 R0 (df2oPar d n δ).δ1) (df2oSpare d n r0 R0 (df2oPar d n δ).δ1) n d a 0]
-      fun ω : WΩ => df2oPs d n r0 R0 δ (df2World K f ω) :=
-  (hPG d K r0 R0 (df2oPar d n δ).δ1 hKc).2.comp (omega_meas_𝒢w n r0 R0 (df2oPar d n δ).δ1 a)
-
-theorem case_good {n : ℕ} {r0 R0 δ : ℝ} {w : World d} (h : Df2Case d n r0 R0 δ w) :
-    PgGood d w.K (df2oPar d n δ).R (some (df2oPs d n r0 R0 δ w)) := by
-  obtain ⟨P, hP, hrest⟩ := h.1
-  have : df2oPs d n r0 R0 δ w = P := by simp [df2oPs, hP]
-  rw [this]
-  exact ⟨P, rfl, hrest⟩
 
 theorem eps_pos_of_rows {p : Df2OPar} {d n : ℕ} (H : RowHyp p d n) : 0 < p.eps := by
   rw [H.eps]
@@ -333,48 +227,6 @@ theorem eps_pos_of_rows {p : Df2OPar} {d n : ℕ} (H : RowHyp p d n) : 0 < p.eps
   have hd' : (0 : ℝ) < d := by exact_mod_cast H.hd
   have hn' : 0 < Real.sqrt n := Real.sqrt_pos.mpr (by exact_mod_cast H.hn)
   positivity
-
-/-! ## Lemma 8.8 on the world -/
-
-/-- `Df2VEWorldOf`: each virtual epoch of D0 is an instance of setting (E), so E1-loc bounds it. -/
-theorem df2VEWorldOf_holds : Df2VEWorldOf := by
-  intro E1 PAP PGM PGG APM d n r0 R0 δ K f hW ν hν a ha
-  obtain ⟨hd, hn, _, _, hδ0, hδ1, hKcpt, hKconv, _, _, hf⟩ := hW
-  have hKc := hKcpt.isClosed
-  have := hν.1
-  by_cases heps : (df2oPar d n δ).eps ≤ 1 / 2
-  swap
-  · exact (measure_mono (show _ ⊆ (∅ : Set WΩ) from fun ω hω => heps hω.1.2)).trans (by simp)
-  have H := rowHyp_of d n δ hd hn hδ0 hδ1 heps
-  have hR := row_one_le_R _ d n H
-  have hmw : 1 / (df2oPar d n δ).R ≤ df2Mw d := by rw [H.R]; exact inv_R_le_df2Mw d hd
-  have heps0 := eps_pos_of_rows H
-  have heps1 : (df2oPar d n δ).eps < 1 := by linarith
-  have hAp : ApSpec (d := d) apCall := fun Q a0 r R P w e =>
-    ⟨fun h1 h2 h3 h4 h5 h6 h7 => (PAP d Q a0 r R P w e).1 hd h1 h2 h3 h4 h5 h6 h7, (PAP d Q a0 r R P w e).2⟩
-  have hB := E1 d n (n - a) δ hd hn (by omega) (by omega) hδ0 hδ1 heps (PgSp d) (kTh n δ K)
-    (fun s => gTh n δ K f a s) apCall (body_kTh hKc hKconv hR hmw)
-    (fun q s hs => adm_gTh hKconv hKc hR hmw (hf (a + s) (by omega)) q) hAp
-    (epochMeas_world hd hKc hKconv PGG APM hR hmw heps0 heps1 hf a) WΩ (gaussStream.prod ν) inferInstance
-    (𝒢w (df2oN0 d r0 R0 (df2oPar d n δ).δ1) (df2oSpare d n r0 R0 (df2oPar d n δ).δ1) n d a)
-    (fun ω => df2oPs d n r0 R0 δ (df2World K f ω))
-    (xiL (df2oN0 d r0 R0 (df2oPar d n δ).δ1) (df2oSpare d n r0 R0 (df2oPar d n δ).δ1) n d a)
-    (eL (df2oN0 d r0 R0 (df2oPar d n δ).δ1) (df2oSpare d n r0 R0 (df2oPar d n δ).δ1) n d a)
-    (theta_meas PGM hKc f a) (setE_world _ _ n a lemmaNZProd ν hν le_rfl)
-  refine (measure_mono fun ω hω => ?_).trans hB
-  obtain ⟨hcase, hnot⟩ := hω
-  have hgood : PgGood d K (df2oPar d n δ).R (some (df2oPs d n r0 R0 δ (df2World K f ω))) := case_good hcase
-  simp only [Set.mem_ofPred_eq]
-  rw [kTh_good hgood]
-  refine fun hok => hnot ((ctx_epochOK_congr _ _ (df2zPath d n r0 R0 δ (df2World K f ω) a) (n - a) (by omega)
-    fun s hs => ⟨?_, ?_, ?_⟩).mp hok)
-  · simp only [gTh, hgood, ↓reduceIte]
-    rfl
-  · have hlt : a + s < n := by omega
-    simp [eL, lay, hlt, df2zPath, df2oZeta, df2World]
-  · have hlt : a + s < n := by omega
-    funext c
-    simp [xiL, lay, hlt, df2zPath, df2oXi, df2World]
 
 end Layer2
 

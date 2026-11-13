@@ -16,7 +16,7 @@ public import AdversarialBco.Poly.PgLemmasProof
 Matrix and convexity lemmas read by the proof of DET (`Df2DetMain.lean`), stated on their own data: the quadratic
 form `df2Sq`, the Loewner order through `PosSemidef`, the quadratic `df2Phi` and its update, the approximate
 projection with its Pythagorean defect, the identity of the statistic of the test, the Hessian of a convex `C²`
-function, the concavity of `log det`, Lemma D.16 with one quadratic, the play inside the body.
+function, the concavity of `log det`, the lemma of a ball under quadratics with one quadratic, the play inside the body.
 -/
 
 open Matrix
@@ -49,12 +49,6 @@ theorem sq_sum {ι : Type*} (s : Finset ι) (P : ι → Matrix (Fin d) (Fin d) �
   induction s using Finset.induction_on with
   | empty => simp [sq_zero]
   | insert a s ha ih => rw [Finset.sum_insert ha, Finset.sum_insert ha, sq_add, ih]
-
-theorem sq_neg (P : Matrix (Fin d) (Fin d) ℝ) (v : Fin d → ℝ) : df2Sq P (-v) = df2Sq P v := by
-  simp [df2Sq, Matrix.mulVec_neg]
-
-theorem sq_sub_comm (P : Matrix (Fin d) (Fin d) ℝ) (a b : Fin d → ℝ) : df2Sq P (a - b) = df2Sq P (b - a) := by
-  rw [← neg_sub, sq_neg]
 
 theorem sq_smul_arg (P : Matrix (Fin d) (Fin d) ℝ) (a : ℝ) (v : Fin d → ℝ) :
     df2Sq P (a • v) = a ^ 2 * df2Sq P v := by

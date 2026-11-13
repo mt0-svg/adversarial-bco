@@ -14,16 +14,13 @@ public import AdversarialBco.Poly.Df2RowsProof
 /-!
 # DF2-O, second layer: proofs
 
-Proofs of the statements of `Df2Layer2.lean`, in the order of the chain of `Df2Layer2Comp`.
+Proofs of two standard facts stated in `Df2Layer2.lean`.
 
 * `lemmaFR : LemmaFR`, the freezing lemma: the conditional law of `ζ` given `𝒢` is its law (independence,
   `condDistrib_ae_eq_of_measure_eq_compProd_of_measurable` with the constant kernel), and the conditional expectation
   of `F(x, ζ)` is the integral against it (`condExp_prod_ae_eq_integral_condDistrib`, conditioning on the identity map
   from `(Ω, m0)` to `(Ω, 𝒢)`).
 * `lemmaNZProd : LemmaNZProd`, the noise on a product (Fubini on the slices, `setIntegral_condExp`).
-* `df2E1LocOf_holds : Df2E1LocOf`, a union bound of the five budgets off which DET applies.
-* `df2DetOf_holds : Df2DetOf`, DET: the hypotheses bundled in `DetHyp` (Df2DetMain.lean), the proof in
-  Df2DetState.lean to Df2DetW.lean, ending with `DetHyp.epoch_ok`.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -88,62 +85,5 @@ theorem lemmaNZProd : LemmaNZProd := by
     funext y; by_cases hy : (x, y) ∈ S <;> simp [Set.indicator, hy]
   beta_reduce
   rw [e1, e2, integral_indicator (hm _ hsl), integral_indicator (hm _ hsl), setIntegral_condExp hm hint hsl]
-
-/-! ## DET -/
-
-/-- DET from its inputs: one epoch on every path, (F) or (N). -/
-theorem df2DetOf_holds : Df2DetOf := by
-  intro L1 W SI RH d n δ Kt ap π m hd hn hδ0 hδ1 heps hm1 hmn hbody hap hadm evG evY evLQ evSDF evDQ
-  exact (DetHyp.mk (DetBase.mk (c := df2CtxAt d n δ Kt ap) L1 W SI hd hn hδ0 hδ1 rfl heps
-    (RH d n δ hd hn hδ0 hδ1 heps) hm1 hmn hbody hap hadm) evG evY evLQ evSDF evDQ).epoch_ok
-
-/-! ## E1-loc -/
-
-/-- E1-loc from DET and the five budgets: off the union of the five bad events the epoch is good (DET), and the
-budgets add up to `(3/7 + 1/7 + 1/21 + 1/7 + 1/8) δ_e = (149/168) δ_e`. -/
-theorem df2E1LocOf_holds : Df2E1LocOf := by
-  intro hDet hG hY hLQ hSDF hDQ d n m δ hd hn hm1 hmn hδ0 hδ1 heps Θ _ Kθ gθ ap hbody hadm hap hmeas Ω _ μ hμ
-    𝒢 θ ξ e hθ hE
-  have hde : 0 ≤ (df2oPar d n δ).δe := (Layer2.rowHyp_of d n δ hd hn hδ0 hδ1 heps).de_pos.le
-  let c : Ω → Df2Ctx d := fun ω => df2CtxAt d n δ (Kθ (θ ω)) ap
-  let π : Ω → Df2Path d := fun ω => ⟨fun s => gθ s (θ ω), fun s => e s ω, fun s => ξ s ω⟩
-  have key : {ω | ¬ (c ω).EpochOK (π ω) m} ⊆
-      {ω | ¬ (c ω).EvG (π ω) m} ∪ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvY (π ω) m} ∪
-        {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvLQ (π ω) m} ∪ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvSDF (π ω) m} ∪
-          {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvDQ (π ω) m} := by
-    intro ω hω
-    by_contra hn'
-    simp only [Set.mem_union, Set.mem_ofPred_eq, not_or, not_and, not_not] at hn'
-    obtain ⟨⟨⟨⟨hg, hy⟩, hlq⟩, hsdf⟩, hdq⟩ := hn'
-    exact hω (hDet d n δ (Kθ (θ ω)) ap (π ω) m hd hn hδ0 hδ1 heps hm1 hmn (hbody _) hap (hadm _) hg (hy hg)
-      (hlq hg) (hsdf hg) (hdq hg))
-  have h1 := hG d n m δ hd hn hm1 hmn hδ0 hδ1 heps Θ Kθ gθ ap hbody hadm hap hmeas Ω μ hμ 𝒢 θ ξ e hθ hE
-  have h2 := hY d n m δ hd hn hm1 hmn hδ0 hδ1 heps Θ Kθ gθ ap hbody hadm hap hmeas Ω μ hμ 𝒢 θ ξ e hθ hE
-  have h3 := hLQ d n m δ hd hn hm1 hmn hδ0 hδ1 heps Θ Kθ gθ ap hbody hadm hap hmeas Ω μ hμ 𝒢 θ ξ e hθ hE
-  have h4 := hSDF d n m δ hd hn hm1 hmn hδ0 hδ1 heps Θ Kθ gθ ap hbody hadm hap hmeas Ω μ hμ 𝒢 θ ξ e hθ hE
-  have h5 := hDQ d n m δ hd hn hm1 hmn hδ0 hδ1 heps Θ Kθ gθ ap hbody hadm hap hmeas Ω μ hμ 𝒢 θ ξ e hθ hE
-  calc μ {ω | ¬ (c ω).EpochOK (π ω) m}
-      ≤ μ ({ω | ¬ (c ω).EvG (π ω) m} ∪ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvY (π ω) m} ∪
-          {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvLQ (π ω) m} ∪
-          {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvSDF (π ω) m} ∪
-          {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvDQ (π ω) m}) := measure_mono key
-    _ ≤ μ {ω | ¬ (c ω).EvG (π ω) m} + μ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvY (π ω) m} +
-          μ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvLQ (π ω) m} +
-          μ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvSDF (π ω) m} +
-          μ {ω | (c ω).EvG (π ω) m ∧ ¬ (c ω).EvDQ (π ω) m} := by
-      refine (measure_union_le _ _).trans ?_
-      gcongr
-      refine (measure_union_le _ _).trans ?_
-      gcongr
-      refine (measure_union_le _ _).trans ?_
-      gcongr
-      exact measure_union_le _ _
-    _ ≤ ENNReal.ofReal (3 / 7 * (df2oPar d n δ).δe) + ENNReal.ofReal (1 / 7 * (df2oPar d n δ).δe) +
-          ENNReal.ofReal (1 / 21 * (df2oPar d n δ).δe) + ENNReal.ofReal (1 / 7 * (df2oPar d n δ).δe) +
-          ENNReal.ofReal (1 / 8 * (df2oPar d n δ).δe) := by gcongr
-    _ = ENNReal.ofReal (149 / 168 * (df2oPar d n δ).δe) := by
-      rw [← ENNReal.ofReal_add (by positivity) (by positivity), ← ENNReal.ofReal_add (by positivity) (by positivity),
-        ← ENNReal.ofReal_add (by positivity) (by positivity), ← ENNReal.ofReal_add (by positivity) (by positivity)]
-      congr 1; ring
 
 end AdversarialBco.Poly

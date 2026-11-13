@@ -1,8 +1,0 @@
-{
-  "challenge_module": "AdversarialBco.ChallengeConj1Exp",
-  "solution_module": "AdversarialBco.Conj1Exp.Main",
-  "theorem_names": ["AdversarialBco.theoremConj1UpperExp", "AdversarialBco.theoremConj1UpperExp_of_conj1"],
-  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
-  "enable_nanoda": true,
-  "lean_kernel": false
-}

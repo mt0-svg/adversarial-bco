@@ -753,12 +753,6 @@ theorem freedman_fk {Ω : Type*} {m0 : MeasurableSpace Ω} (μ : Measure Ω) [Is
 theorem freedmanUnnorm : FreedmanUnnorm.{u} := fun μ _ ℱ X α hα hXm hX hX2 hle hdrift n δ hδ =>
   freedman_unnorm μ ℱ X α hα hXm hX hX2 hle hdrift n δ hδ
 
-theorem freedmanOneSided : FreedmanOneSided.{u} := fun μ _ ℱ X hXm hX hX2 hmg n δ hδ0 hδ1 =>
-  freedman_one_sided μ ℱ X hXm hX hX2 hmg n δ hδ0 hδ1
-
-theorem freedmanStopped : FreedmanStopped.{u} := fun μ _ ℱ X hXm hX hX2 τ hτ n hτn hdrift δ hδ0 hδ1 =>
-  freedman_stopped μ ℱ X hXm hX hX2 τ hτ n hτn hdrift δ hδ0 hδ1
-
 theorem freedmanFK : FreedmanFK.{u} := fun μ _ ℱ X hXm hX hX2 τ hτ n hτn hdrift κ δ hκ hδ0 hδ1 =>
   freedman_fk μ ℱ X hXm hX hX2 τ hτ n hτn hdrift κ δ hκ hδ0 hδ1
 

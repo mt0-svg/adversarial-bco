@@ -1,8 +1,0 @@
-{
-  "challenge_module": "AdversarialBco.ChallengePoly",
-  "solution_module": "AdversarialBco.Poly.Poly32OFinal",
-  "theorem_names": ["AdversarialBco.theoremPoly32O_holds"],
-  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
-  "enable_nanoda": true,
-  "lean_kernel": false
-}

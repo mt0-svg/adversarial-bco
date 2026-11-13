@@ -16,9 +16,7 @@ public import AdversarialBco.Body.Basic
 # Gaussian concentration for Lipschitz functions at the sharp constant
 
 Proves `AdversarialBco.Poly.GaussConcSharp` of `AdversarialBco/Poly/GaussConc.lean`: `GaussConcLip (1/2)` and
-`GaussConcMatrix (1/2)`, the source's thm:orlicz-lip; and, through v1.0's Maurey and
-Pisier theorem `AdversarialBco.Gauss.gaussConcAt`, both forms at `2/π^2` (`gaussConcLip_two_div_pi_sq`,
-`gaussConcMatrix_two_div_pi_sq`).
+`GaussConcMatrix (1/2)`, the source's thm:orlicz-lip.
 
 Route: the covariance identity along a rotation. For `F` of class `C^1` with `‖F'‖ ≤ L` on `ℝ^k`, `γ` the standard
 Gaussian and `ν = γ ⊗ γ`, put `ψ(θ) = ∫ F(x) exp(l F(cos θ x + sin θ y)) dν`. Then `ψ(0) = E[F e^{lF}]`,
@@ -30,7 +28,7 @@ so `E[F e^{lF}] - E F E e^{lF} ≤ l L^2 E e^{lF}` (`herbst_cov`). Herbst's argu
 `hasSubgaussianMGF_of_herbst`) makes `F - E F` sub-Gaussian with variance proxy `L^2`
 (`hasSubgaussianMGF_sub_integral_sharp`); smoothing passes to Lipschitz functions
 (`hasSubgaussianMGF_sub_integral_of_lipschitz_sharp`, the smoothing and limit lemmas of
-`AdversarialBco/Gauss/Concentration.lean` with the constant changed); Chernoff and the affine image give the upper tail under
+`AdversarialBco/Gauss/Concentration.lean`); Chernoff and the affine image give the upper tail under
 every cloud (`gaussConcAt_half`); the lower tail is the upper tail of `-F` and the matrix form is the cloud of
 `√A`, with `‖√A‖^2 = ‖A‖` (`gaussConcLip_of_gaussConcAt`, `gaussConcMatrix_of_gaussConcLip`).
 -/
@@ -598,7 +596,7 @@ end
 
 namespace AdversarialBco.Poly.GConc
 
-section fallback
+section tails
 
 /-- Both tails from the upper tail of every Lipschitz function. -/
 theorem gaussConcLip_of_gaussConcAt (c : ℝ) (h : AdversarialBco.Gauss.GaussConcAt c) : GaussConcLip c := by
@@ -635,14 +633,7 @@ theorem gaussConcMatrix_of_gaussConcLip (c : ℝ) (h : GaussConcLip c) : GaussCo
   rw [mul_pow, norm_toEuclideanCLM_sqrt_sq A hA] at h2
   exact h2
 
-/-- Route (b), Maurey and Pisier: both forms at the constant `2/π^2`. -/
-theorem gaussConcLip_two_div_pi_sq : GaussConcLip (2 / π ^ 2) :=
-  gaussConcLip_of_gaussConcAt _ AdversarialBco.Gauss.gaussConcAt
-
-theorem gaussConcMatrix_two_div_pi_sq : GaussConcMatrix (2 / π ^ 2) :=
-  gaussConcMatrix_of_gaussConcLip _ gaussConcLip_two_div_pi_sq
-
-end fallback
+end tails
 
 section sharp
 
@@ -754,7 +745,8 @@ theorem hasSubgaussianMGF_sub_integral_sharp {k : ℕ} {F : EuclideanSpace ℝ (
     push_cast
     ring
 
-/-- The sharp sub-Gaussian bound for Lipschitz functions, by smoothing (v1.0's argument with the constant changed). -/
+/-- The sharp sub-Gaussian bound for Lipschitz functions, by the smoothing and limit lemmas of
+`AdversarialBco/Gauss/Concentration.lean`. -/
 theorem hasSubgaussianMGF_sub_integral_of_lipschitz_sharp {k : ℕ} {F : EuclideanSpace ℝ (Fin k) → ℝ} {L : ℝ≥0}
     (hF : LipschitzWith L F) :
     HasSubgaussianMGF (fun x => F x - ∫ y, F y ∂stdGaussian (EuclideanSpace ℝ (Fin k))) (L ^ 2)

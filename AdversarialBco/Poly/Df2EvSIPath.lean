@@ -39,11 +39,6 @@ theorem quad_le_of_psd {P : Matrix (Fin d) (Fin d) ℝ} {a : ℝ}
   have := sq_le_of_psd h w
   rwa [sq_smul, sq_one] at this
 
-theorem quad_ge_of_psd {P : Matrix (Fin d) (Fin d) ℝ} {a : ℝ}
-    (h : (P - a • (1 : Matrix (Fin d) (Fin d) ℝ)).PosSemidef) (w : Fin d → ℝ) : a * (w ⬝ᵥ w) ≤ df2Sq P w := by
-  have := sq_le_of_psd h w
-  rwa [sq_smul, sq_one] at this
-
 /-- `0 ≤ P ≤ a I` gives `|P w|² ≤ a² |w|²`. -/
 theorem P_sq_le {P : Matrix (Fin d) (Fin d) ℝ} (hP : P.PosSemidef) {a : ℝ} (ha : 0 ≤ a)
     (h : (a • (1 : Matrix (Fin d) (Fin d) ℝ) - P).PosSemidef) (w : Fin d → ℝ) :
@@ -102,11 +97,6 @@ theorem lpar_of (H : DetBase c δ π m) : EvGY.LPar c π :=
 theorem P_upper (_H : DetBase c δ π m) {s : ℕ} (hI : c.StInv π s) :
     (c.p.δe⁻¹ • (1 : Matrix (Fin d) (Fin d) ℝ) - (c.st π s).P).PosSemidef :=
   psd_trans hI.pb2 hI.pbh
-
-/-- `δ I ≤ P`. -/
-theorem P_lower (_H : DetBase c δ π m) {s : ℕ} (hI : c.StInv π s) :
-    ((c.st π s).P - c.p.δe • (1 : Matrix (Fin d) (Fin d) ℝ)).PosSemidef :=
-  psd_trans hI.pbl hI.pbd
 
 theorem P_symm {s : ℕ} (hI : c.StInv π s) : (c.st π s).Pᵀ = (c.st π s).P :=
   transpose_of_psd hI.pd.posSemidef

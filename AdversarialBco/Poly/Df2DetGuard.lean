@@ -14,7 +14,8 @@ public import AdversarialBco.Poly.Df2DetOns
 
 For a round `s ≤ τ`, on G: `|u_s|² ≤ X/δ_e` with `X = (32/9) d log(1/δ_e)`, `‖ŝ''_s‖ ≤ M₁`,
 `|ĝ_s| ≤ (L/(2ε)) κ₀^{1/2} (X/δ_e)^{1/2}`; the gradient of `Φ'` at a point of `B_R` is at most `R/δ_e²`
-(Lemma D.17 (ii)); Lemma D.18 (`|z_s| ≤ R/δ_e³`, the guard Z does not act) and the bound of the
+(the inner-ball lemma (ii)); the lemma of the centre of the test (`|z_s| ≤ R/δ_e³`, the guard Z does not act) and the
+bound of the
 Newton point of line μ (the guard W does not act).
 -/
 
@@ -144,7 +145,7 @@ theorem Mone_nonneg (H : DetHyp c δ π m) : 0 ≤ c.Mone := by
   have := H.rows.pos_lam; have := H.k0_pos; have := H.rows.pos_eps; have := H.Le_pos; have := H.Xg_nonneg
   have := H.rows.pos_de; unfold Df2Ctx.Mone; positivity
 
-/-- Lemma D.17 (ii): the gradient of `Φ'` at a point of `B_R` is at most `R/δ_e²`. -/
+/-- The inner-ball lemma (ii): the gradient of `Φ'` at a point of `B_R` is at most `R/δ_e²`. -/
 theorem grad_le (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) {y : Fin d → ℝ} (hy : oNorm y ≤ c.p.R) :
     oNorm (c.Pn π s *ᵥ y - c.bn π s) ≤ c.p.R / c.p.δe ^ 2 := by
   have hek := H.kap_pos
@@ -182,7 +183,7 @@ theorem Sn_props (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) :
   have := inv_antitone _ _ (Matrix.PosDef.one.smul H.rows.pos_de) hpd hlow
   rwa [inv_smul_one H.rows.pos_de.ne', hinv] at this
 
-/-- Lemma D.18: `|z_s| ≤ R/δ_e³`, so the guard Z does not act at a round `s ≤ τ`. -/
+/-- The lemma of the centre of the test: `|z_s| ≤ R/δ_e³`, so the guard Z does not act at a round `s ≤ τ`. -/
 theorem not_gdZ (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) : ¬ c.GdZ π s := by
   unfold Df2Ctx.GdZ
   rw [not_lt]

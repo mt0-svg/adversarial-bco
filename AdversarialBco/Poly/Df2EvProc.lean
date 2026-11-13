@@ -15,7 +15,8 @@ public import AdversarialBco.Poly.Df2EvTools
 /-!
 # The states of an epoch up to the stopping time, without the SI facts
 
-`LInv s`: what holds of the state of round `s ≤ τ` by the conditions before `τ` and Lemma D.2 alone, once the
+`LInv s`: what holds of the state of round `s ≤ τ` by the conditions before `τ` and the rank-one round lemma alone, once
+the
 Hessians of the surrogates of the rounds before `s` have a nonnegative quadratic form (`hH`): the mode runs, `P` is
 positive definite, `S P = 1`, `A Aᵀ = S`, `P ≥ ½ P̄`, `P̄ ≥ P̄₀` as quadratic forms, `μ ∈ K_ε`.
 Consequences: `|A w|² ≤ 2 σ² |w|²` and `π(μ) ≤ 1 - ε`.
@@ -97,7 +98,7 @@ theorem linv_zero (hp : LPar c π) : LInv c π 0 := by
     rw [smul_zero]
     exact hp.zero_mem
 
-theorem linv_succ (hp : LPar c π) (hap : ApSpec c.ap) {m s : ℕ} (hs : s < c.tau π m) (hI : LInv c π s)
+theorem linv_succ (hp : LPar c π) (hap : ∀ s, ApSpec (c.ap s)) {m s : ℕ} (hs : s < c.tau π m) (hI : LInv c π s)
     (hH : ∀ v, 0 ≤ df2Sq (c.sHess π s) v) : LInv c π (s + 1) := by
   obtain ⟨-, ⟨ha, hq⟩, ⟨h3a, h3b, -, -⟩, hcont⟩ := cond_of_lt_tau c π s hs
   obtain ⟨pt, mu', -, -, hmc, hrun, hst⟩ := c.st_succ_of_cont π s hI.run hcont
@@ -115,7 +116,7 @@ theorem linv_succ (hp : LPar c π) (hap : ApSpec c.ap) {m s : ℕ} (hs : s < c.t
     have := hI.pb0 v
     have := mul_nonneg hp.ek (hH v)
     linarith
-  · have hsp := (hap (c.Rp π s) ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) c.p.R (c.Pn π s) (c.wmu π s)
+  · have hsp := (hap s (c.Rp π s) ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) c.p.R (c.Pn π s) (c.wmu π s)
       (c.eM π s)).2
     unfold Df2Ctx.mcall at hmc
     rw [hmc] at hsp
@@ -124,7 +125,7 @@ theorem linv_succ (hp : LPar c π) (hap : ApSpec c.ap) {m s : ℕ} (hs : s < c.t
     · rw [hmu, Option.some.inj hμ]; exact hμQ.1
 
 /-- The light invariant at every round up to `τ`. -/
-theorem linv_le_tau (hp : LPar c π) (hap : ApSpec c.ap) {m : ℕ}
+theorem linv_le_tau (hp : LPar c π) (hap : ∀ s, ApSpec (c.ap s)) {m : ℕ}
     (hH : ∀ u < c.tau π m, ∀ v, 0 ≤ df2Sq (c.sHess π u) v) : ∀ s ≤ c.tau π m, LInv c π s := by
   intro s hs
   induction s with

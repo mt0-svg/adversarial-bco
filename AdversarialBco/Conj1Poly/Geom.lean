@@ -13,9 +13,10 @@ public import Mathlib.Data.Int.NatAbs
 @[expose] public section
 
 /-!
-# Theorem 1.3, geometry of a rational polytope
+# The real-RAM upper bound on a polytope, geometry of a rational polytope
 
-Lemma 8.12 in the form the proof uses: a compact polytope whose data has height at most `M` lies in the closed ball of
+The localisation lemma in the form the proof uses: a compact polytope whose data has height at most `M` lies in the
+closed ball of
 radius `Rloc d m M = (d m M^{2(d+1)})^{d+1}` about `0`. The route avoids the basic-solution argument of Lemma BASIC:
 
 * `extreme_ker` (G1): at an extreme point `x` of the polytope, the rows active at `x` have no common nonzero null
@@ -41,16 +42,8 @@ open AdversarialBco.RealRAM
 
 variable {d m : ℕ}
 
-/-- The radius of Lemma 8.12 used in Lean: `(d m M^{2(d+1)})^{d+1}`. -/
+/-- The radius of the localisation lemma used in Lean: `(d m M^{2(d+1)})^{d+1}`. -/
 noncomputable def Rloc (d m M : ℕ) : ℝ := ((d : ℝ) * m * (M : ℝ) ^ (2 * (d + 1))) ^ (d + 1)
-
-theorem one_le_Rloc {M : ℕ} (hd : 1 ≤ d) (hm : 1 ≤ m) (hM : 1 ≤ M) : 1 ≤ Rloc d m M := by
-  unfold Rloc
-  have hdR : (1 : ℝ) ≤ d := by exact_mod_cast hd
-  have hmR : (1 : ℝ) ≤ m := by exact_mod_cast hm
-  have hMR : (1 : ℝ) ≤ M := by exact_mod_cast hM
-  have h1 : (1 : ℝ) ≤ (M : ℝ) ^ (2 * (d + 1)) := one_le_pow₀ hMR
-  exact one_le_pow₀ (by nlinarith [mul_le_mul hdR hmR zero_le_one (by linarith)])
 
 theorem isClosed_polytope (Am : Matrix (Fin m) (Fin d) ℚ) (bv : Fin m → ℚ) : IsClosed (polytope Am bv) := by
   have : polytope Am bv = ⋂ i, {x : E d | ∑ j, (Am i j : ℝ) * x j ≤ (bv i : ℝ)} := by
@@ -607,7 +600,8 @@ theorem extreme_norm_le (Am : Matrix (Fin m) (Fin d) ℚ) (bv : Fin m → ℚ) {
         ring
   exact le_trans h_norm h_final
 
-/-- G6, Lemma 8.12: a compact polytope of height at most `M` lies in the closed ball of radius `Rloc d m M`. -/
+/-- G6, the localisation lemma: a compact polytope of height at most `M` lies in the closed ball of radius
+`Rloc d m M`. -/
 theorem polytope_sub_ball (Am : Matrix (Fin m) (Fin d) ℚ) (bv : Fin m → ℚ) {M : ℕ} (hd : 1 ≤ d) (hm : 1 ≤ m)
     (hM : 1 ≤ M) (hH : HeightLE Am bv M) (hK : IsCompact (polytope Am bv)) :
     polytope Am bv ⊆ Metric.closedBall 0 (Rloc d m M) := by

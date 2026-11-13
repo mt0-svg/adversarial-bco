@@ -14,10 +14,11 @@ public import Mathlib
 
 Interface statements of the lemmas that read the run only through quantities given as hypotheses: the
 deterministic lemmas, the lemmas "on the events" with the events written as hypotheses on arbitrary data, the
-identities of the play `p'`, and the assembly with the trivial bound outside the regime. Lemma D.2 is in `Df2R1.lean`;
-Lemma D.14 (Lemma DF2-W is its instance) is `LemmaW` of `Wrapper.lean`. The learner itself, its events and the readings
-of the source (Lemmas S-DF, DQ, LQ, LD, the closure, the guard, Lemma D.17 with Lemma D.16) form the second layer,
-the machine layer.
+identities of the play `p'`, and the assembly with the trivial bound outside the regime. The rank-one round lemma is in
+`Df2R1.lean`;
+the restart-wrapper lemma (Lemma DF2-W is its instance) is `LemmaW` of `Wrapper.lean`. The events of the learner and
+the readings of the source (Lemmas S-DF, DQ, LQ, LD, the closure, the guard, the inner-ball lemma with the lemma of a
+ball under quadratics) form the second layer (`Df2Layer2.lean` and the files that read it).
 
 Carriers. The region, the test and the online Newton inequality (`df2Sq` to `LemmaONS2Core`) work on `Fin d → ℝ` with
 matrices and `|v|²_P = v ⬝ᵥ (P *ᵥ v)` (`df2Sq`), as `Df2R1.lean`; the centre of the test and the play (`LemmaZCore`,
@@ -42,8 +43,10 @@ matrices and `|v|²_P = v ⬝ᵥ (P *ᵥ v)` (`df2Sq`), as `Df2R1.lean`; the cen
 
 Deterministic pieces of the route stated in the second layer, next to the quantities they read: the identity of the
 test (`Ξ_t = η T̂_t - 2 Φ₀` at `κ = 1/4`, `Ξ_t(y) = Ξ_t(z_t) - |y - z_t|²_{P_{t+1}}`, and the passage from
-the accuracy `min (1, αρ/2) = 1` of AP to `αρ` on `Ξ_t`); the scalar facts `a_t ≥ 1/2` and `q_t ≥ 1/4`, with Lemma D.2; the
-reduction in Lemma D.13 (`R⁻_t ⊆ R_{s+1}` for `s < t`, by `LemmaMON` and the margin row); the two halves of (W3);
+the accuracy `min (1, αρ/2) = 1` of AP to `αρ` on `Ξ_t`); the scalar facts `a_t ≥ 1/2` and `q_t ≥ 1/4`, with the
+rank-one round lemma; the
+reduction in the online Newton step lemma (`R⁻_t ⊆ R_{s+1}` for `s < t`, by `LemmaMON` and the margin row); the two
+halves of (W3);
 the rows at the constants `κ`, `θ`, `α`, `c₁`, `γ`, `C_g`, `C_ε/C_λ`, and the conditions on `δ`,
 under the regime hypothesis, `Df2Trivial` covering its complement. The smoothing limit `s_ϱ'' → s''`, uniform in `z`, is in the second layer; it reads `LemmaUBPrime`
 for `e_t` and for `e_ϱ` and `PlayHess` for `e_ϱ`.
@@ -85,7 +88,7 @@ def LemmaDFI : Prop :=
 
 /-! ## The region -/
 
-/-- Lemma D.7. `Φ_t = Φ₀ + Ω̂_t`; the true bonus `Ω_t` is nondecreasing in `t`; the event of Lemma DQ:
+/-- The monotonicity lemma. `Φ_t = Φ₀ + Ω̂_t`; the true bonus `Ω_t` is nondecreasing in `t`; the event of Lemma DQ:
 `|Ω̂_t - Ω_t| ≤ dev'` on `S_t ∩ B_R` for `t ≤ τ`; the sets `S_t` decrease. Then `Φ_u ≤ Φ_t + 2 dev'` on `S_t ∩ B_R`
 for `u ≤ t ≤ τ`. -/
 def LemmaMON : Prop :=
@@ -103,7 +106,7 @@ def df2S {d : ℕ} (μ : ℕ → Fin d → ℝ) (P : ℕ → Matrix (Fin d) (Fin
 def df2R {d : ℕ} (Keps : Set (Fin d → ℝ)) (Φ : ℕ → (Fin d → ℝ) → ℝ) (c : ℝ) (u : ℕ) : Set (Fin d → ℝ) :=
   {y | y ∈ Keps ∧ Φ (u - 1) y ≤ c}
 
-/-- Proposition D.8. The data of the rounds `1, ..., τ`: centres `μ_s`, precisions `P_s` (positive definite,
+/-- The region proposition. The data of the rounds `1, ..., τ`: centres `μ_s`, precisions `P_s` (positive definite,
 `s ≤ τ`), quadratics `Φ_t = Φ₀ + Ω̂_t` of Hessian `P_{t+1}` (`t + 1 ≤ τ`) whose new term vanishes at `μ_t`
 (`Φ_t(μ_t) = Φ_{t-1}(μ_t)`),
 `Φ₀ ≥ 0`, `Φ₀ ≤ pri` on `K_ε` and `|y - μ₁|²_{P₁} ≤ 2 pri` there, `μ₁ ∈ K_ε` with `(Φ₀ + Ω̂₀)(μ₁) = 0`; `μ_u ∈ R_u` whenever
@@ -131,7 +134,7 @@ def PropINC2 : Prop :=
 
 /-! ## The test -/
 
-/-- Lemma D.10, the dichotomy at general levels. `m` is a number with `sup_Q Ξ - e ≤ m ≤ sup_Q Ξ`, written as
+/-- The dichotomy lemma, the dichotomy at general levels. `m` is a number with `sup_Q Ξ - e ≤ m ≤ sup_Q Ξ`, written as
 `Ξ ≤ m + e` on `Q` and `m ≤ b` for every upper bound `b` of `Ξ` on `Q`; the test fires when `m ≤ -h`.
 (s) A fire gives `η sReg ≤ -(h - e) + π₀ + η dev + η ν` on `Q`. (c) `η sReg ≤ -k_c` on `Q`, with
 `k_c = (1 + r) h + r ρ'' + (1 + r) η dev + η ν`, gives a fire. -/
@@ -149,7 +152,8 @@ def LemmaD2 : Prop :=
 
 /-! ## The online Newton inequality -/
 
-/-- Lemma D.13, the deterministic core. Rounds `s = 1, ..., t`, `t ≥ 1`: `P_{s+1} = P_s + η H_s` with `P_{s+1}`
+/-- The online Newton step lemma, the deterministic core. Rounds `s = 1, ..., t`, `t ≥ 1`: `P_{s+1} = P_s + η H_s` with
+`P_{s+1}`
 positive definite and `Σ_{s+1} P_{s+1} = 1`; `w_s = μ_s - η Σ_{s+1} ĝ_s`; the comparator `y` satisfies the Pythagorean
 inequality with defect `e_s` (`ep s`), `½ |μ_{s+1} - y|²_{P_{s+1}} ≤ ½ |w_s - y|²_{P_{s+1}} + e_s` for `s < t` (the projection
 with defects of DF2-O on a convex set containing `y`; `e = 0` is the exact projection). Then, with
@@ -168,14 +172,16 @@ def LemmaONS2Core : Prop :=
 
 /-! ## The centre of the test -/
 
-/-- Lemma D.18, the step that closes it: `z = Σ (b - (η/2) Ĝ)` with `‖Σ v‖ ≤ ‖v‖/δ`, `‖b‖ ≤ R/(4 δ²)` and
+/-- The lemma of the centre of the test, the step that closes it: `z = Σ (b - (η/2) Ĝ)` with `‖Σ v‖ ≤ ‖v‖/δ`,
+`‖b‖ ≤ R/(4 δ²)` and
 `(η/2) ‖Ĝ‖ ≤ (3/4) R/δ²` has `‖z‖ ≤ R/δ³`. Norms are Euclidean (`EuclideanSpace`). -/
 def LemmaZCore : Prop :=
   ∀ (d : ℕ) (Sg : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) (b G : EuclideanSpace ℝ (Fin d))
     (η R δ : ℝ), 0 < δ → (∀ v, ‖Sg v‖ ≤ ‖v‖ / δ) → ‖b‖ ≤ R / (4 * δ ^ 2) → η / 2 * ‖G‖ ≤ 3 / 4 * R / δ ^ 2 →
     0 ≤ η → ‖Sg (b - (η / 2) • G)‖ ≤ R / δ ^ 3
 
-/-- The row of Lemma D.18: `(1/4) κ₀^{1/2} C₀ (32/9)^{1/2} δ^{3/2} n^{3/2} d^{1/2} x^{3/2} ≤ 3/4` at `δ = e^{-x}`,
+/-- The row of the lemma of the centre of the test:
+`(1/4) κ₀^{1/2} C₀ (32/9)^{1/2} δ^{3/2} n^{3/2} d^{1/2} x^{3/2} ≤ 3/4` at `δ = e^{-x}`,
 `x ≥ 14 + 3 log (d n)` (`δ ≤ e^{-14} (d n)^{-3}`), `κ₀ ≤ 4`. -/
 def Df2RowZ : Prop :=
   ∀ (d n : ℕ) (x κ0 : ℝ), 1 ≤ d → 1 ≤ n → 14 + 3 * Real.log (d * n) ≤ x → 0 ≤ κ0 → κ0 ≤ 4 →
@@ -200,12 +206,14 @@ def PlayShift : Prop :=
     ∫ g, e (μ + (1 - lam) • A g) ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) - df2Surr e μ A lam μ =
       (1 - lam) * (∫ g, e (μ + A g) ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) - df2Surr e μ A lam μ)
 
-/-- Lemma D.3, at every point. For `e` measurable of linear growth, `|e y| ≤ B (1 + ‖y‖)` (the class of the
+/-- The lemma of the derivatives of the surrogate, at every point. For `e` measurable of linear growth,
+`|e y| ≤ B (1 + ‖y‖)` (the class of the
 extension `e_t`), `A` invertible with `P = (A Aᵀ)⁻¹` (`Pm`, as a continuous linear map,
 `Pm ∘ A ∘ Aᵀ = 1`), `κ₀ = (1 - λ)^{-2}` and `X_z = (1 - λ)(μ + A g) + λ z`: the surrogate is of class `C²`, and at
 every `z` its gradient is `v ↦ E[κ₀ e(X_z) ⟨P (1 - λ) A g, v⟩]` and its Hessian is
 `(w, v) ↦ λ E[κ₀ e(X_z) (κ₀ ⟨P (1 - λ) A g, v⟩ ⟨P (1 - λ) A g, w⟩ - ⟨P v, w⟩)]`. Here `X_z - m_z = (1 - λ) A g` with
-`m_z = (1 - λ) μ + λ z`, the mean of `X_z`; Lemma D.3 (Lemma D.3 of the paper) is the case `z = μ`, where `X_μ = μ + (1 - λ) A g`. -/
+`m_z = (1 - λ) μ + λ z`, the mean of `X_z`; the lemma of the derivatives of the surrogate (the paper's lemma of the
+derivatives of the surrogate) is the case `z = μ`, where `X_μ = μ + (1 - λ) A g`. -/
 def LemmaUBPrime : Prop :=
   ∀ (d : ℕ) (e : EuclideanSpace ℝ (Fin d) → ℝ) (μ : EuclideanSpace ℝ (Fin d))
     (A Pm : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) (lam B : ℝ),

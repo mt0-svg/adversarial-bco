@@ -11,15 +11,13 @@ public import AdversarialBco.Poly.Df2EvProc
 @[expose] public section
 
 /-!
-# The epoch on setting (E) as a process: measurability
+# The round of an epoch as a function of the parameter, the mode, the draw and the noise
 
-On an instance of setting (E) (`Df2OnSetE`), with the body and the losses functions of a parameter `θ` measurable in
-`𝒢 0` and the round maps measurable as `Df2EpochMeas` asks, the mode before round `s` is measurable in `𝒢 s` for
-`s ≤ m`, the horizon.
-
-The round map is read through `roundOf`, which takes the parameter, the mode, the draw and the noise; `roundOf_eq`
-factors it through the code of the mode (the tag, then the state on the tag `2`), and the value observed in a round is
-`e_s(X) + pip(X) ε` (`yOf`), measurable from the extension and the gauge.
+With the body and the losses functions of a parameter `θ` and the round maps measurable as `Df2EpochMeas` asks: the
+round map is read through `roundOf`, which takes the parameter, the mode, the draw and the noise; `roundOf_eq`
+factors it through the code of the mode (the tag, then the state on the tag `2`), and `measurable_ite_code` makes such
+a factorisation measurable. The point `X = μ + (1 - λ) A ξ` (`xOf`) is measurable, and so is the value observed in a
+round, `e_s(X) + pip(X) ε` (`yOf`), from the extension and the gauge.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -46,7 +44,7 @@ noncomputable def yOf (s : ℕ) (q : Θ) (st : Df2St d) (ξ : Fin d → ℝ) (e 
 
 /-- The round map of round `s` at the parameter. -/
 noncomputable def roundOf (s : ℕ) (x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ) : Df2Mode d :=
-  (df2RoundE (df2CtxAt d n δ (Kθ x.1) ap) (gθ s x.1) x.2.2.2 x.2.2.1 x.2.1).2
+  (df2RoundE (df2CtxAt d n δ (Kθ x.1) ap) ap (gθ s x.1) x.2.2.2 x.2.2.1 x.2.1).2
 
 omit [MeasurableSpace Θ] in
 theorem roundOf_eq (s : ℕ) (x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ) :
@@ -97,67 +95,7 @@ theorem measurable_ite_code {α : Type*} [MeasurableSpace α] {tag : α → Fin 
   Measurable.ite (htag (measurableSet_singleton 0)) measurable_const
     (Measurable.ite (htag (measurableSet_singleton 1)) measurable_const hf)
 
-theorem measurable_roundOf (hmeas : Df2EpochMeas (df2oPar d n δ) n m Kθ gθ ap) {s : ℕ} (hs : s < m) :
-    Measurable (roundOf n δ Kθ gθ ap s) := by
-  have heq : roundOf n δ Kθ gθ ap s = fun x =>
-      if x.2.1.code.1 = 0 then .off else if x.2.1.code.1 = 1 then .guard else
-        df2NextAP ap (df2oPar d n δ) n (df2KepsOf (Kθ x.1) (df2oPar d n δ).eps) x.2.1.code.2 x.2.2.1
-          (x.2.1.code.2.A *ᵥ x.2.2.1) (yOf n δ Kθ gθ s x.1 x.2.1.code.2 x.2.2.1 x.2.2.2) :=
-    funext (roundOf_eq n δ Kθ gθ ap s)
-  rw [heq]
-  have hcode : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.1.code :=
-    measurable_mode_code.comp (measurable_fst.comp measurable_snd)
-  have htag : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.1.code.1 := measurable_fst.comp hcode
-  have hst : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.1.code.2 := measurable_snd.comp hcode
-  have hξ : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.2.1 :=
-    measurable_fst.comp (measurable_snd.comp measurable_snd)
-  have he : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.2.2 :=
-    measurable_snd.comp (measurable_snd.comp measurable_snd)
-  have hin1 : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => (x.1, x.2.1.code.2, x.2.2.1, x.2.2.2) :=
-    measurable_fst.prodMk (hst.prodMk (hξ.prodMk he))
-  have hY : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ =>
-      yOf n δ Kθ gθ s x.1 x.2.1.code.2 x.2.2.1 x.2.2.2 :=
-    by have h := (measurable_yOf n δ Kθ gθ ap hmeas hs).comp hin1; exact h
-  have hin2 : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ =>
-      (x.1, x.2.1.code.2, x.2.2.1, yOf n δ Kθ gθ s x.1 x.2.1.code.2 x.2.2.1 x.2.2.2) :=
-    measurable_fst.prodMk (hst.prodMk (hξ.prodMk hY))
-  have hN := hmeas.2.2.comp hin2
-  have h := measurable_ite_code htag hN
-  exact h
-
-/-! ## The process on `Ω` -/
-
 variable {Ω : Type} {m0 : MeasurableSpace Ω}
-
-/-- The context of the epoch at `ω`. -/
-noncomputable def ctxW (θ : Ω → Θ) (ω : Ω) : Df2Ctx d := df2CtxAt d n δ (Kθ (θ ω)) ap
-
-/-- The path of the epoch at `ω`. -/
-def pathW (θ : Ω → Θ) (ξ : ℕ → Ω → Fin d → ℝ) (e : ℕ → Ω → ℝ) (ω : Ω) : Df2Path d :=
-  ⟨fun s => gθ s (θ ω), fun s => e s ω, fun s => ξ s ω⟩
-
-omit [MeasurableSpace Θ] in
-theorem mode_succ_eq (θ : Ω → Θ) (ξ : ℕ → Ω → Fin d → ℝ) (e : ℕ → Ω → ℝ) (ω : Ω) (s : ℕ) :
-    (ctxW n δ Kθ ap θ ω).mode (pathW gθ θ ξ e ω) (s + 1) =
-      roundOf n δ Kθ gθ ap s (θ ω, (ctxW n δ Kθ ap θ ω).mode (pathW gθ θ ξ e ω) s, ξ s ω, e s ω) := rfl
-
-/-- The mode before round `s ≤ m` is measurable in `𝒢 s`. -/
-theorem measurable_mode (hmeas : Df2EpochMeas (df2oPar d n δ) n m Kθ gθ ap) (𝒢 : Filtration ℕ m0)
-    (θ : Ω → Θ) (ξ : ℕ → Ω → Fin d → ℝ) (e : ℕ → Ω → ℝ) (hθ : Measurable[𝒢 0] θ)
-    (hξ : ∀ s, Measurable[𝒢 (s + 1)] (ξ s)) (he : ∀ s, Measurable[𝒢 (s + 1)] (e s)) :
-    ∀ s ≤ m, Measurable[𝒢 s] fun ω => (ctxW n δ Kθ ap θ ω).mode (pathW gθ θ ξ e ω) s := by
-  intro s hs
-  induction s with
-  | zero => exact (measurable_const : Measurable[𝒢 0] fun _ : Ω => Df2Mode.run (df2Init (df2oPar d n δ) d))
-  | succ s ih =>
-    have hθ' : Measurable[𝒢 (s + 1)] θ := hθ.mono (𝒢.mono (Nat.zero_le _)) le_rfl
-    have hm' : Measurable[𝒢 (s + 1)] fun ω => (ctxW n δ Kθ ap θ ω).mode (pathW gθ θ ξ e ω) s :=
-      (ih (by omega)).mono (𝒢.mono (Nat.le_succ s)) le_rfl
-    have htup : Measurable[𝒢 (s + 1)] fun ω =>
-        (θ ω, (ctxW n δ Kθ ap θ ω).mode (pathW gθ θ ξ e ω) s, ξ s ω, e s ω) :=
-      hθ'.prodMk (hm'.prodMk ((hξ s).prodMk (he s)))
-    have h := (measurable_roundOf n δ Kθ gθ ap (m := m) (s := s) hmeas (by omega)).comp htup
-    exact h
 
 end EvGY
 

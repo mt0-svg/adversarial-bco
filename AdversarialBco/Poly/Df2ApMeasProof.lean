@@ -12,15 +12,15 @@ public import AdversarialBco.Poly.PgProcBase
 @[expose] public section
 
 /-!
-# (L1) for `apCall`: the round map of DF2-O is measurable jointly in the position
+# Measurability tools for the round map of DF2-O
 
-Proof of `Df2ApCallMeas` of `Df2Layer2.lean` (theorem `df2ApCallMeas`): `df2NextAP apCall`, the rest of a round
-after the observation, is a measurable function of the position, the state, the draw and the observation.
-
-The state and the mode carry the comap σ-algebras of `Df2St.code` and `Df2Mode.code` (`Df2Layer2.lean`). The
-arithmetic of the round is continuous or measurable (`Real.sqrt`, inverses); the regions `R⁻` and `R_{t+1}` have
-measurable graphs, since `K` is closed and `(P, y) ↦ μ_P + A_P y` is continuous; the two calls of `apCall` are
-measurable in their arguments by `meas_apCall` (`Df2ApMeasTools.lean`).
+The state and the mode carry the comap σ-algebras of `Df2St.code` and `Df2Mode.code` (`Df2Layer2.lean`); their fields
+and constructors are measurable (`measurable_st_mu`, `measurable_st_A`, ..., `meas_st_mk`, `meas_run`). The region
+`K_ε` of a position has a measurable graph, since `K` is closed and `(P, y) ↦ μ_P + A_P y` is continuous
+(`keps_graph`). `nextE` is `df2NextAP` with its two `match` on the answers of the routine written as `Option.elim`
+(`nextE_eq`). Measurable sets under `∨`, `∧`, `≤`, `<` (`mset_or`, `mset_and`, `mset_le`, `mset_lt`), measurable
+graphs of sublevel sets and compositions (`graphMeas_sub`, `graphMeas_comp`), and the quadratic `df2Phi`
+(`df2Phi_continuous`, `meas_df2Phi`).
 -/
 
 open MeasureTheory Matrix
@@ -93,7 +93,7 @@ theorem meas_run {f : X → Df2St d} (hf : Measurable f) : Measurable fun x => D
 
 end States
 
-/-! ## The regions of the two calls -/
+/-! ## The region `K_ε` -/
 
 theorem keps_graph {d : ℕ} (K : Set (E d)) (hK : IsClosed K) (R ε : ℝ) :
     MeasurableSet {p : PgSp d × (Fin d → ℝ) | p.2 ∈ df2KepsOf (df2Kp K p.1 R) ε} := by
@@ -108,7 +108,7 @@ theorem keps_graph {d : ℕ} (K : Set (E d)) (hK : IsClosed K) (R ε : ℝ) :
     measurableSet_le ((continuous_snd.comp hc).norm.measurable) measurable_const
   exact h1.inter h2
 
-/-! ## The round map -/
+/-! ## The line of a round as `Option.elim`, and measurable sets -/
 
 open Classical in
 /-- `df2NextAP` with its two `match` on the routine's answers written as `Option.elim`. -/
@@ -215,42 +215,6 @@ theorem meas_df2Phi {P : X → Matrix (Fin d) (Fin d) ℝ} {b : X → Fin d → 
     (hy : Measurable y) : Measurable fun x => df2Phi (P x) (b x) (k x) (y x) :=
   df2Phi_continuous.measurable.comp (hP.prodMk (hb.prodMk (hk.prodMk hy)))
 
-/-- The round map after the observation is measurable for any family of regions `Keps` with a measurable graph. -/
-theorem df2NextAP_measurable (p : Df2OPar) (n : ℕ) (Keps : PgSp d → Set (Fin d → ℝ))
-    (hK : MeasurableSet {q : PgSp d × (Fin d → ℝ) | q.2 ∈ Keps q.1}) :
-    Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
-      df2NextAP apCall p n (Keps x.1) x.2.1 x.2.2.1 (x.2.1.A *ᵥ x.2.2.1) x.2.2.2 := by
-  simp only [nextE_eq]
-  unfold nextE
-  dsimp only
-  refine Measurable.ite ?_ measurable_const ?_
-  · refine mset_or (mset_le ?_ measurable_const) (mset_le ?_ measurable_const) <;> fun_prop
-  refine Measurable.ite ?_ measurable_const ?_
-  · refine mset_or (mset_lt measurable_const ?_) (mset_lt measurable_const ?_) <;> fun_prop
-  refine Measurable.ite ?_ measurable_const ?_
-  · refine mset_lt measurable_const ?_; fun_prop
-  refine meas_optElim ?_ measurable_const ?_
-  · refine meas_apCall _ ?_ _ _ _ _ _ _ ?_ ?_ ?_ ?_ ?_ ?_
-    · exact graphMeas_ite_bool (by fun_prop) (graphMeas_comp hK (by fun_prop))
-        (graphMeas_sub (graphMeas_comp hK (by fun_prop)) (by fun_prop) _)
-    all_goals fun_prop
-  refine Measurable.ite ?_ measurable_const ?_
-  · refine mset_le ?_ measurable_const; fun_prop
-  refine Measurable.ite ?_ measurable_const ?_
-  · refine mset_lt measurable_const ?_; fun_prop
-  refine meas_optElim ?_ measurable_const ?_
-  · refine meas_apCall _ ?_ _ _ _ _ _ _ ?_ ?_ ?_ ?_ ?_ ?_
-    · exact graphMeas_sub (graphMeas_comp hK (by fun_prop)) (by fun_prop) _
-    all_goals fun_prop
-  exact meas_run (meas_st_mk measurable_const (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
-    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) measurable_const)
-
 end
-
-/-- (L1) for `apCall`: `Df2ApCallMeas` of `Df2Layer2.lean`. -/
-theorem df2ApCallMeas : Df2ApCallMeas := by
-  intro d n δ K _ hK _
-  exact df2NextAP_measurable (df2oPar d n δ) n
-    (fun Ps => df2KepsOf (df2Kp K Ps (df2oPar d n δ).R) (df2oPar d n δ).eps) (keps_graph K hK _ _)
 
 end AdversarialBco.Poly.ApMeas

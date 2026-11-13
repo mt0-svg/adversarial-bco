@@ -129,17 +129,6 @@
 
 % The Gaussian variational approximation
 
-@article{OA09,
-  author    = {Opper, Manfred and Archambeau, C{\'e}dric},
-  title     = {The variational {G}aussian approximation revisited},
-  journal   = {Neural Comput.},
-  volume    = {21},
-  number    = {3},
-  pages     = {786-792},
-  year      = {2009},
-  doi       = {10.1162/neco.2008.08-07-592}
-}
-
 @article{CB13,
   author    = {Challis, Edward and Barber, David},
   title     = {Gaussian {K}ullback-{L}eibler approximate inference},
@@ -165,17 +154,6 @@
 
 % The explicit learner
 
-@inproceedings{AG12,
-  author    = {Agrawal, Shipra and Goyal, Navin},
-  title     = {Analysis of {T}hompson sampling for the multi-armed bandit problem},
-  booktitle = {Proceedings of the 25th Annual Conference on Learning Theory},
-  series    = {Proc. Mach. Learn. Res.},
-  volume    = {23},
-  pages     = {39.1-39.26},
-  year      = {2012},
-  note      = {arXiv:1111.1797}
-}
-
 @article{XZ25,
   author    = {Xu, Yunbei and Zeevi, Assaf},
   title     = {Bayesian design principles for frequentist sequential learning},
@@ -186,21 +164,6 @@
   year      = {2025},
   doi       = {10.1145/3766898},
   note      = {arXiv:2310.00806}
-}
-
-@misc{FKQR21,
-  author    = {Foster, Dylan J. and Kakade, Sham M. and Qian, Jian and Rakhlin, Alexander},
-  title     = {The statistical complexity of interactive decision making},
-  year      = {2021},
-  note      = {arXiv:2112.13487}
-}
-
-@book{NN94,
-  author    = {Nesterov, Yurii and Nemirovskii, Arkadii},
-  title     = {Interior-Point Polynomial Algorithms in Convex Programming},
-  publisher = {SIAM},
-  year      = {1994},
-  doi       = {10.1137/1.9781611970791}
 }
 
 @inproceedings{Lean4,
@@ -230,8 +193,8 @@
 
 @misc{AdvBcoLean,
   author       = {{mt0-svg}},
-  title        = {{Adversarial bandit convex optimisation: regret $d^{3/2}\sqrt n$ with polynomial-time steps on a real {RAM}, and a matching lower bound}},
-  howpublished = {Lean~4 formalization, version 2.0.0, Lean~4.34.1 and Mathlib~v4.34.1, \url{https://github.com/mt0-svg/adversarial-bco}},
+  title        = {{Optimal regret for adversarial bandit convex optimisation in polynomial time}},
+  howpublished = {Lean~4 formalization, Lean~4.34.1 and Mathlib~v4.34.1, \url{https://github.com/mt0-svg/adversarial-bco}},
   year         = {2026}
 }
 
@@ -239,13 +202,6 @@
   author       = {Degenne, R{\'e}my},
   title        = {{Maiti2026Power}},
   howpublished = {Lean~4 repository, \url{https://github.com/RemyDegenne/Maiti2026Power}, commit b9431dd9b3811779479d1ea108e51268eb7b24ce},
-  year         = {2026}
-}
-
-@misc{TauCeti,
-  author       = {{The Tau Ceti contributors}},
-  title        = {{Tau Ceti}},
-  howpublished = {Lean~4 repository, \url{https://github.com/TauCetiProject/TauCeti}, commit e0610cce4004d628cbd9d2aafdbbb5459fe72938},
   year         = {2026}
 }
 
@@ -261,51 +217,6 @@
   title        = {nanoda: an external type checker for {L}ean~4},
   howpublished = {Rust program, \url{https://github.com/ammkrn/nanoda_lib}, commit \texttt{3a2407216ee84a75f9e1aead6803d0578be06ae7}},
   year         = {2026}
-}
-
-@incollection{Pis86,
-  author    = {Pisier, Gilles},
-  title     = {Probabilistic methods in the geometry of {B}anach spaces},
-  booktitle = {Probability and Analysis (Varenna, 1985)},
-  editor    = {Letta, Giorgio and Pratelli, Maurizio},
-  series    = {Lecture Notes in Math.},
-  volume    = {1206},
-  publisher = {Springer},
-  year      = {1986},
-  pages     = {167--241}
-}
-
-@article{Sion58,
-  author  = {Sion, Maurice},
-  title   = {On general minimax theorems},
-  journal = {Pacific J. Math.},
-  volume  = {8},
-  number  = {1},
-  pages   = {171--176},
-  year    = {1958},
-  doi     = {10.2140/pjm.1958.8.171}
-}
-
-@article{Komiya88,
-  author  = {Komiya, Hidetoshi},
-  title   = {Elementary proof for {Sion}'s minimax theorem},
-  journal = {Kodai Math. J.},
-  volume  = {11},
-  number  = {1},
-  pages   = {5--7},
-  year    = {1988},
-  doi     = {10.2996/kmj/1138038812}
-}
-
-@article{BSS89,
-  author    = {Blum, Lenore and Shub, Michael and Smale, Steve},
-  title     = {On a theory of computation and complexity over the real numbers: {NP}-completeness, recursive functions and universal machines},
-  journal   = {Bull. Amer. Math. Soc. (N.S.)},
-  volume    = {21},
-  number    = {1},
-  pages     = {1--46},
-  year      = {1989},
-  doi       = {10.1090/S0273-0979-1989-15750-9}
 }
 
 @inproceedings{ZL22,
@@ -336,6 +247,17 @@
   doi       = {10.2748/tmj/1178243286}
 }
 
+@article{Hoe63,
+  author    = {Hoeffding, Wassily},
+  title     = {Probability inequalities for sums of bounded random variables},
+  journal   = {J. Amer. Statist. Assoc.},
+  volume    = {58},
+  number    = {301},
+  pages     = {13--30},
+  year      = {1963},
+  doi       = {10.1080/01621459.1963.10500830}
+}
+
 @book{GLS93,
   author    = {Gr\"otschel, Martin and Lov\'asz, L\'aszl\'o and Schrijver, Alexander},
   title     = {Geometric Algorithms and Combinatorial Optimization},
@@ -357,4 +279,125 @@
   pages     = {69--74},
   year      = {1996},
   doi       = {10.1007/BF02312467}
+}
+
+@article{CR73,
+  author    = {Cook, Stephen A. and Reckhow, Robert A.},
+  title     = {Time bounded random access machines},
+  journal   = {J. Comput. System Sci.},
+  volume    = {7},
+  number    = {4},
+  pages     = {354--375},
+  year      = {1973},
+  doi       = {10.1016/S0022-0000(73)80029-7}
+}
+
+@book{AHU74,
+  author    = {Aho, Alfred V. and Hopcroft, John E. and Ullman, Jeffrey D.},
+  title     = {The Design and Analysis of Computer Algorithms},
+  publisher = {Addison-Wesley},
+  address   = {Reading, MA},
+  year      = {1974}
+}
+
+@article{BM58,
+  author    = {Box, G. E. P. and Muller, Mervin E.},
+  title     = {A note on the generation of random normal deviates},
+  journal   = {Ann. Math. Statist.},
+  volume    = {29},
+  number    = {2},
+  pages     = {610-611},
+  year      = {1958},
+  doi       = {10.1214/aoms/1177706645}
+}
+@article{LVLL06,
+  author    = {Lee, Dong-U and Villasenor, John D. and Luk, Wayne and Leong, Philip H. W.},
+  title     = {A hardware {G}aussian noise generator using the {B}ox-{M}uller method and its error analysis},
+  journal   = {IEEE Trans. Comput.},
+  volume    = {55},
+  number    = {6},
+  pages     = {659-671},
+  year      = {2006},
+  doi       = {10.1109/TC.2006.81}
+}
+@misc{DG15,
+  author    = {Devroye, Luc and Gravel, Claude},
+  title     = {Random variate generation using only finitely many unbiased, independently and identically distributed random bits},
+  year      = {2015},
+  note      = {arXiv:1502.02539}
+}
+@article{KTK80,
+  author    = {Kozlov, M. K. and Tarasov, S. P. and Khachiyan, L. G.},
+  title     = {The polynomial solvability of convex quadratic programming},
+  journal   = {USSR Comput. Math. Math. Phys.},
+  volume    = {20},
+  number    = {5},
+  pages     = {223-228},
+  year      = {1980},
+  doi       = {10.1016/0041-5553(80)90098-1}
+}
+@article{CCG04,
+  author    = {Cesa-Bianchi, Nicol{\`o} and Conconi, Alex and Gentile, Claudio},
+  title     = {On the generalization ability of on-line learning algorithms},
+  journal   = {IEEE Trans. Inform. Theory},
+  volume    = {50},
+  number    = {9},
+  pages     = {2050-2057},
+  year      = {2004},
+  doi       = {10.1109/TIT.2004.833339}
+}
+@inproceedings{Zin03,
+  author    = {Zinkevich, Martin},
+  title     = {Online convex programming and generalized infinitesimal gradient ascent},
+  booktitle = {Proceedings of the 20th International Conference on Machine Learning},
+  pages     = {928-936},
+  year      = {2003}
+}
+@article{NJLS09,
+  author    = {Nemirovski, A. and Juditsky, A. and Lan, G. and Shapiro, A.},
+  title     = {Robust stochastic approximation approach to stochastic programming},
+  journal   = {SIAM J. Optim.},
+  volume    = {19},
+  number    = {4},
+  pages     = {1574-1609},
+  year      = {2009},
+  doi       = {10.1137/070704277}
+}
+@incollection{vEB90,
+  author    = {van Emde Boas, Peter},
+  title     = {Machine models and simulations},
+  booktitle = {Handbook of Theoretical Computer Science, Vol. A: Algorithms and Complexity},
+  editor    = {van Leeuwen, Jan},
+  publisher = {Elsevier},
+  address   = {Amsterdam},
+  pages     = {1-66},
+  year      = {1990},
+  doi       = {10.1016/B978-0-444-88071-0.50006-0}
+}
+
+@article{Gof84,
+  author    = {Goffin, Jean-Louis},
+  title     = {Variable metric relaxation methods, {Part II}: The ellipsoid method},
+  journal   = {Math. Programming},
+  volume    = {30},
+  pages     = {147--162},
+  year      = {1984},
+  doi       = {10.1007/BF02591882}
+}
+
+@book{Tho00,
+  author    = {Thorisson, Hermann},
+  title     = {Coupling, Stationarity, and Regeneration},
+  series    = {Probability and its Applications},
+  publisher = {Springer},
+  address   = {New York},
+  year      = {2000},
+  doi       = {10.1007/978-1-4612-1236-2}
+}
+
+@misc{XZ23,
+  author    = {Xu, Yunbei and Zeevi, Assaf},
+  title     = {Bayesian design principles for frequentist sequential learning},
+  year      = {2023},
+  note      = {arXiv:2310.00806}
 }

@@ -10,7 +10,7 @@ public import AdversarialBco.Poly.Wrapper
 @[expose] public section
 
 /-!
-# Lemma D.14, the restart wrapper: proofs
+# The restart-wrapper lemma, the restart wrapper: proofs
 
 Proof of the interface statement `AdversarialBco.Poly.LemmaW` of `AdversarialBco/Poly/Wrapper.lean`: four leaves
 (`wrap_segment_exit`, the point where the segment from a point of `Kτ` to a
@@ -222,7 +222,7 @@ theorem AdversarialBco.Poly.lemmaW_c {E : Type*} [NormedAddCommGroup E] [NormedS
 
 namespace AdversarialBco.Poly
 
-/-- Lemma D.14. -/
+/-- The restart-wrapper lemma. -/
 theorem lemmaW : LemmaW := by
   intro E _ _ Keps Kτ Kτ1 τ s σ xs β Ereg A₁ A₂ A₅ κs κc b Fire hτ hconv hKτ hsub hsub1 hS hxs hmin hprev hβ hW0 hW1
     hW2 hW3 hW3' hW4s hW4c hW5 hκs hb

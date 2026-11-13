@@ -12,13 +12,13 @@ public import AdversarialBco.Poly.Df2Oracle
 /-!
 # Proofs of the statements of `Df2Oracle.lean`
 
-One theorem per `Prop` of `AdversarialBco/Poly/Df2Oracle.lean`, named after it in lower camel case, at the end of this
-file: `lemmaCC`, `lemmaBALL`, `lemmaLINE`, `lemmaSEP`, `lemmaGAUGE`, `lemmaGVAL`, `lemmaGCAP`, `propELL`, `propELLcap`,
-`propELL1`, `propAP`. The mathematics is Appendix E of the paper.
+One theorem per `Prop` of `AdversarialBco/Poly/Df2Oracle.lean`, named after it in lower camel case, in the namespace
+`AdversarialBco.Poly.LeanAp`: `lemmaCC`, `lemmaBALL`, `lemmaLINE`, `lemmaSEP`, `lemmaGAUGE`, `lemmaGVAL`, `lemmaGCAP`,
+`propELL`, `propELLcap`, `propELL1`, `propAP`; `propAP` is restated at the end of this file in
+`AdversarialBco.Poly`. The mathematics is the paper's appendix on the projection routine.
 
 The helpers live in `AdversarialBco.Poly.LeanAp`. `ell1_acc` treats one case directly
-(`ell1_acc_up`) and gets the other by the reflection `ellOne_neg`. The `d = 1` transfer in `propAP` goes through
-`propAP_of_parts`.
+(`ell1_acc_up`) and gets the other by the reflection `ellOne_neg`.
 -/
 
 open Matrix
@@ -88,11 +88,6 @@ theorem oNorm_oUnit (i : Fin d) : oNorm (oUnit i) = 1 := by
 theorem abs_apply_le_oNorm (v : Fin d → ℝ) (i : Fin d) : |v i| ≤ oNorm v := by
   have := abs_dot_le (oUnit i) v
   rwa [oUnit_dot, oNorm_oUnit, one_mul] at this
-
-theorem oNorm_le_l1 (v : Fin d → ℝ) : oNorm v ≤ ∑ i, |v i| := by
-  rw [oNorm, Real.sqrt_le_left (Finset.sum_nonneg fun i _ => abs_nonneg _)]
-  calc v ⬝ᵥ v = ∑ i, |v i| ^ 2 := by simp [dotProduct, pow_two]
-    _ ≤ (∑ i, |v i|) ^ 2 := Finset.sum_sq_le_sq_sum_of_nonneg fun i _ => abs_nonneg _
 
 theorem l1_le_sqrt_mul (v : Fin d → ℝ) : ∑ i, |v i| ≤ Real.sqrt d * oNorm v := by
   have h := abs_dot_le (fun _ => (1 : ℝ)) (fun i => |v i|)
@@ -548,7 +543,7 @@ theorem test_passes {φ : ℝ → ℝ} (hφ : ConvexOn ℝ Set.univ φ) {L ℓ �
     mul_le_mul_of_nonneg_left this hl.le
   nlinarith
 
-/-- A window that passes the test gives the conclusions of Lemma E.2. -/
+/-- A window that passes the test gives the conclusions of Lemma LINE. -/
 theorem ret_ok {φ : ℝ → ℝ} {L ℓ τ : ℝ} {J i : ℕ} (hℓ : 0 < ℓ) (hiJ : i ≤ J) {W : LineWin}
     (hW : LineInv φ L ℓ τ i W) (htest : W.sd ≤ τ * W.lam / 2) :
     0 ≤ W.p0 + 2 * W.lam ∧ W.p0 + 2 * W.lam ≤ ℓ ∧ ℓ / 4 ^ (J + 1) ≤ W.lam ∧ W.lam ≤ ℓ / 4 ∧
@@ -566,7 +561,7 @@ theorem ret_ok {φ : ℝ → ℝ} {L ℓ τ : ℝ} {J i : ℕ} (hℓ : 0 < ℓ) 
       show W.p0 + 2 * W.lam - W.lam = W.p0 + W.lam by ring]
     linarith
 
-/-- The loop of LINE returns, with the conclusions of Lemma E.2. -/
+/-- The loop of LINE returns, with the conclusions of Lemma LINE. -/
 theorem lineLoop_ok {φ : ℝ → ℝ} (hφ : ConvexOn ℝ Set.univ φ) {L ℓ τ : ℝ} {J : ℕ} {ev1 : ℝ → ℝ → Option ℝ}
     (hτ : 0 < τ) (hτL : τ ≤ L) (hℓ : 0 < ℓ) (hev : EvOK φ ℓ τ J ev1) (hJ : 8 * L / τ ≤ 2 ^ J) :
     ∀ j i W, i + j = J → LineInv φ L ℓ τ i W → ∃ s δ, lineLoop ev1 τ j W = some (s, δ) ∧ 0 ≤ s ∧ s ≤ ℓ ∧
@@ -629,7 +624,7 @@ theorem lineFirst_ok {φ : ℝ → ℝ} {L ℓ τ : ℝ} {J : ℕ} {ev1 : ℝ �
     simp only [pow_zero, div_one]
     linarith
 
-/-- Lemma E.2. -/
+/-- Lemma LINE. -/
 theorem lemmaLINE : LemmaLINE := by
   intro φ L ℓ τ ev1 hφ hLip hτ hτL hℓ hev
   set J := ⌈Real.logb 2 (8 * L / τ)⌉₊ with hJdef
@@ -896,7 +891,7 @@ theorem oValsAll_eq {ev : (Fin d → ℝ) → ℝ → Option ℝ} {x : Fin d →
   funext i
   simp [hv i]
 
-/-- Lemma E.3. -/
+/-- Lemma SEP. -/
 theorem lemmaSEP : LemmaSEP := by
   intro d h L τ ℓ1 y0 ev hd hh hLip hτ hτL hℓ1 hev
   have hL : 0 < L := lt_of_lt_of_le hτ hτL
@@ -2493,7 +2488,7 @@ theorem ellF_sub_le {d : ℕ} (P : Matrix (Fin d) (Fin d) ℝ) (hP : P.PosSemide
   -- Therefore (1/2) * X ≤ P.trace * (R + oNorm w) * oNorm (z - p)
   nlinarith
 
-/-- Lemma E.4. -/
+/-- The central-cut lemma. -/
 theorem lemmaCC : LemmaCC := by
   intro d A a c hd hA hc
   have hdet := cc_det A a c hd hA hc
@@ -3484,37 +3479,7 @@ theorem propAP : PropAP := by
 
 end LeanAp
 
-/-! ## The statements of `Df2Oracle.lean` -/
-
-/-- Lemma E.4. -/
-theorem lemmaCC : LemmaCC := LeanAp.lemmaCC
-
-/-- Lemma E.5. -/
-theorem lemmaBALL : LemmaBALL := LeanAp.lemmaBALL
-
-/-- Lemma E.2. -/
-theorem lemmaLINE : LemmaLINE := LeanAp.lemmaLINE
-
-/-- Lemma E.3. -/
-theorem lemmaSEP : LemmaSEP := LeanAp.lemmaSEP
-
-/-- Lemma GAUGE. -/
-theorem lemmaGAUGE : LemmaGAUGE := LeanAp.lemmaGAUGE
-
-/-- Lemma GVAL. -/
-theorem lemmaGVAL : LemmaGVAL := LeanAp.lemmaGVAL
-
-/-- Lemma GCAP. -/
-theorem lemmaGCAP : LemmaGCAP := LeanAp.lemmaGCAP
-
-/-- Proposition ELL. -/
-theorem propELL : PropELL := LeanAp.propELL
-
-/-- Proposition ELL-cap. -/
-theorem propELLcap : PropELLcap := LeanAp.propELLcap
-
-/-- Proposition ELL-1. -/
-theorem propELL1 : PropELL1 := LeanAp.propELL1
+/-! ## (SPEC-AP) in the namespace of the statements -/
 
 /-- (SPEC-AP) for `apCall`. -/
 theorem propAP : PropAP := LeanAp.propAP

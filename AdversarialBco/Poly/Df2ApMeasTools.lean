@@ -14,13 +14,14 @@ public import AdversarialBco.Poly.Df2Oracle
 
 Every procedure of `AdversarialBco/Poly/Df2Oracle.lean` (bisection, the gauge value, LINE, SEP, the central cut,
 ELL-cap, ELL-1, `apCall`) is measurable as a function of a parameter `x : X` on which its arguments depend
-measurably; the body `Q x` enters through its graph `{(x, y) | y ∈ Q x}`, a measurable set (`GraphMeas`). This is
-the tool for `Df2ApCallMeas` of `Df2Layer2.lean` ((L1) for `apCall`), proved in `Df2ApMeasProof.lean`.
+measurably; the body `Q x` enters through its graph `{(x, y) | y ∈ Q x}`, a measurable set (`GraphMeas`). The routine
+`apCall` itself is measurable by `meas_apCall`.
 
 Mathlib has no σ-algebra on `Option α` at the pin: the scoped instance `instOpt` is the comap of
 `Option α → α ⊕ Unit`, so that `some` is measurable, `{o | o.isSome}` is measurable, and `Option.elim`, `bind`,
-`map` of measurable maps are measurable (`Measurable.optElim`). The records `LineWin`, `EllSt`, `EllConsts` get the
-comap of the tuple of their fields. A loop run a measurable number of times is measurable (`measurable_natDep`).
+`map` of measurable maps are measurable (`meas_optElim`, `meas_optBind`, `meas_optMap`). The records `LineWin`,
+`EllSt`, `EllConsts` get the comap of the tuple of their fields. A loop run a measurable number of times is measurable
+(`measurable_natDep`).
 -/
 
 open MeasureTheory Matrix
@@ -160,8 +161,6 @@ theorem meas_lineWin_mk {p0 lam v0 v1 v2 v3 v4 : X → ℝ} (h0 : Measurable p0)
 theorem measurable_lineWin_p0 : Measurable LineWin.p0 := measurable_fst.comp measurable_lineWin_code
 theorem measurable_lineWin_lam : Measurable LineWin.lam :=
   measurable_fst.comp (measurable_snd.comp measurable_lineWin_code)
-theorem measurable_lineWin_v0 : Measurable LineWin.v0 :=
-  measurable_fst.comp (measurable_snd.comp (measurable_snd.comp measurable_lineWin_code))
 theorem measurable_lineWin_v1 : Measurable LineWin.v1 :=
   measurable_fst.comp (measurable_snd.comp (measurable_snd.comp (measurable_snd.comp measurable_lineWin_code)))
 theorem measurable_lineWin_v2 : Measurable LineWin.v2 :=
@@ -169,9 +168,6 @@ theorem measurable_lineWin_v2 : Measurable LineWin.v2 :=
     (measurable_snd.comp measurable_lineWin_code))))
 theorem measurable_lineWin_v3 : Measurable LineWin.v3 :=
   measurable_fst.comp (measurable_snd.comp (measurable_snd.comp (measurable_snd.comp
-    (measurable_snd.comp (measurable_snd.comp measurable_lineWin_code)))))
-theorem measurable_lineWin_v4 : Measurable LineWin.v4 :=
-  measurable_snd.comp (measurable_snd.comp (measurable_snd.comp (measurable_snd.comp
     (measurable_snd.comp (measurable_snd.comp measurable_lineWin_code)))))
 
 theorem measurable_ellSt_iff {d : ℕ} {f : X → EllSt d} : Measurable f ↔ Measurable fun x => ellStCode (f x) :=
@@ -252,38 +248,6 @@ theorem meas_oBisectLo {X : Type*} [MeasurableSpace X] (Pr : X → ℝ → Prop)
       hPr.preimage (f := fun x => (x, _)) (measurable_id.prodMk hm)
     simp only [oBisectLo]
     exact Measurable.ite hS (hm.prodMk ih.snd) (ih.fst.prodMk hm)
-
-theorem meas_oGaugeVal {X : Type*} [MeasurableSpace X] {d : ℕ} (Q : X → Set (Fin d → ℝ)) (hQ : GraphMeas Q)
-    (a0 : X → Fin d → ℝ) (r R : X → ℝ) (y : X → Fin d → ℝ) (η : X → ℝ) (ha0 : Measurable a0)
-    (hr : Measurable r) (hR : Measurable R) (hy : Measurable y) (hη : Measurable η) :
-    Measurable fun x => oGaugeVal (Q x) (a0 x) (r x) (R x) (y x) (η x) := by
-  unfold oGaugeVal
-  have h_eq : MeasurableSet {x | y x = a0 x} := measurableSet_eq_fun hy ha0
-  let Pr : X → ℝ → Prop := fun x t => 0 < t ∧ a0 x + t⁻¹ • (y x - a0 x) ∈ Q x
-  let lo : X → ℝ := fun x => oNorm (y x - a0 x) / (2 * R x)
-  let hi : X → ℝ := fun x => oNorm (y x - a0 x) / r x
-  have hPr : MeasurableSet {p : X × ℝ | Pr p.1 p.2} := by
-    have h_lt : MeasurableSet {p : X × ℝ | 0 < p.2} :=
-      measurableSet_lt measurable_const measurable_snd
-    have h_mem : MeasurableSet {p : X × ℝ | a0 p.1 + p.2⁻¹ • (y p.1 - a0 p.1) ∈ Q p.1} :=
-      hQ.preimage (f := fun (p : X × ℝ) => (p.1, a0 p.1 + p.2⁻¹ • (y p.1 - a0 p.1))) ((measurable_fst).prodMk
-        ((ha0.comp measurable_fst).add (((measurable_snd).inv).smul ((hy.comp measurable_fst).sub (ha0.comp measurable_fst)))))
-    exact h_lt.inter h_mem
-  have hlo : Measurable lo := by
-    dsimp [lo]
-    refine ((measurable_oNorm.comp (hy.sub ha0)).div ?_)
-    exact (measurable_const.mul hR)
-  have hhi : Measurable hi := by
-    dsimp [hi]
-    refine ((measurable_oNorm.comp (hy.sub ha0)).div hr)
-  have hN : Measurable fun x => oValSteps (a0 x) (r x) (y x) (η x) := by
-    dsimp [oValSteps, Real.logb]
-    refine Measurable.nat_ceil ?_
-    refine (Measurable.log ?_).div measurable_const
-    refine ((measurable_oNorm.comp (hy.sub ha0)).div (hr.mul hη))
-  have h_val : Measurable fun x => (oBisect (Pr x) (lo x) (hi x) (oValSteps (a0 x) (r x) (y x) (η x))).2 :=
-    measurable_natDep (fun j => (meas_oBisect Pr hPr lo hi hlo hhi j).snd) hN
-  exact Measurable.ite h_eq measurable_const h_val
 
 theorem meas_oGaugeValCap {X : Type*} [MeasurableSpace X] {d : ℕ} (Q : X → Set (Fin d → ℝ)) (hQ : GraphMeas Q)
     (a0 : X → Fin d → ℝ) (r R : X → ℝ) (B : X → ℕ) (y : X → Fin d → ℝ) (η : X → ℝ) (ha0 : Measurable a0)
@@ -374,8 +338,8 @@ theorem meas_lineFirst {X : Type*} [MeasurableSpace X] (ev : X → ℝ → ℝ �
   · exact measurable_snd.comp measurable_fst
   · exact measurable_snd
 
-attribute [local fun_prop] measurable_lineWin_p0 measurable_lineWin_lam measurable_lineWin_v0 measurable_lineWin_v1
-  measurable_lineWin_v2 measurable_lineWin_v3 measurable_lineWin_v4
+attribute [local fun_prop] measurable_lineWin_p0 measurable_lineWin_lam measurable_lineWin_v1
+  measurable_lineWin_v2 measurable_lineWin_v3
 
 theorem meas_ev_comp {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y] {ev : X → ℝ → ℝ → Option ℝ}
     (hev : Measurable fun p : X × ℝ × ℝ => ev p.1 p.2.1 p.2.2) {f : Y → X} {a b : Y → ℝ} (hf : Measurable f)

@@ -57,7 +57,7 @@ noncomputable def eT : ℝ := min 1 (c.p.alpha * c.p.rho / 2)
 
 /-- The test call. -/
 noncomputable def tcall (s : ℕ) : Option (Fin d → ℝ) :=
-  c.ap (c.Rm π s) (c.st π s).ctr (c.st π s).r c.p.R (c.Pn π s) (c.zz π s) c.eT
+  c.ap s (c.Rm π s) (c.st π s).ctr (c.st π s).r c.p.R (c.Pn π s) (c.zz π s) c.eT
 
 /-- The statistic of the test, `Ξ(y) = η (l' - ⟨Ĝ', y⟩) - 2 Φ'(y)`. -/
 noncomputable def Xi (s : ℕ) (y : Fin d → ℝ) : ℝ := c.p.eta * (c.ln π s - c.Gn π s ⬝ᵥ y) - 2 * c.PhiN π s y
@@ -74,7 +74,7 @@ noncomputable def eM (s : ℕ) : ℝ := 1 / (16 * c.n ^ 2 * max 1 (4 * c.p.R ^ 2
 
 /-- The call of line μ, on the ball `(ctr', r')`. -/
 noncomputable def mcall (s : ℕ) (ctr' : Fin d → ℝ) (r' : ℝ) : Option (Fin d → ℝ) :=
-  c.ap (c.Rp π s) ctr' r' c.p.R (c.Pn π s) (c.wmu π s) (c.eM π s)
+  c.ap s (c.Rp π s) ctr' r' c.p.R (c.Pn π s) (c.wmu π s) (c.eM π s)
 
 /-- The first guard: the two scalars. -/
 def GdA (s : ℕ) : Prop := c.aa π s ≤ 0 ∨ c.qq π s ≤ 0
@@ -97,7 +97,7 @@ noncomputable def stNext (s : ℕ) (pt mu' : Fin d → ℝ) : Df2St d :=
 open Classical in
 /-- One round from the state of round `s`, unfolded. -/
 theorem nextAP_unfold (s : ℕ) :
-    df2NextAP c.ap c.p c.n c.Keps (c.st π s) (π.xi s) (c.w π s) (c.Y π s) =
+    df2NextAP (c.ap s) c.p c.n c.Keps (c.st π s) (π.xi s) (c.w π s) (c.Y π s) =
       if c.aa π s ≤ 0 ∨ c.qq π s ≤ 0 then .guard else
       if d / c.p.δe < (c.Pn π s).trace ∨ d / c.p.δe < (c.Sn π s).trace then .guard else
       if c.p.R / c.p.δe ^ 3 < oNorm (c.zz π s) then .guard else
@@ -112,8 +112,8 @@ theorem nextAP_unfold (s : ℕ) :
 
 /-- The mode after a round from a running mode. -/
 theorem mode_succ_of_run (s : ℕ) (h : c.mode π s = .run (c.st π s)) :
-    c.mode π (s + 1) = df2NextAP c.ap c.p c.n c.Keps (c.st π s) (π.xi s) (c.w π s) (c.Y π s) := by
-  show (df2RoundE c (π.g s) (π.e s) (π.xi s) (c.mode π s)).2 = _
+    c.mode π (s + 1) = df2NextAP (c.ap s) c.p c.n c.Keps (c.st π s) (π.xi s) (c.w π s) (c.Y π s) := by
+  show (df2RoundE c (c.ap s) (π.g s) (π.e s) (π.xi s) (c.mode π s)).2 = _
   rw [h]
   rfl
 

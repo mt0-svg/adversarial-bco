@@ -13,7 +13,8 @@ public import AdversarialBco.Poly.Df2PlayProof
 /-!
 # The means of the increments are the derivatives of the surrogate
 
-Lemma D.3 at `z = μ` (`lemmaUBPrime_holds`) read under `gam d` on `Fin d → ℝ`: with `X(z) = μ + (1 - λ) A z`,
+The lemma of the derivatives of the surrogate at `z = μ` (`lemmaUBPrime_holds`) read under `gam d` on `Fin d → ℝ`: with
+`X(z) = μ + (1 - λ) A z`,
 `P A Aᵀ = 1` and `e` Lipschitz,
 
 * `mean_lin`: `∫ e(X(z)) ⟨P A z, h⟩ dγ(z) = (1 - λ) ⟨s'(μ), h⟩`;
@@ -83,7 +84,7 @@ theorem inner_P (P : Matrix (Fin d) (Fin d) ℝ) (h : Fin d → ℝ) :
     ⟪Matrix.toEuclideanCLM (𝕜 := ℝ) P (WithLp.toLp 2 h), (WithLp.toLp 2 h : E d)⟫ = df2Sq P h := by
   rw [clm_mulVec, EuclideanSpace.inner_toLp_toLp, star_trivial]; rfl
 
-/-- Lemma D.3 at `μ`, the gradient, under `gam d`. -/
+/-- The lemma of the derivatives of the surrogate at `μ`, the gradient, under `gam d`. -/
 theorem mean_lin (e : E d → ℝ) (K : ℝ) (he : ∀ x y, |e x - e y| ≤ K * ‖x - y‖) (mu : Fin d → ℝ)
     (A P : Matrix (Fin d) (Fin d) ℝ) (hPA : P * (A * Aᵀ) = 1) (lam : ℝ) (hl0 : 0 < lam) (hl1 : lam < 1)
     (h : Fin d → ℝ) :
@@ -106,7 +107,7 @@ theorem mean_lin (e : E d → ℝ) (K : ℝ) (he : ∀ x y, |e x - e y| ≤ K * 
   have h1 : (1 - lam) ≠ 0 := by linarith
   field_simp
 
-/-- Lemma D.3 at `μ`, the Hessian, under `gam d`. -/
+/-- The lemma of the derivatives of the surrogate at `μ`, the Hessian, under `gam d`. -/
 theorem mean_quad (e : E d → ℝ) (K : ℝ) (he : ∀ x y, |e x - e y| ≤ K * ‖x - y‖) (mu : Fin d → ℝ)
     (A P : Matrix (Fin d) (Fin d) ℝ) (hPA : P * (A * Aᵀ) = 1) (lam : ℝ) (hl0 : 0 < lam) (hl1 : lam < 1)
     (h : Fin d → ℝ) :

@@ -13,7 +13,7 @@ public import Mathlib.MeasureTheory.Measure.Typeclasses.Probability
 /-!
 # From a high-probability bound to a measurable majorant
 
-The argument of AdversarialBco/Conj1Exp/Main.lean, stated once for any probability space: if a function `reg` is at
+For any probability space: if a function `reg` is at
 most `n` everywhere and the set where it exceeds `c` has outer measure at most `δ`, with `n δ ≤ 1` and `c ≤ b`,
 `0 ≤ b`, then `R = b + n 1_M`, for `M` a measurable superset of that set of the same measure (`toMeasurable`), is a
 measurable majorant of `reg` with values in `ℝ≥0` and `∫⁻ R ≤ b + 1`.

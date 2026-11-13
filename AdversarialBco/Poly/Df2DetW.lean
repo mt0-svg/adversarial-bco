@@ -10,14 +10,16 @@ public import AdversarialBco.Poly.Df2DetW1
 @[expose] public section
 
 /-!
-# DET, Lemma D.14 at `τ` and the epoch
+# DET, the restart-wrapper lemma at `τ` and the epoch
 
-Lemma DF2-W: Lemma D.14 with `K_eps` the
+Lemma DF2-W: the restart-wrapper lemma with `K_eps` the
 body, `K_τ = R⁻_τ` (the test region of round `τ`), `K_{τ+1} = R⁻_τ ∩ R⁻_{τ+1}`, `Ereg = eReg_τ(x)` for each
 `x ∈ K_ε`, `σ_u = s_u(μ_u)`, `β = Ω_{τ+1}/η` and `Fire` the firing of the test at `τ`; (W1) from `Df2DetW1.lean`,
 (W2) from the sandwich and the online Newton inequality, (W3) from Lemma DQ and the continuity of `Φ`, (W4s) and (W4c)
-from Lemma D.10 on `R⁻_τ` with `h = θ ρ`, `e = α ρ`, (W5) from the range of the surrogate on `K_ε`. The rows R22, R24o
-give the two conditions of Lemma D.14 and R19o the level `ρ/η`. Then `epoch_ok`: the epoch either fires at `τ` with
+from the dichotomy lemma on `R⁻_τ` with `h = θ ρ`, `e = α ρ`, (W5) from the range of the surrogate on `K_ε`. The rows
+R22, R24o
+give the two conditions of the restart-wrapper lemma and R19o the level `ρ/η`. Then `epoch_ok`: the epoch either fires
+at `τ` with
 `eReg_τ ≤ 0` on `K_ε`, or runs to the horizon with `eReg_{m-1} ≤ ρ/η`.
 -/
 
@@ -56,7 +58,7 @@ noncomputable def wB : ℝ := ((c.p.c1 - c.p.gam) * c.p.rho - df2Pri c.p - df2De
 /-- `β = Ω_{τ+1}/η`. -/
 noncomputable def wBeta (τ : ℕ) (y : Fin d → ℝ) : ℝ := c.OmT π (τ + 1) y / c.p.eta
 
-/-- The losses of Lemma D.14, indexed from 1. -/
+/-- The losses of the restart-wrapper lemma, indexed from 1. -/
 noncomputable def sW (u : ℕ) (x : Fin d → ℝ) : ℝ := c.surr π (u - 1) (WithLp.toLp 2 x)
 
 noncomputable def sigW (u : ℕ) : ℝ := c.surr π (u - 1) (WithLp.toLp 2 (c.st π (u - 1)).mu)
@@ -180,7 +182,7 @@ theorem w3b (H : DetHyp c δ π m) {y : Fin d → ℝ} (hy : y ∈ c.Rm π (c.ta
   obtain ⟨-, hP0⟩ := H.phi0_le hR
   linarith
 
-/-- Lemma D.10 on `R⁻_τ` at the accurate test point `pt` of round `τ`. -/
+/-- The dichotomy lemma on `R⁻_τ` at the accurate test point `pt` of round `τ`. -/
 theorem d2_inst (H : DetHyp c δ π m) {pt : Fin d → ℝ} (hpt : pt ∈ c.Rm π (c.tau π m))
     (hacc : ∀ x ∈ c.Rm π (c.tau π m), ellF (c.Pn π (c.tau π m)) (c.zz π (c.tau π m)) pt ≤
       ellF (c.Pn π (c.tau π m)) (c.zz π (c.tau π m)) x + c.eT) :
@@ -245,7 +247,7 @@ theorem cur_min (H : DetHyp c δ π m) :
     rw [this]; linarith [H.heps]
   exact exists_min_on c.Keps c.p.R _ H.keps.2.1 H.keps.2.2.2 ⟨0, h0⟩ hcont
 
-/-! ### The rows of Lemma D.14 -/
+/-! ### The rows of the restart-wrapper lemma -/
 
 theorem row_s (H : DetHyp c δ π m) : c.wA1 + c.wA5 ≤ c.wKs := by
   have hη := H.rows.pos_eta; have hl := H.rows.pos_lam; have he := H.rows.pos_eps
@@ -277,7 +279,7 @@ theorem row_main (H : DetHyp c δ π m) : c.wA1 + c.wA2 ≤ c.p.rho / c.p.eta :=
 
 /-! ### Lemma DF2-W -/
 
-/-- Lemma D.14 at `τ`, for every `x ∈ K_ε`. -/
+/-- The restart-wrapper lemma at `τ`, for every `x ∈ K_ε`. -/
 theorem w_main (H : DetHyp c δ π m) :
     (c.fire π (c.tau π m) → ∀ x ∈ c.Keps, c.eReg π (c.tau π m) x ≤ 0) ∧
     (¬ c.fire π (c.tau π m) →

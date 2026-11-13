@@ -15,7 +15,7 @@ public import AdversarialBco.Conj1Lower.RuleS
 @[expose] public section
 
 /-!
-# The ledger: Lemma 9.8
+# The ledger: the ledger lemma
 
 `Λ(π) = (1/2) ln det(Σ(π) + w² I)` (`lam`), `W = Σ(π) + w² I` (`frameW` of Frame.lean). For a cell `c` of mass
 `p_c = π(c)`: `S_c = p_c⁻¹ ∫_c (θ - m)(θ - m)ᵀ dπ` (`m` the mean of `π`), `U_c = S_c + w² I` (`cellU`), and
@@ -73,11 +73,6 @@ noncomputable def payAnn (w : ℝ) (π : Measure (E d)) (ans : E d → Option Ce
 noncomputable def ledgerBudget (d : ℕ) (r₀ w : ℝ) : ℝ := d / 2 * Real.log (1 + r₀ ^ 2 / (d * w ^ 2))
 
 /-! ## The scalar `ψ` -/
-
-theorem psiF_nonneg {u : ℝ} (hu : 0 < u) : 0 ≤ psiF u := by
-  rw [psiF]
-  have h := Real.log_le_sub_one_of_pos hu
-  linarith
 
 theorem psiF_monotoneOn : MonotoneOn psiF (Set.Ici 1) := by
   intro u hu v hv huv
@@ -601,120 +596,6 @@ theorem logdet_le_card_log_trace (X : Matrix (Fin d) (Fin d) ℝ) (hX : X.PosDef
   rw [h_simp] at hineq
   rw [hc_def] at hineq
   exact hineq
-
-/-- `ln det(S + w² I) ≥ d ln w²` for `S` positive semidefinite. -/
-theorem logdet_frameW_ge (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.PosSemidef) {w : ℝ} (hw : w ≠ 0) :
-    d * Real.log (w ^ 2) ≤ Real.log (det (frameW w S)) := by
-  have hS_herm : S.IsHermitian := hS.isHermitian
-  have h_eigen_nonneg : ∀ i, 0 ≤ hS_herm.eigenvalues i := hS.eigenvalues_nonneg
-  have hw_sq_pos : 0 < w ^ 2 := sq_pos_iff.mpr hw
-  have h_card : Fintype.card (Fin d) = d := by simp
-  -- frameW w S is Hermitian
-  have h_frame_herm : (frameW w S).IsHermitian := by
-    unfold frameW
-    have h_one : (1 : Matrix (Fin d) (Fin d) ℝ).IsHermitian := Matrix.isHermitian_one
-    have h_smul : ((w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ)).IsHermitian :=
-      h_one.smul (by rw [isSelfAdjoint_iff]; simp : IsSelfAdjoint (w ^ 2))
-    exact hS_herm.add h_smul
-  -- det(frameW w S) = ∏ eigenvalues_i
-  have h_det_eq : det (frameW w S) = ∏ i : Fin d, (h_frame_herm.eigenvalues i : ℝ) :=
-    h_frame_herm.det_eq_prod_eigenvalues
-  -- spectral theorem: S = U * D * Uᴴ
-  have hspec := hS_herm.spectral_theorem
-  set U := hS_herm.eigenvectorUnitary with hU
-  set D := diagonal ((RCLike.ofReal : ℝ → ℝ) ∘ hS_herm.eigenvalues) with hD
-  have hS_eq : S = ((Unitary.conjStarAlgAut ℝ (Matrix (Fin d) (Fin d) ℝ)) U) D := hspec
-  have h_conj_apply : ((Unitary.conjStarAlgAut ℝ (Matrix (Fin d) (Fin d) ℝ)) U) D = (U : Matrix (Fin d) (Fin d) ℝ) * D * star (U : Matrix (Fin d) (Fin d) ℝ) := by
-    rw [Unitary.conjStarAlgAut_apply]
-  have hS_eq' : S = (U : Matrix (Fin d) (Fin d) ℝ) * D * star (U : Matrix (Fin d) (Fin d) ℝ) := by
-    rw [hS_eq, h_conj_apply]
-  -- U is unitary, so U * star U = 1 and star U * U = 1
-  have hU_unitary : IsUnit (U : Matrix (Fin d) (Fin d) ℝ) := by
-    have h_mem : (U : Matrix (Fin d) (Fin d) ℝ) ∈ unitaryGroup (Fin d) ℝ := U.property
-    rcases h_mem with ⟨h1, h2⟩
-    refine ⟨⟨U, star U, ?_, ?_⟩, rfl⟩
-    · simpa using h1
-    · simpa using h2
-  have h_star_eq_inv : star (U : Matrix (Fin d) (Fin d) ℝ) = (U : Matrix (Fin d) (Fin d) ℝ)⁻¹ := by
-    have h_mem : (U : Matrix (Fin d) (Fin d) ℝ) ∈ unitaryGroup (Fin d) ℝ := U.property
-    rcases h_mem with ⟨h1, h2⟩
-    rw [eq_comm, ← Matrix.inv_eq_left_inv h1]
-  -- identity: U * D * Uᴴ + w² • I = U * (D + w² • I) * Uᴴ
-  have h_frame_eq : frameW w S = (U : Matrix (Fin d) (Fin d) ℝ) * (D + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ)) * star (U : Matrix (Fin d) (Fin d) ℝ) := by
-    unfold frameW
-    rw [hS_eq']
-    have h_unit : (U : Matrix (Fin d) (Fin d) ℝ) * star (U : Matrix (Fin d) (Fin d) ℝ) = 1 := by
-      have h_mem : (U : Matrix (Fin d) (Fin d) ℝ) ∈ unitaryGroup (Fin d) ℝ := U.property
-      rcases h_mem with ⟨h1, h2⟩
-      exact h2
-    calc
-      (U : Matrix (Fin d) (Fin d) ℝ) * D * star (U : Matrix (Fin d) (Fin d) ℝ) + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ)
-          = (U : Matrix (Fin d) (Fin d) ℝ) * D * star (U : Matrix (Fin d) (Fin d) ℝ) + (w ^ 2) • ((U : Matrix (Fin d) (Fin d) ℝ) * star (U : Matrix (Fin d) (Fin d) ℝ)) := by
-        simp [h_unit]
-      _ = (U : Matrix (Fin d) (Fin d) ℝ) * D * star (U : Matrix (Fin d) (Fin d) ℝ) + (w ^ 2) • ((U : Matrix (Fin d) (Fin d) ℝ) * (1 : Matrix (Fin d) (Fin d) ℝ) * star (U : Matrix (Fin d) (Fin d) ℝ)) := by
-        simp
-      _ = (U : Matrix (Fin d) (Fin d) ℝ) * (D + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ)) * star (U : Matrix (Fin d) (Fin d) ℝ) := by
-        simp [mul_add, add_mul]
-  -- det(frameW w S) = det(D + w² • I)
-  have h_det_frame : det (frameW w S) = det (D + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ)) := by
-    rw [h_frame_eq]
-    rw [h_star_eq_inv]
-    rw [Matrix.det_conj hU_unitary (D + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ))]
-  -- D is diagonal with entries λ_i
-  have hD_diag : D = diagonal fun i : Fin d => (hS_herm.eigenvalues i : ℝ) := by
-    ext i j
-    simp [D, diagonal]
-  -- D + w² • I = diagonal (λ_i + w²)
-  have hD_add : D + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ) = diagonal fun i : Fin d => (hS_herm.eigenvalues i : ℝ) + w ^ 2 := by
-    rw [hD_diag]
-    ext i j
-    simp [diagonal, Matrix.add_apply, Matrix.smul_apply, Matrix.one_apply]
-    split_ifs <;> simp
-  -- det(D + w² • I) = ∏ (λ_i + w²)
-  have h_det_diag : det (D + (w ^ 2) • (1 : Matrix (Fin d) (Fin d) ℝ)) = ∏ i : Fin d, ((hS_herm.eigenvalues i : ℝ) + w ^ 2) := by
-    rw [hD_add, Matrix.det_diagonal]
-  -- Now relate to eigenvalues of frameW
-  -- We know det(frameW w S) = ∏ eigenvalues_i(frameW w S)
-  -- But we also have det(frameW w S) = ∏ (λ_i + w²)
-  -- So we need to show that eigenvalues_i(frameW w S) = λ_i + w²
-  -- Actually, we don't need this equality! We just need:
-  -- ∏ (λ_i + w²) ≥ (w²)^d
-  -- and then take logs.
-  -- Each λ_i ≥ 0, w² > 0, so λ_i + w² ≥ w²
-  have h_sum_ge : ∀ i, w ^ 2 ≤ (hS_herm.eigenvalues i : ℝ) + w ^ 2 := by
-    intro i
-    nlinarith [h_eigen_nonneg i]
-  -- Product inequality
-  have h_prod_ge : (∏ i : Fin d, (w ^ 2 : ℝ)) ≤ ∏ i : Fin d, ((hS_herm.eigenvalues i : ℝ) + w ^ 2) := by
-    refine Finset.prod_le_prod₀ ?_ ?_
-    · intro i hi
-      have : 0 ≤ (w ^ 2 : ℝ) := by linarith
-      exact this
-    · intro i hi
-      exact h_sum_ge i
-  -- (w²)^d = ∏ (w²)
-  have h_prod_const : (∏ i : Fin d, (w ^ 2 : ℝ)) = (w ^ 2) ^ d := by
-    simp
-  rw [h_prod_const] at h_prod_ge
-  -- Now combine with det equality
-  have h_det_val : det (frameW w S) = ∏ i : Fin d, ((hS_herm.eigenvalues i : ℝ) + w ^ 2) := by
-    rw [h_det_frame, h_det_diag]
-  rw [← h_det_val] at h_prod_ge
-  -- h_prod_ge: (w ^ 2) ^ d ≤ det (frameW w S)
-  -- We need: d * log(w²) ≤ log(det)
-  have h_det_pos : 0 < det (frameW w S) := by
-    -- Since det = ∏ (λ_i + w²) and each λ_i + w² ≥ w² > 0
-    rw [h_det_val]
-    refine Finset.prod_pos fun i hi => ?_
-    have : 0 < (hS_herm.eigenvalues i : ℝ) + w ^ 2 := by nlinarith [h_eigen_nonneg i, hw_sq_pos]
-    exact this
-  have h_w_sq_pow_pos : 0 < (w ^ 2) ^ d := pow_pos hw_sq_pos d
-  -- Apply log to both sides of h_prod_ge
-  have h_log_ineq : Real.log ((w ^ 2) ^ d) ≤ Real.log (det (frameW w S)) :=
-    Real.log_le_log h_w_sq_pow_pos h_prod_ge
-  -- Real.log ((w ^ 2) ^ d) = d * Real.log (w ^ 2)
-  rw [Real.log_pow] at h_log_ineq
-  exact h_log_ineq
 
 theorem frameW_posDef (S : Matrix (Fin d) (Fin d) ℝ) (hS : S.PosSemidef) {w : ℝ} (hw : w ≠ 0) :
     (frameW w S).PosDef := by

@@ -13,7 +13,8 @@ public import AdversarialBco.Poly.Df2DetGuard
 # DET, the accuracy of the three calls
 
 The induction on the run, rounds `s ≤ τ`: the test call is accurate (its ball lies in
-`R⁻_s`: `B(0, 1 - ε) ⊆ K_ε` at the first round, the ball of Lemma D.17 of the round before after it); Lemma D.17 at a
+`R⁻_s`: `B(0, 1 - ε) ⊆ K_ε` at the first round, the ball of the inner-ball lemma of the round before after it); the
+inner-ball lemma at a
 round where the statistic is above `-θ ρ` (`Φ'(pt) ≤ (c₁ - γ) ρ - 2` from the online Newton inequality with defects,
 the gradient bound and IB-geo) puts the ball of line μ in `R⁻_{s+1} ⊆ R⁺_s`, so line μ is accurate; and a round `τ`
 that does not fire continues the epoch.
@@ -90,18 +91,19 @@ theorem phi0_le (H : DetHyp c δ π m) {y : Fin d → ℝ} (hy : oNorm y ≤ c.p
 theorem accT (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m)
     (hb : oBall (c.st π s).ctr (c.st π s).r ⊆ c.Rm π s) (hr : 0 < (c.st π s).r) : c.AccT π s := by
   obtain ⟨hcv, hcl, hsub⟩ := H.Rm_props hs
-  obtain ⟨μ, h1, h2, h3⟩ := (H.hap _ _ _ _ _ _ _).1 hcv hcl hr hb hsub (H.r1_le_tau hs).1 H.eT_pos
+  obtain ⟨μ, h1, h2, h3⟩ := (H.hap s _ _ _ _ _ _ _).1 hcv hcl hr hb hsub (H.r1_le_tau hs).1 H.eT_pos
   exact ⟨μ, h1, h2, h3⟩
 
 /-- Line μ of a round `s ≤ τ` whose ball lies in `R⁻_{s+1}` is accurate. -/
 theorem accM (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) {pt : Fin d → ℝ}
     (hb : oBall ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) ⊆ c.RmN π s) : c.AccM π s pt := by
   obtain ⟨hcv, hcl, hsub⟩ := H.Rp_props hs
-  obtain ⟨μ, h1, h2, h3⟩ := (H.hap _ _ _ _ _ _ _).1 hcv hcl H.rad_pos (hb.trans (H.RmN_sub_Rp s)) hsub
+  obtain ⟨μ, h1, h2, h3⟩ := (H.hap s _ _ _ _ _ _ _).1 hcv hcl H.rad_pos (hb.trans (H.RmN_sub_Rp s)) hsub
     (H.r1_le_tau hs).1 (H.eM_pos s)
   exact ⟨μ, h1, h2, h3⟩
 
-/-- Lemma D.17 (i): at a round `s ≤ τ` whose earlier points of line μ are accurate, a point of `R⁻_s` where the
+/-- The inner-ball lemma (i): at a round `s ≤ τ` whose earlier points of line μ are accurate, a point of `R⁻_s` where
+the
 statistic is above `-θ ρ` has `Φ'(pt) ≤ (c₁ - γ) ρ - 2` (row R24b). -/
 theorem ib2_level (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) (hP : ∀ u < s, c.ProjOK π u)
     {pt : Fin d → ℝ} (hpt : pt ∈ c.Rm π s) (hXi : ¬ c.Xi π s pt ≤ -(c.p.theta * c.p.rho)) :
@@ -121,7 +123,7 @@ theorem ib2_level (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) (hP :
   have := H.pri_nonneg
   linarith
 
-/-- Lemma D.17 (iii): the ball of line μ lies in `R⁻_{s+1}`. -/
+/-- The inner-ball lemma (iii): the ball of line μ lies in `R⁻_{s+1}`. -/
 theorem ib2 (H : DetHyp c δ π m) {s : ℕ} (hs : s ≤ c.tau π m) (hP : ∀ u < s, c.ProjOK π u)
     {pt : Fin d → ℝ} (hpt : pt ∈ c.Rm π s) (hXi : ¬ c.Xi π s pt ≤ -(c.p.theta * c.p.rho)) :
     oBall ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) ⊆ c.RmN π s := by

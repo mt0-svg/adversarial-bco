@@ -1,8 +1,0 @@
-{
-  "challenge_module": "AdversarialBco.ChallengeConj1Lower",
-  "solution_module": "AdversarialBco.Conj1Lower.Main",
-  "theorem_names": ["AdversarialBco.theoremConj1Lower"],
-  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
-  "enable_nanoda": true,
-  "lean_kernel": false
-}

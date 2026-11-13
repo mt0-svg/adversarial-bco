@@ -5,16 +5,17 @@ Authors: mt0-svg
 -/
 module
 
-public import AdversarialBco.Poly.Df2PropGAd
+public import AdversarialBco.Poly.Df2Layer2
+public import AdversarialBco.StatementConj1
 
 @[expose] public section
 
 /-!
-# Leaves of Proposition G against a strategy
+# The comparator as an infimum over the rational points of the interior
 
-Generic lemmas used by Df2PropGAdProof.lean: the infimum of a convex function over a convex body as an infimum over
-the rational points of its interior (the measurable form of the comparator), the measurability of the strategy read
-off a history, and the recursion of the observations `obsAd`.
+The infimum of a convex function over a convex body as an infimum over the rational points of its interior (the
+measurable form of the comparator, `sInf_image_eq_iInf_rat`), with a sum of convex functions (`convexOn_sum_range`)
+and the approximation from the interior (`convex_interior_approx`, `iInf_rat_le_of_continuousOn`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -23,139 +24,6 @@ namespace AdversarialBco.Poly.PropGAd
 
 open AdversarialBco AdversarialBco.RealRAM AdversarialBco.Poly
 open Classical
-
-/-! ## The observations of a strategy -/
-
-theorem obsAd_congr {d : ℕ} (σ : Strategy d) (ε : ℕ → ℝ) {x y : ℕ → E d} :
-    ∀ t, (∀ i < t, x i = y i) → obsAd σ ε x t = obsAd σ ε y t
-  | 0, _ => rfl
-  | t + 1, h => by
-    have ih := obsAd_congr σ ε t fun i hi => h i (by omega)
-    have hx : (fun i : Fin t => x i) = fun i : Fin t => y i := funext fun i => h i (by omega)
-    simp only [obsAd, ih, hx, h t (by omega)]
-
-theorem lossAd_congr {d : ℕ} (σ : Strategy d) (ε : ℕ → ℝ) {x y : ℕ → E d} (t : ℕ)
-    (h : ∀ i < t, x i = y i) : lossAd σ ε x t = lossAd σ ε y t := by
-  have hx : (fun i : Fin t => x i) = fun i : Fin t => y i := funext fun i => h i i.2
-  simp only [lossAd, obsAd_congr σ ε t h, hx]
-
-theorem obsAd_last {d : ℕ} (σ : Strategy d) (ε : ℕ → ℝ) (x : ℕ → E d) (t : ℕ) :
-    obsAd σ ε x (t + 1) (Fin.last t) = lossAd σ ε x t (x t) + ε t := by
-  simp only [obsAd, Fin.snoc_last, lossAd]
-
-theorem obsAd_prefix {d : ℕ} (σ : Strategy d) (ε : ℕ → ℝ) (x : ℕ → E d) (t : ℕ) :
-    ∀ k : ℕ, ∀ (i : ℕ) (hi : i < t), obsAd σ ε x (t + k) ⟨i, by omega⟩ = obsAd σ ε x t ⟨i, hi⟩ := by
-  intro k
-  induction' k with k ih
-  · intro i hi
-    rfl
-  · intro i hi
-    have h_lt : (i : ℕ) < t + k := by omega
-    have h_target : obsAd σ ε x (t + (k + 1)) ⟨i, by omega⟩ = obsAd σ ε x t ⟨i, hi⟩ := by
-      calc
-        obsAd σ ε x (t + (k + 1)) ⟨i, by omega⟩
-            = Fin.snoc (α := fun _ => ℝ) (obsAd σ ε x (t + k))
-              (σ (t + k) (fun i => x i) (obsAd σ ε x (t + k)) (x (t + k)) + ε (t + k))
-              ⟨i, by omega⟩ := by rfl
-        _ = obsAd σ ε x (t + k) ⟨i, by omega⟩ := by
-          simp [Fin.snoc, h_lt]
-        _ = obsAd σ ε x t ⟨i, hi⟩ := ih i hi
-    exact h_target
-
-theorem obsAd_le {d : ℕ} (σ : Strategy d) (ε : ℕ → ℝ) (x : ℕ → E d) {t t' : ℕ} (htt : t ≤ t') (i : ℕ)
-    (hi : i < t) : obsAd σ ε x t' ⟨i, by omega⟩ = obsAd σ ε x t ⟨i, hi⟩ := by
-  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le htt
-  exact obsAd_prefix σ ε x t k i hi
-
-/-! ## Measurability -/
-
-/-- The Carathéodory lemma on the interior of a convex set (A2). -/
-theorem caraInterior : CaraInterior := by
-  intro d X _ K F hconv hmeas
-  have hfin : FiniteDimensional ℝ (E d) := by infer_instance
-  let u : (interior K) → X → ℝ := fun y x => F x y
-  have hu_cont : ∀ x, Continuous fun (y : interior K) => u y x := by
-    intro x
-    have h_cont_on : ContinuousOn (F x) (interior K) :=
-      (hconv x).continuousOn_interior
-    have h_cont : Continuous ((interior K).domRestrict (F x)) :=
-      h_cont_on.domRestrict
-    convert h_cont using 1
-    ext y; rfl
-  have hu_meas : ∀ (y : interior K), Measurable (u y) := by
-    intro y
-    simpa [u] using hmeas y.1 y.2
-  have h_uncurry_meas : Measurable (Function.uncurry u) :=
-    measurable_uncurry_of_continuous_of_measurable hu_cont hu_meas
-  let s : Set (X × E d) := {q | q.2 ∈ interior K}
-  have hs_meas : MeasurableSet s := by
-    have h_open : IsOpen (interior K) := isOpen_interior
-    have h_meas : MeasurableSet (interior K) := h_open.measurableSet
-    exact measurable_snd h_meas
-  have h_on_s : Measurable (s.domRestrict fun q => (interior K).indicator (F q.1) q.2) := by
-    have h_eq_on_s : s.domRestrict (fun q => (interior K).indicator (F q.1) q.2) =
-        s.domRestrict (fun q => F q.1 q.2) := by
-      ext q
-      have hq : q.1.2 ∈ interior K := q.2
-      simp [s, Set.indicator, hq]
-    rw [h_eq_on_s]
-    let φ : s → (interior K) × X := fun q => (⟨q.1.2, q.2⟩, q.1.1)
-    have hφ_meas : Measurable φ := by
-      have hf : Measurable (fun q : s => q.1.2) := measurable_snd.comp measurable_subtype_coe
-      have hmem : ∀ q : s, q.1.2 ∈ interior K := fun q => q.2
-      have h_first : Measurable (fun q : s => (⟨q.1.2, q.2⟩ : interior K)) :=
-        Measurable.codRestrict hf hmem
-      have h_second : Measurable (fun q : s => q.1.1) :=
-        measurable_fst.comp measurable_subtype_coe
-      exact Measurable.prodMk h_first h_second
-    have h_eq : s.domRestrict (fun q => F q.1 q.2) = (Function.uncurry u) ∘ φ := by
-      ext q
-      simp [u, φ]
-    rw [h_eq]
-    exact h_uncurry_meas.comp hφ_meas
-  have h_on_compl : Measurable (sᶜ.domRestrict fun q => (interior K).indicator (F q.1) q.2) := by
-    have h_eq_on_compl : sᶜ.domRestrict (fun q => (interior K).indicator (F q.1) q.2) =
-        sᶜ.domRestrict (fun _ => (0 : ℝ)) := by
-      ext q
-      have hq : q.1.2 ∉ interior K := q.2
-      simp [s, Set.indicator, hq]
-    rw [h_eq_on_compl]
-    exact measurable_const
-  exact measurable_of_restrict_of_restrict_compl hs_meas h_on_s h_on_compl
-
-theorem measurable_iInf_rat {α : Type*} [MeasurableSpace α] {d : ℕ} (U : Set (E d))
-    (G : α → E d → ℝ) (hG : ∀ y, Measurable fun a => G a y) (M : ℝ) :
-    Measurable fun a => ⨅ q : Fin d → ℚ,
-      if (WithLp.toLp 2 (fun i => (q i : ℝ)) : E d) ∈ U then G a (WithLp.toLp 2 (fun i => (q i : ℝ))) else M := by
-  refine Measurable.iInf ?_
-  intro q
-  by_cases h : (WithLp.toLp 2 (fun i => (q i : ℝ)) : E d) ∈ U
-  · simpa [h] using hG (WithLp.toLp 2 (fun i => (q i : ℝ)))
-  · simpa [h]
-
-theorem measurable_restrict_indicator {d t : ℕ} (K : Set (E d))
-    (σt : (Fin t → E d) → (Fin t → ℝ) → E d → ℝ)
-    (hσ : Measurable fun q : ((Fin t → E d) × (Fin t → ℝ)) × E d => (interior K).indicator (σt q.1.1 q.1.2) q.2) :
-    Measurable fun q : ((ℕ → E d) × (ℕ → ℝ)) × E d =>
-      (interior K).indicator (σt (fun i : Fin t => q.1.1 i) (fun i : Fin t => q.1.2 i)) q.2 := by
-  have h_meas : Measurable fun (q : ((ℕ → E d) × (ℕ → ℝ)) × E d) =>
-      (((fun i : Fin t => q.1.1 i), (fun i : Fin t => q.1.2 i)), q.2) := by
-    refine Measurable.prodMk ?_ measurable_snd
-    refine Measurable.prodMk ?_ ?_
-    · refine Measurable.of_eval fun i => ?_
-      exact (measurable_pi_apply (i : ℕ)).comp (measurable_fst.comp measurable_fst)
-    · refine Measurable.of_eval fun i => ?_
-      exact (measurable_pi_apply (i : ℕ)).comp (measurable_snd.comp measurable_fst)
-  exact hσ.comp h_meas
-
-theorem measurable_update_pair {d : ℕ} (t : ℕ) :
-    Measurable fun q : ((ℕ → E d) × (ℕ → ℝ)) × (E d × ℝ) =>
-      (Function.update q.1.1 t q.2.1, Function.update q.1.2 t q.2.2) := by
-  refine Measurable.prodMk ?_ ?_
-  · exact (measurable_update' (a := t) (X := fun (_ : ℕ) => E d)).comp
-      ((measurable_fst.comp measurable_fst).prodMk (measurable_fst.comp measurable_snd))
-  · exact (measurable_update' (a := t) (X := fun (_ : ℕ) => ℝ)).comp
-      ((measurable_snd.comp measurable_fst).prodMk (measurable_snd.comp measurable_snd))
 
 /-! ## The comparator as an infimum over the rational points of the interior -/
 

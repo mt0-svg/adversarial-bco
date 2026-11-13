@@ -12,8 +12,9 @@ public import AdversarialBco.Poly.Df2DetRound
 /-!
 # DET, the region
 
-Appendix D.5 of the paper on the run, for the rounds up to `τ`: Lemma DQ in the form `|Ω̂_t - Ω_t| ≤ dev'`, Lemma D.7 and
-Proposition D.8 (`inc2_at`: `μ_t` is in the region `Reg t = {y ∈ K_ε : Φ_t(y) ≤ c₁ ρ}` and the region lies in the
+The paper's subsection on the region on the run, for the rounds up to `τ`: Lemma DQ in the form `|Ω̂_t - Ω_t| ≤ dev'`,
+the monotonicity lemma and
+the region proposition (`inc2_at`: `μ_t` is in the region `Reg t = {y ∈ K_ε : Φ_t(y) ≤ c₁ ρ}` and the region lies in the
 past ellipsoids). DF2 counts the rounds from 1: its `μ_i`, `P_i` are `muD i`, `PD i` here, its `S_t` is `SD t`
 (`SD (t + 1) = SS t`), and the bonus `Ω̂_t` sums the rounds `u < t` (`OmH t`). The true bonus is frozen after `τ`
 (`OmTc`), so that it is nonnegative and nondecreasing at every index, as INC2 asks.
@@ -86,10 +87,6 @@ theorem devP_nonneg (H : DetHyp c δ π m) : 0 ≤ df2DevP c.p d c.n := by
   have := H.Bn_nonneg; have := H.rows.pos_lam; have := H.rows.pos_eta; have := H.one_le_Le
   unfold df2DevP; rw [H.kap]; positivity
 
-theorem dev_nonneg (H : DetHyp c δ π m) : 0 ≤ df2Dev c.p d c.n := by
-  have := H.Bn_nonneg; have := H.b1_nonneg; have := H.rows.pos_lam; have := H.one_le_Le
-  unfold df2Dev; positivity
-
 theorem devK_nonneg (H : DetHyp c δ π m) : 0 ≤ df2DevK c.p d c.n := by
   have := H.Bn_nonneg; have := H.b1_nonneg; have := H.rows.pos_lam; have := H.one_le_Le
   unfold df2DevK; positivity
@@ -150,7 +147,7 @@ theorem succ_of_lt (H : DetHyp c δ π m) {s : ℕ} (hs : s < c.tau π m) :
   obtain ⟨-, -, -, hcont⟩ := H.cond_lt_tau s hs
   obtain ⟨pt, mu', -, -, hmc, -, hst⟩ := c.st_succ_of_cont π s hI.run hcont
   refine ⟨fun y => by unfold Df2Ctx.Phi; rw [hst]; rfl, ?_⟩
-  have hsp := (H.hap (c.Rp π s) ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) c.p.R (c.Pn π s) (c.wmu π s)
+  have hsp := (H.hap s (c.Rp π s) ((1 - c.p.sb) • pt) (c.p.sb * (1 - c.p.eps)) c.p.R (c.Pn π s) (c.wmu π s)
     (c.eM π s)).2
   unfold Df2Ctx.mcall at hmc
   rw [hmc] at hsp
@@ -158,10 +155,7 @@ theorem succ_of_lt (H : DetHyp c δ π m) {s : ℕ} (hs : s < c.tau π m) :
   · cases h
   · rw [hst, Option.some.inj hμ]; exact hμQ
 
-/-! ### Lemma DQ, Lemma D.7, Proposition D.8 on the run -/
-
-theorem rS_pos (H : DetHyp c δ π m) : 0 < c.rS := by
-  have := H.rows.pos_lam; have := H.one_le_Le; unfold Df2Ctx.rS; positivity
+/-! ### Lemma DQ, the monotonicity lemma, the region proposition on the run -/
 
 theorem le_rS_iff (H : DetHyp c δ π m) (q : ℝ) : q ≤ c.rS ↔ c.p.lam ^ 2 * q ≤ 1 / (2 * c.p.Le) := by
   have hl := H.rows.pos_lam; have hL := H.one_le_Le
@@ -225,7 +219,7 @@ theorem dq_at (H : DetHyp c δ π m) {t : ℕ} (ht : t ≤ c.tau π m + 1) {y : 
         mul_le_mul_of_nonneg_left hdq (by have := H.kap_pos; positivity)
     _ = df2DevP c.p d c.n := by unfold df2DevP; field_simp
 
-/-- Lemma D.7 on the run (DF2 indexing, `u ≤ t ≤ τ + 1`). -/
+/-- The monotonicity lemma on the run (DF2 indexing, `u ≤ t ≤ τ + 1`). -/
 theorem mon_at (H : DetHyp c δ π m) {u t : ℕ} (hut : u ≤ t) (ht : t ≤ c.tau π m + 1) {y : Fin d → ℝ}
     (hy : y ∈ c.SD π t) (hR : oNorm y ≤ c.p.R) :
     c.Phi π 0 y + c.OmH π u y ≤ c.Phi π 0 y + c.OmH π t y + 2 * df2DevP c.p d c.n := by
@@ -249,7 +243,7 @@ theorem inc_row (H : DetHyp c δ π m) : 8 * (c.p.c1 * c.p.rho + 2 * df2DevP c.p
     field_simp; ring
   rw [e]; exact h
 
-/-- Proposition D.8 on the run: for `t ≤ τ`, `μ_t` is in the region of round `t`, and every point of it is within
+/-- The region proposition on the run: for `t ≤ τ`, `μ_t` is in the region of round `t`, and every point of it is within
 `8 (c₁ ρ + 2 dev')` of `μ_v` in `P_v`, `v ≤ t`. -/
 theorem inc2_at (H : DetHyp c δ π m) {t : ℕ} (ht : t ≤ c.tau π m) :
     (c.st π t).mu ∈ c.Reg π t ∧ ∀ y ∈ c.Reg π t, ∀ v ≤ t,
