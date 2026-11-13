@@ -903,6 +903,16 @@ Every other numbered statement is proved in Lean as a step of the proofs of thes
 The theorems depend on the axioms \texttt{propext}, \texttt{Classical.choice} and \texttt{Quot.sound} only.
 The Lean kernel checks every declaration when the package is built. Comparator \cite{Comparator} checks each of the three theorems of Table~\ref{tab:formal} against a copy of its statement files, made by a program, that imports Mathlib alone. Within Comparator, nanoda \cite{nanoda}, a second implementation of the kernel, checks again every declaration the theorems depend on, Mathlib included. Next to each theorem, Comparator checks a witness that the hypotheses of the theorem can be met, so that none of the three holds vacuously.
 
+\section*{Acknowledgements}
+
+We thank H\'edi Hadiji for helpful discussions.
+
+\section*{Contact}
+Questions, corrections and comments are welcome as issues on the repository: \url{\repo/issues/new/choose}.
+
+\bibliographystyle{amsplain}
+\bibliography{refs}
+
 \appendix
 
 \section{Proofs for Section~\ref{sec:poly}}\label{app:bitproofs}
@@ -2231,15 +2241,5 @@ For (A3) fix a world of the case, of $\Omega_{\mathrm{ref}}$ and of $E_{\mathrm{
 For $t=1$, (i) is empty, and (ii) holds by E6 and E17: both learners start an epoch with $\mu=0$, $|H_1|,|H^B_1|\le h_a$, and $|\xi_1|\le\Xi$ on the event (a) of the virtual epoch started at $1$. Let the claim hold at $t$, and let no round before $t+1$ decouple. Let $a\le t$ be the round at which the current epoch of the reference started; the run of the reference from $a$ is the virtual epoch started at $a$, which has the events at the horizon $n-a+1$ on $\Omega_{\mathrm{ref}}$; it neither fires nor guards in the rounds $a,\dots,t-1$ by (i), so Lemma~\ref{lem:hor}~(c) gives the facts of round $t$. Round $t$ is coupled, so the reference observes $\tilde Y_t$ and the inputs of the two round maps are within $e_Y$ and $e_\xi$ (E1, E2). By (i) the epochs agree through $t-1$ and $\mu'_t=\mu^\circ_t$, so Lemma~\ref{lem:errors} applies in round $t$, with the conditions of Theorem~\ref{thm:bud}. By E18 BL passes the guards of R7, R10 and R13, since the reference passes those of steps~2, 3 and~6. The region of the test call of BL contains the image of the ball of the reference by a homothety of ratio $k(1-s)\ge1-h$, with $h\le r_{\min}/4$ (E14, Lemma~\ref{lem:gap}), so its ball of radius $r'/2$ fits, and by Theorem~\ref{thm:ellr}~(b) the call returns a point within $a'_T$ of the minimum; the same holds for the call of R14. E15 and Lemma~\ref{lem:sel}, with $\eta_T+e_T\le(\delta_e/d)r^2\le1$, give a point $p^\circ_t$ that the checked routine accepts at accuracy $1$ (the acceptance test is $F(p^\circ)\ge M-2$ with $F=\Upsilon^\circ_t$, since $\Upsilon^\circ$ is a constant minus twice the objective of step~5), and whose test decision is that of BL. If BL continues, E16 and Lemma~\ref{lem:val} make $\mu'_{t+1}$ acceptable to the reference, so $\mu^\circ_{t+1}=\mu'_{t+1}$; if it fires, both start an epoch at round $t+1$. This is (i) at $t$. For (ii) at $t+1$: E5 to E6 hold at round $t+1$ by Lemma~\ref{lem:track} with $x,V\le1$ (Theorem~\ref{thm:bud}), $|\xi_{t+1}|\le\Xi$ on the event (a) of the virtual epoch started at $t+1$ (part of $\Omega_{\mathrm{ref}}$), and E17 gives $r_{t+1}>0$ and $\tau(m_{t+1},r_{t+1})\le\tau_0$.
 
 The first part of (A3) is (ii). If no round $t\le n$ decouples, (i) at every $t$ and E17 with Theorem~\ref{thm:bud} give $\sum_tf_t(x'_t)\le\sum_tf_t(x^\circ_t)+1$. This is \texttt{AdversarialBco.Bit.BLP.runOK\_of} in the formalization. \qed
-
-\section*{Acknowledgements}
-
-We thank H\'edi Hadiji for helpful discussions.
-
-\section*{Contact}
-Questions, corrections and comments are welcome as issues on the repository: \url{\repo/issues/new/choose}.
-
-\bibliographystyle{amsplain}
-\bibliography{refs}
 
 \end{document}
