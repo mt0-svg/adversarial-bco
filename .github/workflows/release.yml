@@ -28,6 +28,7 @@ jobs:
     permissions:
       actions: read
       contents: read
+      statuses: write
     outputs:
       run: ${{ steps.find.outputs.run }}
       sha: ${{ steps.find.outputs.sha }}
@@ -66,7 +67,7 @@ jobs:
             echo "CI run $run on $ci; from $ci to $TAG ($sha) only these files changed, none of them checked by CI:"
             git diff --name-only "$ci" "$sha"
           fi
-          sha=$ci
+          tagged=$sha sha=$ci
           # Every job of that run but Badges must have run and passed: a job skipped by its if, or a step skipped
           # inside a job, would leave results missing, and counts of result files kept here drift from ci.yml. The
           # one exception: the continuation parts of a chained Lean build (part 2 on) are skipped by design once an
@@ -85,6 +86,12 @@ jobs:
               || ! grep -qE '^success'$'\t''(Lean checks|Axioms)$' jobs.tsv; then
               echo "CI run $run: build parts skipped, but part 1 or the job after the chain did not pass"; exit 1
             fi
+          fi
+          # A reused run leaves the tagged commit without a CI check: give it one that links to that run.
+          if [ "$sha" != "$tagged" ]; then
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$tagged" -f state=success -f context=CI \
+              -f description="Green CI run of ${sha:0:7}: same Lean, Lake and Comparator files" \
+              -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$run" > /dev/null
           fi
           echo "run=$run" >> "$GITHUB_OUTPUT"
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
