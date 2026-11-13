@@ -3,7 +3,8 @@ name: Release
 # On a tag v* (or by hand for a given tag): the GitHub release of the tagged commit, from the green CI run of
 # that commit. Nothing is compiled again: the Lake build that CI built and checked (build, source scan, axioms,
 # Comparator and its controls, the computation jobs) is packed as it is, with the PDF and the outputs of every check
-# of that run. It takes the green CI run started by hand on the tagged commit; with none, the release stops: run
+# of that run. It takes the green CI run started by hand on the tagged commit, or on an ancestor with the same
+# build (only the paper or the README changed since); with none, the release stops: run
 # ci.yml on it first, then start this workflow by hand with the tag.
 on:
   push:
@@ -34,8 +35,10 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      # The green CI run started by hand on the tagged commit: a run on a push has only the jobs of the parts that
-      # the push touched.
+      # The green CI run started by hand on the tagged commit (a run on a push has only the jobs of the parts that
+      # the push touched), else on its newest ancestor from which the tag changes none of the paths that trigger
+      # ci.yml (the list build-paths of ci.yml, ci.yml included): a release that changes only the paper or the
+      # README reuses the CI run of the last commit that CI checked.
       - id: find
         env:
           GH_TOKEN: ${{ github.token }}
@@ -43,10 +46,27 @@ jobs:
         run: |
           set -eu
           sha=$(git rev-parse "$TAG^{commit}")
-          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?status=success&event=workflow_dispatch&head_sha=$sha&per_page=100" \
-            --jq '.workflow_runs[0].id // empty')
-          [ -n "$run" ] || { echo "no successful CI run started by hand on $TAG ($sha): run ci.yml on it (gh workflow run ci.yml --ref $TAG), then this workflow by hand"; exit 1; }
-          echo "CI run $run on $TAG ($sha)"
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?status=success&event=workflow_dispatch&per_page=100" \
+            --jq '.workflow_runs[] | "\(.id) \(.head_sha)"' > runs.txt
+          mapfile -t paths < <(awk '/paths: &build-paths/ {on = 1; next} on && /^ *- / {sub(/^ *- */, ""); gsub(/"/, ""); print; next} on {exit}' .github/workflows/ci.yml)
+          [ "${#paths[@]}" -gt 0 ] || { echo "no build-paths list in ci.yml"; exit 1; }
+          run=
+          while read -r id s; do
+            git merge-base --is-ancestor "$s" "$sha" 2> /dev/null || continue
+            [ -z "$(git diff --name-only "$s" "$sha" -- "${paths[@]}")" ] || continue
+            # its Lake build artifact expires with the retention of ci.yml
+            gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts?name=lake-build" --jq '.artifacts[] | select(.expired | not) | .id' < /dev/null | grep -q . || continue
+            run=$id ci=$s
+            break
+          done < runs.txt
+          [ -n "$run" ] || { echo "no successful CI run started by hand on $TAG ($sha) or on an ancestor with the same build: run ci.yml on it (gh workflow run ci.yml --ref $TAG), then this workflow by hand"; exit 1; }
+          if [ "$ci" = "$sha" ]; then
+            echo "CI run $run on $TAG ($sha)"
+          else
+            echo "CI run $run on $ci; from $ci to $TAG ($sha) only these files changed, none of them checked by CI:"
+            git diff --name-only "$ci" "$sha"
+          fi
+          sha=$ci
           # Every job of that run but Badges must have run and passed: a job skipped by its if, or a step skipped
           # inside a job, would leave results missing, and counts of result files kept here drift from ci.yml. The
           # one exception: the continuation parts of a chained Lean build (part 2 on) are skipped by design once an

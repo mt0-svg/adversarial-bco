@@ -58,7 +58,7 @@ rm -f .lake/build/lib/lean/AdversarialBco/Challenge*.* .lake/build/ir/Adversaria
 ```
 
 On the release tree, Comparator with nanoda ran in 226 s of wall time for `config-conj1-bit.json`, 294 s for `config-conj1-bit-exp.json` and 75 s for `config-conj1-lower-poly.json`.
-The outputs of Comparator, with those of every other check of the CI run, are in `verification-v2.1.0.tar.gz`, an asset of the release.
+The outputs of Comparator, with those of every other check of the CI run, are in `verification-v2.2.0.tar.gz`, an asset of the release.
 
 Full check, from source:
 
@@ -76,7 +76,7 @@ As a dependency (Lean and Mathlib `v4.34.1`):
 [[require]]
 name = "adversarial-bco"
 git = "https://github.com/mt0-svg/adversarial-bco"
-rev = "v2.1.0"
+rev = "v2.2.0"
 ```
 
 then `lake update adversarial-bco`, `lake exe cache get` and `lake build`, which downloads the build archive of the release.
