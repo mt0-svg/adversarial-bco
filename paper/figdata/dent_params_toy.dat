@@ -1,0 +1,23 @@
+# Figure L, toy frame in a plane (d = 2): stated values, not those of Theorem LU
+name value
+d 2
+k 1.000000000000e0
+r1 7.071067811865e0
+kappa 1
+mean 0 0
+cov_eigenvalues 0.04 0.01
+cov_angle_deg 30
+floor_w 5.000000000000e-2
+D_M 2
+sqrt2k 1.414213562373e0
+tip_x 1.332050807569e-1
+tip_y 1.692820323028e-1
+tip_whitened 1.0 0.8
+rho 1.907878402834e0
+play_x -1.739230484541e-1
+play_y 6.124355652982e-2
+play_whitened -0.6 1.4
+dent_at_play 2.140184043885e0
+bowl_at_play 2.160000000000e0
+cell_of_tip 0
+levels 0.25,0.5,0.75,1,1.25,1.5,2,2.5,3

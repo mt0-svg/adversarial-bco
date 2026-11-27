@@ -1,0 +1,8 @@
+# central cuts from E_0 = B(0, R): cut at the centre a_k by the separation of Q while a_k is outside Q; logdet = ln det A_k; bound = 2d ln R - k/(d+1) (Lemma cc); floor = 2d ln r (Lemma ball, since B(z, r) lies in Q, hence in every E_k); inside = 1 when a_k lies in Q
+k logdet bound floor inside
+0 0.000000000000 0.000000000000 -16.635532333439 0
+1 -0.523248143765 -0.333333333333 -16.635532333439 0
+2 -1.046496287529 -0.666666666667 -16.635532333439 0
+3 -1.569744431294 -1.000000000000 -16.635532333439 0
+4 -2.092992575058 -1.333333333333 -16.635532333439 0
+5 -2.616240718823 -1.666666666667 -16.635532333439 1

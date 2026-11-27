@@ -11,15 +11,14 @@ public import AdversarialBco.Bit.ApQ.Clear
 @[expose] public section
 
 /-!
-# The exponent of BL's calls: `expBL : ExpBL`
+# The exponent of BL's calls: the bounds
 
 The exponent of the routine's point is `λ + 1` or `p`, both at most `3 j + lg R̄ + lg(d²(d + 1)) + 7`
 (`ellExp_le`), with `j = lg(1/(θ min(r, 1)))`. On the cleared call the factor `D_P` cancels in `θ`:
 `1/θ` is `1` or `3 (tr(P) R̄ + |f|₁) R̄ / e` (`invθ_le`), with `tr(B'B'ᵀ) = frob2 B' ≤ 2Λ`. For each of BL's three
 pairs (radius, accuracy), `1/e` and `1/r` are products of PARAM's values and of inverses of points of the grid
-`2^{-pF}` (`pair_bnd`), so at the unit `T = 2^K`, `K = 80 G + 400 + E₀`, `1/(θ min(r, 1)) ≤ T^15`, `j ≤ 15 K` and the
-exponent is at most `48 K ≤ 2·10^7 (d + size n + E₀ + 1)`. The junk values of `x/0 = 0` need no case: every identity
-used holds in a field with `0⁻¹ = 0`.
+`2^{-pF}` (`inv_grid`, `inv_one_sub_grid`; the pairs at BL-O's PARAM: `pair_bndP`, Unified/MagExp.lean). The junk
+values of `x/0 = 0` need no case: every identity used holds in a field with `0⁻¹ = 0`.
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -110,138 +109,5 @@ theorem inv_one_sub_grid {k : ℕ} {x : ℚ} (hx : OnG k x) : |(1 - x)⁻¹| ≤
 
 theorem onG_dn (k : ℕ) (x : ℚ) : OnG k (dn k x) := by
   unfold OnG; rw [qn_dn]; unfold dn; field_simp
-
-/-- **`1/e` and `1/r` for BL's three calls.** -/
-theorem pair_bnd {n : ℕ} {T : ℚ} (hT : 128 ≤ T) (hNe : ((par d n).Ne : ℚ) ≤ T) (hdT : (d : ℚ) ≤ T)
-    (hnT : (n : ℚ) ≤ T) (hR : |(par d n).R| ≤ T) (hpF : 2 * (2 : ℚ) ^ (par d n).pF ≤ T) {r e : ℚ}
-    (h : (r, e) ∈ callRE (par d n) d n) : 0 ≤ e ∧ |1 / e| ≤ T ^ 7 ∧ |r⁻¹| ≤ T ^ 2 := by
-  have hT1 : (1 : ℚ) ≤ T := by linarith
-  have hT2 : (2 : ℚ) ≤ T := by linarith
-  have hp1 : (2 : ℚ) ^ (par d n).pF ≤ T := by
-    have : (0 : ℚ) < 2 ^ (par d n).pF := by positivity
-    linarith
-  have he1 : |(1 - (par d n).eps)⁻¹| ≤ T := (inv_one_sub_grid (by rw [PieceA.par_eps]; exact onG_up _ _)).trans hp1
-  have hsb : |(par d n).sb⁻¹| ≤ T := (inv_grid (by rw [PieceA.par_sb]; exact onG_dn _ _)).trans hp1
-  have hNe0 : (0 : ℚ) ≤ (par d n).Ne := Nat.cast_nonneg _
-  have hd0 : (0 : ℚ) ≤ d := Nat.cast_nonneg _
-  have habs : ∀ {x : ℚ}, 0 ≤ x → x ≤ T → |x| ≤ T ^ 1 := fun h0 h1 => by rw [abs_of_nonneg h0, pow_one]; exact h1
-  have h8 : |(8 : ℚ)| ≤ T ^ 1 := habs (by norm_num) (by linarith)
-  have hNd8 : |((par d n).Ne : ℚ) * d * 8| ≤ T ^ 3 := bnd_mul (bnd_mul (habs hNe0 hNe) (habs hd0 hdT)) h8
-  -- `1/(r'/2)` for `r' = rB = s_b (1 - ε')`
-  have hrB : |(BLP.rB (par d n))⁻¹| ≤ T ^ 2 := by
-    unfold BLP.rB; rw [mul_inv, abs_mul, sq]
-    exact mul_le_mul hsb he1 (abs_nonneg _) (by linarith)
-  have hrB2 : |(BLP.rB (par d n) / 2)⁻¹| ≤ T ^ 2 := by
-    unfold BLP.rB
-    rw [inv_div, div_eq_mul_inv, mul_inv, abs_mul, abs_mul, abs_two, sq]
-    have hs := inv_grid (k := (par d n).pF) (x := (par d n).sb) (by rw [PieceA.par_sb]; exact onG_dn _ _)
-    calc 2 * (|(par d n).sb⁻¹| * |(1 - (par d n).eps)⁻¹|) = (2 * |(par d n).sb⁻¹|) * |(1 - (par d n).eps)⁻¹| := by
-          ring
-      _ ≤ T * T := mul_le_mul (by linarith) he1 (abs_nonneg _) (by linarith)
-  simp only [callRE, List.mem_cons, Prod.mk.injEq, List.not_mem_nil, or_false] at h
-  rcases h with ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, rfl⟩
-  · refine ⟨by positivity, ?_, bnd_up hT1 (pw1 he1) (by norm_num)⟩
-    rw [one_div_div, div_eq_mul_inv, ← inv_pow]
-    exact bnd_up hT1 (bnd_mul hNd8 (by rw [sq]; exact bnd_mul (pw1 he1) (pw1 he1))) (by norm_num)
-  · refine ⟨by positivity, ?_, hrB2⟩
-    rw [one_div_div, div_eq_mul_inv, ← inv_pow]
-    exact bnd_up hT1 (bnd_mul hNd8 (by rw [sq]; exact bnd_mul hrB hrB)) (by norm_num)
-  · refine ⟨by unfold BLP.eBL; positivity, ?_, hrB2⟩
-    unfold BLP.eBL
-    rw [one_div_one_div]
-    have h128 : |(128 : ℚ)| ≤ T ^ 1 := habs (by norm_num) hT
-    have hn2 : |(n : ℚ) ^ 2| ≤ T ^ 2 := by rw [sq]; exact bnd_mul (habs (Nat.cast_nonneg _) hnT) (habs (Nat.cast_nonneg _) hnT)
-    have hR2 : |(par d n).R ^ 2| ≤ T ^ 2 := by rw [sq]; exact bnd_mul (pw1 hR) (pw1 hR)
-    have h3 : |128 * (n : ℚ) ^ 2| ≤ T ^ 3 := bnd_mul (a := 1) (b := 2) h128 hn2
-    have h5 : |128 * (n : ℚ) ^ 2 * (par d n).R ^ 2| ≤ T ^ 5 := bnd_mul (a := 3) (b := 2) h3 hR2
-    have h6 : |128 * (n : ℚ) ^ 2 * (par d n).R ^ 2 * d| ≤ T ^ 6 := bnd_mul (a := 5) (b := 1) h5 (habs hd0 hdT)
-    exact bnd_mul (a := 1) (b := 6) (habs hNe0 hNe) h6
-
-/-! ## The exponent -/
-
-/-- The exponent of the unit. -/
-def Kexp (d n E0 : ℕ) : ℕ := 80 * parG d n + 400 + E0
-
-/-- **`expBL`: the exponent of BL's calls.** -/
-theorem expBL : ExpBL := by
-  refine ⟨20000000, 1, ?_⟩
-  intro d n m E0 A b c S H g ℓq Bp f r e hd hn _ hfr hf hre
-  set D := callOf (mkCfg d n m A b c S) H g ℓq r (Bp * Bpᵀ) f e with hDdef
-  have hG := parG_ge (d := d) (n := n)
-  obtain ⟨T, hTdef⟩ : ∃ T : ℚ, T = 2 ^ Kexp d n E0 := ⟨_, rfl⟩
-  have hK : ∀ a, a ≤ Kexp d n E0 → (2 : ℚ) ^ a ≤ T := fun a h => hTdef ▸ pow_le_pow_right₀ (by norm_num) h
-  have hT : (128 : ℚ) ≤ T := by
-    calc (128 : ℚ) = 2 ^ 7 := by norm_num
-      _ ≤ T := hK 7 (by unfold Kexp; omega)
-  have hT1 : (1 : ℚ) ≤ T := by linarith
-  have hT2 : (2 : ℚ) ≤ T := by linarith
-  have hN : 75 * parG d n + 343 ≤ Kexp d n E0 := by unfold Kexp; omega
-  obtain ⟨-, -, -, -, -, fR, fLam⟩ := fld_abs (d := d) (n := n) hd hn
-  have hNe : ((par d n).Ne : ℚ) ≤ T := by
-    have h := pv_abs (d := d) (n := n) hd hn (k := 18) (by norm_num)
-    rw [pv_18 (d := d) (n := n), abs_of_nonneg (Int.natCast_nonneg _)] at h
-    rw [par_Ne]
-    exact (by exact_mod_cast h : ((BLP.Ne d n : ℕ) : ℚ) ≤ 2 ^ (75 * parG d n + 343)).trans (hK _ hN)
-  have hdT : (d : ℚ) ≤ T := (by exact_mod_cast (d_le_G (n := n)) : (d : ℚ) ≤ 2 ^ parG d n).trans (hK _ (by unfold Kexp; omega))
-  have hnT : (n : ℚ) ≤ T := (by exact_mod_cast (n_le_G hd hn) : (n : ℚ) ≤ 2 ^ parG d n).trans (hK _ (by unfold Kexp; omega))
-  have hR : |(par d n).R| ≤ T := by
-    refine (grid_abs (k := (par d n).pF) (by rw [PieceA.par_R]; exact onG_up _ _) ?_).trans (hK _ hN)
-    rw [qn_par_R, ← pv_80 (d := d) (n := n)]
-    exact pv_abs hd hn (by norm_num)
-  have hpF : 2 * (2 : ℚ) ^ (par d n).pF ≤ T := by
-    rw [← pow_succ']; exact hK _ (by unfold Kexp; omega)
-  obtain ⟨he0, he, hr⟩ := pair_bnd hT hNe hdT hnT hR hpF hre
-  -- `R̄ = R_int`
-  have hRb : (clearQ D).Rb = (par d n).Rint := Nat.ceil_natCast _
-  have hRbT : ((clearQ D).Rb : ℚ) ≤ T := by rw [hRb]; exact fR.trans (hK _ hN)
-  have hRb0 : (0 : ℚ) ≤ (clearQ D).Rb := Nat.cast_nonneg _
-  -- `tr(P) R̄ + |f|₁ ≤ T^4`
-  have hL : abs (D.P.trace * (clearQ D).Rb + ∑ i, |D.f i|) ≤ T ^ 4 := by
-    have htr : D.P.trace = frob2 Bp := trace_mul_tr Bp
-    have h0 := frob2_nonneg Bp
-    have hLam : (2 : ℚ) * (par d n).Lam ≤ T ^ 2 := by
-      have h1 : ((par d n).Lam : ℚ) ≤ T := fLam.trans (hK _ hN)
-      calc (2 : ℚ) * (par d n).Lam ≤ T * T := mul_le_mul hT2 h1 (Nat.cast_nonneg _) (by linarith)
-        _ = T ^ 2 := by ring
-    have hf1 : abs (∑ i, |D.f i|) ≤ T ^ 3 := by
-      have hs : ∑ i, |D.f i| ≤ d * 2 ^ E0 := by
-        calc ∑ i, |D.f i| ≤ ∑ _i : Fin d, (2 : ℚ) ^ E0 := Finset.sum_le_sum fun i _ => hf i
-          _ = d * 2 ^ E0 := by simp
-      have hE0 : (2 : ℚ) ^ E0 ≤ T := hK _ (by unfold Kexp; omega)
-      rw [abs_of_nonneg (Finset.sum_nonneg fun i _ => abs_nonneg _)]
-      calc ∑ i, |D.f i| ≤ d * 2 ^ E0 := hs
-        _ ≤ T * T := mul_le_mul hdT hE0 (by positivity) (by linarith)
-        _ ≤ T * T * T := le_mul_of_one_le_right (mul_nonneg (by linarith) (by linarith)) hT1
-        _ = T ^ 3 := by ring
-    have hP : |D.P.trace * (clearQ D).Rb| ≤ T ^ 3 := by
-      rw [htr, abs_of_nonneg (mul_nonneg h0 hRb0), pow_succ]
-      exact mul_le_mul (hfr.trans hLam) hRbT hRb0 (pow_nonneg (by linarith) _)
-    exact bnd_add hT2 hP hf1
-  have hθ := invθ_le D (by linarith) hL hRbT he
-  have hX := X_le (clearQ D) hT1 hθ hr
-  have hj : (clearQ D).j ≤ 15 * Kexp d n E0 := by
-    apply lgQ_le
-    rw [pow_mul', ← hTdef]
-    exact hX.trans (pow_le_pow_right₀ hT1 (by norm_num))
-  have hc1 : Nat.clog 2 (clearQ D).Rb ≤ Kexp d n E0 := by
-    rw [hRb]
-    apply Nat.clog_le_of_le_pow
-    have h := pv_abs (d := d) (n := n) hd hn (k := 91) (by norm_num)
-    rw [pv_91 (d := d) (n := n), ← Rint_eq, abs_of_nonneg (Int.natCast_nonneg _)] at h
-    have h' : (par d n).Rint ≤ 2 ^ (75 * parG d n + 343) := by exact_mod_cast h
-    exact h'.trans (Nat.pow_le_pow_right (by norm_num) hN)
-  have hc2 : Nat.clog 2 (d ^ 2 * (d + 1)) ≤ Kexp d n E0 := by
-    apply Nat.clog_le_of_le_pow
-    have h1 : d ≤ 2 ^ parG d n := d_le_G (n := n)
-    have h2 : d + 1 ≤ 2 ^ (parG d n + 1) := by rw [pow_succ]; have := Nat.one_le_two_pow (n := parG d n); omega
-    calc d ^ 2 * (d + 1) ≤ (2 ^ parG d n) ^ 2 * 2 ^ (parG d n + 1) := Nat.mul_le_mul (Nat.pow_le_pow_left h1 2) h2
-      _ = 2 ^ (3 * parG d n + 1) := by rw [← pow_mul, ← pow_add]; ring_nf
-      _ ≤ 2 ^ Kexp d n E0 := Nat.pow_le_pow_right (by norm_num) (by unfold Kexp; omega)
-  have hGle := parG_le (d := d) hd hn
-  have hds : d.size ≤ d := Nat.size_le.2 Nat.lt_two_pow_self
-  calc ellExp (clearQ D) ≤ 3 * (clearQ D).j + Nat.clog 2 (clearQ D).Rb + Nat.clog 2 (d ^ 2 * (d + 1)) + 7 :=
-        ellExp_le _
-    _ ≤ 20000000 * (d + n.size + E0 + 1) ^ 1 := by
-        rw [pow_one]; unfold Kexp at hj hc1 hc2; omega
 
 end AdversarialBco.Bit.Transfer.BLM

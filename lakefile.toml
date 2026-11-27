@@ -18,32 +18,39 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.34.1"
 
-# The frozen statements: the bit-model upper bound (StatementConj1Bit, over the machine of StatementBitRAM and the
-# statement files it imports), its corollary in expectation (StatementConj1BitExp) and the lower bound on a polytope
-# (StatementConj1LowerPoly), with the statement files the proofs import.
+# The frozen statements: Theorem U on the machine with the oracle (StatementUnified, over StatementBitRAMO and its bit
+# machine StatementBitRAM), the lower bound in the same generality and Corollary MATCH (StatementUnifiedLower), the
+# bit-model upper bound on polytopes with high probability (StatementConj1BitHP, over StatementConj1Bit), the upper
+# bound on a convex body on the real RAM (StatementConj1, over the machine of StatementPoly) and the lower bound on a
+# polytope (StatementConj1LowerPoly), with the statement files the proofs import.
 [[lean_lib]]
 name = "Statement"
 roots = ["AdversarialBco.Statement", "AdversarialBco.StatementBody", "AdversarialBco.StatementPoly",
   "AdversarialBco.StatementConj1", "AdversarialBco.StatementConj1Lower", "AdversarialBco.StatementConj1Poly",
-  "AdversarialBco.StatementBitRAM", "AdversarialBco.StatementConj1Bit", "AdversarialBco.StatementConj1BitExp",
-  "AdversarialBco.StatementConj1LowerPoly"]
+  "AdversarialBco.StatementBitRAM", "AdversarialBco.StatementConj1Bit", "AdversarialBco.StatementConj1BitHP",
+  "AdversarialBco.StatementConj1LowerPoly", "AdversarialBco.StatementBitRAMO", "AdversarialBco.StatementUnified",
+  "AdversarialBco.StatementUnifiedLower"]
 
-# The development and the theorems.
+# The development and the theorems; Bit.PieceA.BudA holds a declaration that the paper names outside their cone.
 [[lean_lib]]
 name = "Main"
-roots = ["AdversarialBco.Conj1Bit.Main", "AdversarialBco.Conj1Bit.Exp", "AdversarialBco.Conj1BitExp.Main",
-  "AdversarialBco.Conj1LowerPoly.Main"]
+roots = ["AdversarialBco.Unified.Main", "AdversarialBco.UnifiedLower.Main", "AdversarialBco.UnifiedMatch.Main",
+  "AdversarialBco.Conj1BitHP.Main", "AdversarialBco.Conj1.Main", "AdversarialBco.Conj1LowerPoly.Main",
+  "AdversarialBco.Bit.PieceA.BudA"]
 globs = ["AdversarialBco.Lemmas", "AdversarialBco.Body.+", "AdversarialBco.Body2.+", "AdversarialBco.Gauss.+",
-  "AdversarialBco.Poly.+", "AdversarialBco.Conj1.+", "AdversarialBco.Conj1Exp.+", "AdversarialBco.Conj1Lower.+",
-  "AdversarialBco.Conj1Poly.+", "AdversarialBco.Conj1PolyExp.+", "AdversarialBco.Bit.+",
-  "AdversarialBco.Conj1Bit.+", "AdversarialBco.Conj1BitExp.+", "AdversarialBco.Conj1LowerPoly.+"]
+  "AdversarialBco.Poly.+", "AdversarialBco.Conj1.+", "AdversarialBco.Conj1Arith.+", "AdversarialBco.Conj1Exp.+",
+  "AdversarialBco.Conj1Lower.+", "AdversarialBco.Conj1Poly.+", "AdversarialBco.Bit.+",
+  "AdversarialBco.Conj1Bit.+", "AdversarialBco.Conj1BitHP.+", "AdversarialBco.Conj1LowerPoly.+", "AdversarialBco.Lower.+",
+  "AdversarialBco.Unified.+", "AdversarialBco.UnifiedLower.+", "AdversarialBco.UnifiedMatch.+"]
 
-# The statements with `sorry`, which nothing imports: the challenges of config-conj1-bit.json, config-conj1-bit-exp.json
-# and config-conj1-lower-poly.json (ChallengeConj1Bit, ChallengeConj1BitExp and ChallengeConj1LowerPoly, over the copies
-# in ChallengeBase), whose theorems the modules named by the configurations prove.
+# The statements with `sorry`, which nothing imports: the challenges of config-unified.json, config-unified-lower.json,
+# config-match.json, config-conj1-bit-hp.json, config-conj1.json and config-conj1-lower-poly.json (ChallengeUnified,
+# ChallengeUnifiedLower, ChallengeMatch, ChallengeConj1BitHP, ChallengeConj1 and ChallengeConj1LowerPoly, over the
+# copies in ChallengeBase), whose theorems the modules named by the configurations prove.
 [[lean_lib]]
 name = "Challenge"
-roots = ["AdversarialBco.ChallengeConj1Bit", "AdversarialBco.ChallengeConj1BitExp",
-  "AdversarialBco.ChallengeConj1LowerPoly"]
-globs = ["AdversarialBco.ChallengeConj1Bit", "AdversarialBco.ChallengeConj1BitExp",
-  "AdversarialBco.ChallengeConj1LowerPoly", "AdversarialBco.ChallengeBase.+"]
+roots = ["AdversarialBco.ChallengeUnified", "AdversarialBco.ChallengeUnifiedLower", "AdversarialBco.ChallengeMatch",
+  "AdversarialBco.ChallengeConj1BitHP", "AdversarialBco.ChallengeConj1", "AdversarialBco.ChallengeConj1LowerPoly"]
+globs = ["AdversarialBco.ChallengeUnified", "AdversarialBco.ChallengeUnifiedLower", "AdversarialBco.ChallengeMatch",
+  "AdversarialBco.ChallengeConj1BitHP", "AdversarialBco.ChallengeConj1", "AdversarialBco.ChallengeConj1LowerPoly",
+  "AdversarialBco.ChallengeBase.+"]

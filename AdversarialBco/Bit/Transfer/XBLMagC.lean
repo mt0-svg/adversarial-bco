@@ -13,10 +13,10 @@ public import AdversarialBco.Bit.Transfer.XBLMagB
 # The magnitudes of BL's state, part C: one round
 
 At a unit `T ≥ 4` that bounds the configuration (`CfgB`: `d`, the kept rows `α̃_i`, `1/β̃_i`, `1/ε'`, the fields
-`λ', κ_c', ν', Λ, A_0, B_0, R_int`), one round of BL from a state with `A', B'` entries at most `T`, `μ'` in the box of
-radius `R_int` and the sums `b', k', G', l'` at most `t T^30` (`StI`) leaves a state of the same kind at `t + 1`
-(`step_bnd`): `A', B'` pass the test `frob2 ≤ 2Λ` of R10, `μ'` is the projection routine's point, `Y' ≤ T^14`
-(`Y_bnd`), and each increment is at most `T^27`.
+`λ', κ_c', ν', Λ, A_0, B_0, R_int`), the bounds of one round of BL from a state with `A', B'` entries at most `T`, `μ'`
+in the box of radius `R_int` and the sums `b', k', G', l'` at most `t T^30` (`StI`): the initial state (`init_bnd`),
+an entry of a matrix that passes the test `frob2 ≤ 2Λ` of R10 (`frob_entry_le`), the increments (`incr_u`, `incr_b`,
+`incr_k`, `incr_g`, `incr_l`, `acc_bnd`) and the state that R15 COMMIT writes (`commit_bnd`).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -151,52 +151,6 @@ theorem frob_entry_le {T : ℚ} (hT : 2 ≤ T) {L : ℕ} (hL : (L : ℚ) ≤ T) 
   have := sq_le_sq.1 h2
   rwa [abs_of_nonneg (by linarith : (0 : ℚ) ≤ T)] at this
 
-/-! ## The reading `Y'` -/
-
-/-- **`|Y'| ≤ T^14`.** -/
-theorem Y_bnd {cfg : Cfg d} {T : ℚ} (hc : CfgB T cfg) {st : St d} {t : ℕ} (hs : StI T cfg.par.Rint t st)
-    (ξ : Fin d → ℚ) (ζ : ℚ) (o : ℤ) (hξ : ∀ i, |ξ i| ≤ T) (hζ : |ζ| ≤ T) (ho0 : 0 ≤ (o : ℚ))
-    (ho1 : (o : ℚ) ≤ 2 ^ cfg.par.p) :
-    |rnd cfg.par.p (ptQ cfg (XQ cfg st ξ) * ((o : ℚ) / 2 ^ cfg.par.p + ζ) / 2 +
-      2 * (ptQ cfg (XQ cfg st ξ) - 1) / cfg.par.eps)| ≤ T ^ 14 := by
-  have hT2 : (2 : ℚ) ≤ T := by linarith [hc.T4]
-  have hT1 : (1 : ℚ) ≤ T := by linarith
-  have hw : ∀ i, |(st.A *ᵥ ξ) i| ≤ T ^ 3 := bnd_mulVec (a := 1) (b := 1) hT1 hc.d
-    (fun i j => pw1 (hs.A i j)) (fun j => pw1 (hξ j))
-  have hlam : |1 - cfg.par.lam| ≤ T ^ 2 :=
-    bnd_sub (a := 1) hT2 (pw1 (by rw [abs_one]; exact hT1)) (pw1 hc.lam)
-  have hX : ∀ i, |XQ cfg st ξ i| ≤ T ^ 6 := fun i => by
-    show |st.mu i + (1 - cfg.par.lam) * (st.A *ᵥ ξ) i| ≤ T ^ 6
-    exact bnd_add (a := 5) hT2 (bnd_up hT1 (pw1 ((hs.mu i).trans hc.R)) (by norm_num)) (bnd_mul hlam (hw i))
-  have hterm : ∀ i, |cfg.α i ⬝ᵥ XQ cfg st ξ / cfg.β i| ≤ T ^ 9 := fun i => by
-    rw [div_eq_mul_inv]
-    have hb := hc.β i
-    exact bnd_mul (a := 8) (b := 1) (bnd_dot (a := 1) (b := 6) hT1 hc.d (fun j => pw1 (hc.α i j)) hX)
-      (pw1 (by rw [abs_of_pos (inv_pos.2 hb.1)]; exact hb.2))
-  have hg0 := (gauge_spec cfg (XQ cfg st ξ)).1
-  have hg1 : gaugeQ cfg (XQ cfg st ξ) ≤ T ^ 9 :=
-    gauge_le cfg _ _ (pow_nonneg (by linarith) 9) fun i => (le_abs_self _).trans (hterm i)
-  obtain ⟨hpt1, -⟩ := ptQ_ge cfg (XQ cfg st ξ) hc.eps0 (by linarith [hc.eps1])
-  have hT9 : 1 ≤ T ^ 9 := one_le_pow₀ hT1
-  have hpt2 : ptQ cfg (XQ cfg st ξ) ≤ T ^ 10 := by
-    unfold ptQ
-    refine max_le (one_le_pow₀ hT1) (two_mul_pw hT2 ?_)
-    have he : (1 : ℚ) / 2 ≤ 1 - cfg.par.eps := by linarith [hc.eps1]
-    rw [div_le_iff₀ (by linarith)]
-    nlinarith
-  set pt := ptQ cfg (XQ cfg st ξ)
-  have hpt : |pt| ≤ T ^ 10 := by rw [abs_of_nonneg (by linarith)]; exact hpt2
-  have hpt' : |pt - 1| ≤ T ^ 10 := by rw [abs_of_nonneg (by linarith)]; linarith
-  have hp : (0 : ℚ) < 2 ^ cfg.par.p := by positivity
-  have ho : |(o : ℚ) / 2 ^ cfg.par.p| ≤ T ^ 1 := by
-    rw [abs_of_nonneg (div_nonneg ho0 hp.le), pow_one, div_le_iff₀ hp]; nlinarith
-  have h1 : |pt * ((o : ℚ) / 2 ^ cfg.par.p + ζ) / 2| ≤ T ^ 12 :=
-    bnd_div2 (bnd_mul hpt (bnd_add hT2 ho (pw1 hζ)))
-  have h2 : |2 * (pt - 1) / cfg.par.eps| ≤ T ^ 12 := by
-    rw [div_eq_mul_inv]
-    exact bnd_mul (a := 11) (b := 1) (bnd_mul (a := 1) (pw1 (by rw [abs_two]; exact hT2)) hpt') (pw1 hc.epsI)
-  exact bnd_rnd hT2 _ (bnd_up hT1 (bnd_add hT2 h1 h2) (by norm_num))
-
 /-! ## The increments -/
 
 section Incr
@@ -278,19 +232,5 @@ theorem commit_bnd {cfg : Cfg d} {T : ℚ} (hc : CfgB T cfg) {st : St d} {t : �
   · exact acc_bnd hT1 (hs.G j)
       (bnd_up hT1 (incr_g hc.T4 hc.d _ _ st.B st.mu ξ hs.B hmuT hξ hY _ hc.nu j) (by norm_num))
   · exact acc_bnd hT1 hs.l (incr_l hc.T4 hc.d _ _ st.B st.mu ξ hs.B hmuT hξ hY _ hc.nu)
-
-/-- **One round keeps the bounds.** -/
-theorem step_bnd (ap : CallQ d → Option (Fin d → ℚ)) (hap : ∀ D y, ap D = some y → ∀ j, |y j| ≤ D.R)
-    {cfg : Cfg d} {T : ℚ} (hc : CfgB T cfg) (n : ℕ) {st : St d} {t : ℕ} (hs : StI T cfg.par.Rint t st)
-    (ξ : Fin d → ℚ) (ζ : ℚ) (o : ℤ) (hξ : ∀ i, |ξ i| ≤ T) (hζ : |ζ| ≤ T) (ho0 : 0 ≤ (o : ℚ))
-    (ho1 : (o : ℚ) ≤ 2 ^ cfg.par.p) {st' : St d} (h : step ap cfg n (.run st) ξ ζ o = .run st') :
-    StI T cfg.par.Rint (t + 1) st' := by
-  have hY := Y_bnd hc hs ξ ζ o hξ hζ ho0 ho1
-  simp only [step] at h
-  repeat' (first | split at h | split_ifs at h)
-  all_goals (try (cases h))
-  all_goals first
-    | exact init_bnd (by linarith [hc.T4]) (Nat.cast_nonneg _) _ hc.A0 hc.B0 _
-    | exact commit_bnd hc hs ξ hξ _ (hap _ _ ‹_›) _ _ ‹_› _ hY
 
 end AdversarialBco.Bit.Transfer.BLM

@@ -3481,6 +3481,12 @@ end LeanAp
 
 /-! ## (SPEC-AP) in the namespace of the statements -/
 
+/-- Lemma SEP. -/
+theorem lemmaSEP : LemmaSEP := LeanAp.lemmaSEP
+
+/-- Lemma GAUGE. -/
+theorem lemmaGAUGE : LemmaGAUGE := LeanAp.lemmaGAUGE
+
 /-- (SPEC-AP) for `apCall`. -/
 theorem propAP : PropAP := LeanAp.propAP
 

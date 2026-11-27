@@ -17,7 +17,7 @@ public import AdversarialBco.Bit.Transfer.XBLTailSpec
 The values of R5 to R9 of `step` in mode `run` (Bit/Transfer/XBLStep.lean) as the integers the machine computes, once
 the state and the draw are fractions of integers (`Q = 2^p`, `F = 2^pF`, `G = 2^(2 p_B)`, `μ' = μ̂/D_μ`): `Y`, `c`
 (`head_Yc`), R7's tests (`head_tests`), the numerators of `A'`, `B'`, `s5` (`head_r8`), of `b'`, `k'`, `G'`, `l'`
-(`head_r9`), and `w_μ` (`head_wmu`).
+(`head_r9`). The point `w_μ` is `head_wmuO` (Unified/TailOFld.lean).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -170,15 +170,6 @@ theorem head_r9 (Q F G D kN yh nh kh lh : ℤ) (Γ mu bh Gh : Fin d → ℤ) (Bh
   · have := r9_lq cfg.par.p Q D lh (fun j => rndZ (yh * nh * (Bh *ᵥ Γ) j) (F * Q * Q * G) Q) mu hQ hD
     rw [rl', hl, eg, hmu]
     exact ⟨this.1, by rw [this.2, rndZ]⟩
-
-/-- `w_μ` from the integers of the round. -/
-theorem head_wmu (n : ℕ) (s5 : ℤ) (Γ : Fin d → ℤ) (hpar : cfg.par = par d n)
-    (h5 : rs5 cfg st (fun i => (Γ i : ℚ) / 2 ^ (2 * gsm_prec cfg.par.B)) ζ obs =
-      (s5 : ℚ) / ((2 ^ cfg.par.p : ℤ) : ℚ)) :
-    rwmu cfg st (fun i => (Γ i : ℚ) / 2 ^ (2 * gsm_prec cfg.par.B)) ζ obs = wmuOf (par d n) st s5 Γ := by
-  rw [rwmu, h5, wmuOf, ← hpar]
-  push_cast
-  rfl
 
 end Head9
 

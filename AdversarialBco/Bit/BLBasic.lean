@@ -13,8 +13,8 @@ public import AdversarialBco.Bit.BLLink
 # Basic lemmas on BL's pure function
 
 The rounding primitives of Bit/BLPure.lean against the exact values (`rnd`, `dn`, `up`, `sqrtDn`, `sqrtUp`), and the
-coin locality of the run: the draw of round `t` reads the coins of its blocks, and the run before round `t` reads the
-coins before round `t`'s first block (given `PosLocal`).
+coins of a draw: `readCoins` reads only the coins of its block (`readCoins_congr`), and the blocks of round `t` end
+before the first block of round `t + 1` (`blkStart_succ_le`).
 -/
 namespace AdversarialBco.Bit.BLP
 
@@ -102,48 +102,5 @@ theorem blkStart_succ_le (d K0 B t q : ℕ) (hq : q < Sched.nBlk d) :
   unfold Sched.blkStart
   have : t * Sched.nBlk d + q + 1 ≤ (t + 1) * Sched.nBlk d + 0 := by rw [add_mul]; omega
   nlinarith
-
-theorem blkUW_congr (cs cs' : ℕ → Bool) (K0 B d t q : ℕ) (hq : q < Sched.nBlk d)
-    (h : ∀ j, j < Sched.blkStart d K0 B (t + 1) 0 → cs j = cs' j) :
-    blkUW cs K0 B d t q = blkUW cs' K0 B d t q := by
-  have hle := blkStart_succ_le d K0 B t q hq
-  unfold blkUW
-  rw [readCoins_congr cs cs' _ B (fun j _ h2 => h j (by omega)),
-    readCoins_congr cs cs' _ B (fun j _ h2 => h j (by omega))]
-
-theorem draw_congr (cs cs' : ℕ → Bool) (K0 B d t : ℕ)
-    (h : ∀ j, j < Sched.blkStart d K0 B (t + 1) 0 → cs j = cs' j) :
-    draw cs K0 B d t = draw cs' K0 B d t := by
-  have hb : ∀ q, q < Sched.nBlk d → blkUW cs K0 B d t q = blkUW cs' K0 B d t q :=
-    fun q hq => blkUW_congr cs cs' K0 B d t q hq h
-  refine Prod.ext ?_ ?_
-  · funext i
-    show (if (i : ℕ) % 2 = 0 then _ else _) = (if (i : ℕ) % 2 = 0 then _ else _)
-    rw [hb ((i : ℕ) / 2) (by unfold Sched.nBlk; omega)]
-  · show (gOut B (blkUW cs K0 B d t ((d + 1) / 2))).1 / 2 = (gOut B (blkUW cs' K0 B d t ((d + 1) / 2))).1 / 2
-    rw [hb _ (by unfold Sched.nBlk; omega)]
-
-theorem K0_le_blkStart (d K0 B t q : ℕ) : K0 ≤ Sched.blkStart d K0 B t q := by
-  unfold Sched.blkStart; omega
-
-theorem blkStart_mono (d K0 B : ℕ) {t t' : ℕ} (h : t ≤ t') :
-    Sched.blkStart d K0 B t 0 ≤ Sched.blkStart d K0 B t' 0 := by
-  unfold Sched.blkStart; gcongr
-
-/-- The run before round `t` reads only the coins before round `t`'s first block. -/
-theorem traj_congr (R : Routines) (hR : PosLocal R) (d n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ)
-    (σ : RealRAM.Strategy d) (cs cs' : ℕ → Bool) (t : ℕ)
-    (h : ∀ j, j < Sched.blkStart d (R.K0 d n) (par d n).B t 0 → cs j = cs' j) :
-    traj R d n m A b σ cs t = traj R d n m A b σ cs' t := by
-  have hcfg : cfgOf R d n m A b cs = cfgOf R d n m A b cs' := by
-    unfold cfgOf
-    rw [hR d n m A b cs cs' (fun j hj => h j (lt_of_lt_of_le hj (K0_le_blkStart _ _ _ _ _)))]
-  induction t with
-  | zero => simp only [traj, hcfg]
-  | succ t ih =>
-    have ih' := ih (fun j hj => h j (lt_of_lt_of_le hj (blkStart_mono _ _ _ (Nat.le_succ t))))
-    have hdr : drawAt R d n cs t = drawAt R d n cs' t := draw_congr cs cs' _ _ d t h
-    simp only [traj]
-    rw [hcfg, ih', hdr]
 
 end AdversarialBco.Bit.BLP

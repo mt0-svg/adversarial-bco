@@ -13,16 +13,15 @@ public import AdversarialBco.Bit.TriSamp
 /-!
 # Interface I: BL's routines as computable pure functions
 
-The functions that BL's machine program computes for the routines that Bit/BLPure.lean leaves open (`Routines`):
+The functions that BL's machine program computes for its routines, in rational arithmetic:
 
-* `ellRI` on the integer problem `EllI d`: Procedure ELL-R for `d ≥ 2` (`ellR`),
-  Procedure BIS-R for `d = 1` (`bisR`), the point `x / 2^(ellExp I)`; `clearQ : CallQ d → EllI d` clears the
-  denominators of a call; `apQ` is the projection routine on BL's call data.
+* `EllI d`, the integer problem of a call, and the steps of Procedure ELL-R (`ellUpd`, `ellTest`, `ellExp`);
+  `clearQ : CallQ d → EllI d` clears the denominators of a call.
 * `frameQ`: Procedure FRAME: F0 the height, F1 the cleared rows, F2 the read-off for `d = 1`,
   F3 the constants and F4 Procedure ELL-F for `d ≥ 2`, F5 the centre (`0` on fail).
-* `triPosQ`: TRI-OGD staged (`triPos` of Bit/TriStage.lean) in rational arithmetic, line by line; `K0Q`, the coins of
-  the prologue; `posQ`, P2 POS on the frame `B̄(c, 1/2) ⊆ K ⊆ B̄(c, n)` with `c = frameQ`.
-* `RoutinesQ : Routines`.
+* TRI-OGD staged, line by line: the rational position `PosQ`, the constants (`triSQ` to `triHiQ`), one round
+  (`triRoundQ`), the iterates and their average (`triIterQ`, `triAvgQ`), the draws (`triDrawQ`) and the composition
+  (`pgCompQ`); `ellPos`, the parameter of the position's ellipsoid.
 
 Choices against the procedures of the paper, none of which changes the statement of a theorem:
 
@@ -195,46 +194,8 @@ structure ESt (d : ℕ) where
   a : Fin d → ℤ
   kept : Option ((Fin d → ℤ) × ℤ)
 
-/-- The iterations of ELL-R, `k` of them left. -/
-def ellLoop (I : EllI d) : ℕ → ESt d → Option (Fin d → ℤ)
-  | 0, st => st.kept.map Prod.fst
-  | k + 1, st =>
-    match ellTest I I.p st.a st.kept with
-    | .ret x => some x
-    | .cut c kept =>
-      if c = 0 then kept.map Prod.fst else
-      match ellUpd I.p I.q I.j ((2 : ℤ) ^ I.p * I.Lam) ((2 : ℤ) ^ I.p * (I.Rb + I.LamH)) st.A st.a c with
-      | none => kept.map Prod.fst
-      | some (A', a') => ellLoop I k ⟨A', a', kept⟩
-
-/-- Procedure ELL-R (`d ≥ 2`): from `Â = 2^p R̄² I`, `â = 0`, `N` iterations; the point `â/2^p`. -/
-def ellR (I : EllI d) : Option (Fin d → ℤ) :=
-  ellLoop I I.N ⟨((2 : ℤ) ^ I.p * I.Rb ^ 2) • (1 : Matrix (Fin d) (Fin d) ℤ), 0, none⟩
-
-/-- The iterations of BIS-R on the interval `[lo, hi]` (integers over `2^{N₁}`), `k` of them left. -/
-def bisLoop (I : EllI d) : ℕ → ℤ → ℤ → Option ((Fin d → ℤ) × ℤ) → Option (Fin d → ℤ)
-  | 0, _, _, kept => kept.map Prod.fst
-  | k + 1, lo, hi, kept =>
-    let a : ℤ := (lo + hi) / 2
-    match ellTest I (I.lam + 1) (fun _ => a) kept with
-    | .ret x => some x
-    | .cut c kept' =>
-      if c = 0 then kept'.map Prod.fst else
-      if 0 < ∑ i, c i then bisLoop I k lo a kept' else bisLoop I k a hi kept'
-
-/-- Procedure BIS-R (`d = 1`): `N₁ = λ + 1` halvings of `[-R̄, R̄]`; the point over `2^{N₁}`. -/
-def bisR (I : EllI d) : Option (Fin d → ℤ) :=
-  bisLoop I (I.lam + 1) (-((I.Rb : ℤ) * 2 ^ (I.lam + 1))) ((I.Rb : ℤ) * 2 ^ (I.lam + 1)) none
-
 /-- The exponent of the denominator of the returned point: `N₁ = λ + 1` for `d = 1`, `p` otherwise. -/
 def ellExp (I : EllI d) : ℕ := if d = 1 then I.lam + 1 else I.p
-
-/-- The projection routine on the integer problem: fail at once if `R < 1`, `r₀ ≤ 0` or `e ≤ 0`; `0` for `d = 0`;
-BIS-R for `d = 1`; ELL-R for `d ≥ 2`. The point is `x / 2^(ellExp I)`. -/
-def ellRI (I : EllI d) : Option (Fin d → ℤ) :=
-  if I.R < 1 ∨ I.r ≤ 0 ∨ I.e ≤ 0 then none else
-  if d = 0 then some 0 else
-  if d = 1 then bisR I else ellR I
 
 /-! ## Clearing the denominators of a call -/
 
@@ -268,10 +229,6 @@ def clearQ (D : CallQ d) : EllI d where
   R := D.R
   r := D.r
   e := objDen D * D.e
-
-/-- The projection routine of BL (`Routines.ap`): ELL-R or BIS-R on the cleared call. -/
-def apQ {d : ℕ} (D : CallQ d) : Option (Fin d → ℚ) :=
-  (ellRI (clearQ D)).map fun x i => (x i : ℚ) / 2 ^ ellExp (clearQ D)
 
 /-! ## Procedure FRAME -/
 
@@ -353,7 +310,7 @@ def frameQ (d _n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ) :
     | some a => fun i => (a i : ℚ) / 2 ^ frP d
     | none => 0
 
-/-! ## TRI-OGD staged in rationals (`triPos`, Bit/TriStage.lean) -/
+/-! ## TRI-OGD staged in rationals -/
 
 /-- A position `(μ, T)`, the rational form of `PgSp d` (`pgMu`, `pgMat`). -/
 abbrev PosQ (d : ℕ) := (Fin d → ℚ) × Matrix (Fin d) (Fin d) ℚ
@@ -408,9 +365,6 @@ def triJsQ (d ℓ : ℕ) : ℕ := Nat.clog 4 ⌈(triGuQ d + triBuQ d) ^ 2 * 2 ^ 
 /-- `triBg = 4 k_g`. -/
 def triBgQ (d : ℕ) : ℕ := 4 * triKgQ d
 
-/-- `triL`, the coins of one stage. -/
-def triLQ (d ℓ : ℕ) : ℕ := 2 ^ triNeQ d ℓ * (2 * d * triBgQ d)
-
 /-- `triMst`, the number of stages `max 1 ⌈log₂ ⌈R0/r0⌉⌉`. -/
 def triMstQ (r0 R0 : ℚ) : ℕ := max 1 (Nat.clog 2 ⌈R0 / r0⌉₊)
 
@@ -429,16 +383,6 @@ def triClipQ (r a b : ℚ) (x : PosQ d) : PosQ d :=
 /-- `triRound`: every coordinate down to the grid `2^{-B_v}`. -/
 def triRoundQ (Bv : ℕ) (x : PosQ d) : PosQ d :=
   (fun i => (⌊x.1 i * 2 ^ Bv⌋ : ℚ) / 2 ^ Bv, fun i j => (⌊x.2 i j * 2 ^ Bv⌋ : ℚ) / 2 ^ Bv)
-
-/-- `triQ`, the quotient `α_k·z/β_k` of row `k`. -/
-def triQQ {m : ℕ} (α : Fin m → Fin d → ℚ) (β : Fin m → ℚ) (k : Fin m) (z : Fin d → ℚ) : ℚ := α k ⬝ᵥ z / β k
-
-/-- `triU`, the subgradient of the gauge: `α_k/β_k` for the least `k` at which the quotient is largest, when that
-quotient is positive, else `0`. -/
-def triUQ {m : ℕ} (α : Fin m → Fin d → ℚ) (β : Fin m → ℚ) (z : Fin d → ℚ) : Fin d → ℚ :=
-  ∑ k, if 0 < triQQ α β k z ∧ (∀ k', triQQ α β k' z ≤ triQQ α β k z) ∧
-      (∀ k', k' < k → triQQ α β k' z < triQQ α β k z)
-    then (β k)⁻¹ • α k else 0
 
 /-- `triV`, the subgradient `(u, tril(u yᵀ) - (κ/d) diag(1/T_ii))`, `u = u(μ + T y)`, `κ = 1/8`. -/
 def triVQ (u : (Fin d → ℚ) → Fin d → ℚ) (x : PosQ d) (y : Fin d → ℚ) : PosQ d :=
@@ -460,65 +404,12 @@ def triDrawQ (d B : ℕ) (x : ℕ → Bool) (t : ℕ) : Fin d → ℚ := fun i =
   ((gsSpec B (readCoins x (2 * (t * d + i) * B) B).toNat (readCoins x ((2 * (t * d + i) + 1) * B) B).toNat).1 : ℚ) /
     2 ^ (2 * gsm_prec B)
 
-/-- `triCoreOut`: the core on the rows `(α, β)` at the integer `ℓ`, on the draws `y`. -/
-def triCoreOutQ (d : ℕ) {m : ℕ} (α : Fin m → Fin d → ℚ) (β : Fin m → ℚ) (ℓ : ℕ) (y : ℕ → Fin d → ℚ) : PosQ d :=
-  triAvgQ (triRQ d) (triAQ d) (triBQ d) (1 / 2 ^ triJsQ d ℓ)
-    (fun x w => triRoundQ (triBvQ d) (triVQ (triUQ α β) x w)) y (2 ^ triNeQ d ℓ)
-
-/-- `triRowsA`: the rows `A`, then `e_i` and `-e_i`. -/
-def triRowsAQ {m : ℕ} (A : Fin m → Fin d → ℚ) : Fin (m + (d + d)) → Fin d → ℚ :=
-  Fin.append A (Fin.append (fun i => Pi.single i 1) (fun i => -Pi.single i 1))
-
-/-- `triRowsB`: `b`, then `c_i + s` and `s - c_i`. -/
-def triRowsBQ {m : ℕ} (b : Fin m → ℚ) (c : Fin d → ℚ) (s : ℚ) : Fin (m + (d + d)) → ℚ :=
-  Fin.append b (Fin.append (fun i => c i + s) (fun i => s - c i))
-
-/-- `triStA`: the rows of a stage read in the position `P`, `Tᵀ a_k`. -/
-def triStAQ {m : ℕ} (A : Fin m → Fin d → ℚ) (P : PosQ d) : Fin (m + (d + d)) → Fin d → ℚ :=
-  fun k => P.2ᵀ *ᵥ triRowsAQ A k
-
-/-- `triStB`: the right-hand sides of a stage read in `P`, `b_k - a_k·μ`. -/
-def triStBQ {m : ℕ} (A : Fin m → Fin d → ℚ) (b : Fin m → ℚ) (c : Fin d → ℚ) (s : ℚ) (P : PosQ d) :
-    Fin (m + (d + d)) → ℚ :=
-  fun k => triRowsBQ b c s k - triRowsAQ A k ⬝ᵥ P.1
-
 /-- `pgComp`: `(μ + T μ', T T')`. -/
 def pgCompQ (P P' : PosQ d) : PosQ d := (P.1 + P.2 *ᵥ P'.1, P.2 * P'.2)
-
-/-- `triStep`: stage `j` from the position `P` on the coins `x` of the stage. -/
-def triStepQ {m : ℕ} (A : Fin m → Fin d → ℚ) (b : Fin m → ℚ) (c : Fin d → ℚ) (r0 : ℚ) (ℓ j : ℕ) (P : PosQ d)
-    (x : ℕ → Bool) : PosQ d :=
-  pgCompQ P (triCoreOutQ d (triStAQ A P) (triStBQ A b c (2 ^ (j + 1) * r0) P) ℓ fun t => triDrawQ d (triBgQ d) x t)
-
-/-- `triStageN`: the position after the stages `0, ..., j - 1`, from `(c, r0 I)`. -/
-def triStageNQ {m : ℕ} (A : Fin m → Fin d → ℚ) (b : Fin m → ℚ) (c : Fin d → ℚ) (r0 : ℚ) (ℓ : ℕ)
-    (ω : ℕ → ℕ → Bool) : ℕ → PosQ d
-  | 0 => (c, r0 • 1)
-  | j + 1 => triStepQ A b c r0 ℓ j (triStageNQ A b c r0 ℓ ω j) (ω j)
-
-/-- `triPos`: stage `j` reads the coins `j L, ..., j L + L - 1` of `cs`. -/
-def triPosQ {m : ℕ} (A : Fin m → Fin d → ℚ) (b : Fin m → ℚ) (c : Fin d → ℚ) (r0 R0 : ℚ) (ℓ : ℕ) (cs : ℕ → Bool) :
-    PosQ d :=
-  triStageNQ A b c r0 ℓ (fun j k => cs (triLay (triMstQ r0 R0) (triLQ d ℓ) (j, k))) (triMstQ r0 R0)
 
 /-! ## The prologue and the routines -/
 
 /-- The integer `ℓ_pos = clog₂(3 · 2^{19} (d n)³ m_st) ≥ log(m_st/δ₁)`, `δ₁ = 2^{-19}/(3 (d n)³)`. -/
 def ellPos (d n : ℕ) : ℕ := Nat.clog 2 (3 * 2 ^ 19 * (d * n) ^ 3 * triMstQ (1 / 2) n)
-
-/-- The coins of the prologue: `m_st L` (`Routines.K0`). -/
-def K0Q (d n : ℕ) : ℕ := triMstQ (1 / 2) n * triLQ d (ellPos d n)
-
-/-- P2 POS (`Routines.pos`): TRI-OGD staged on the rows of `K`, on the frame `B̄(c, 1/2) ⊆ K ⊆ B̄(c, n)`,
-`c = frameQ`. -/
-def posQ (d n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ) (cs : ℕ → Bool) : PosQ d :=
-  triPosQ (fun k => A k) b (frameQ d n m A b) (1 / 2) n (ellPos d n) cs
-
-/-- BL's routines as computed by its program. -/
-def RoutinesQ : Routines where
-  ap := apQ
-  K0 := K0Q
-  ctr := frameQ
-  pos := posQ
 
 end AdversarialBco.Bit.RQ

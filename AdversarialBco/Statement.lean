@@ -18,10 +18,12 @@ public import Mathlib.Topology.MetricSpace.Bounded
 /-!
 # The ambient space and the class of losses
 
-The two definitions that the statement files build on, repeated verbatim by the challenges.
+The definitions that the statement files and the proofs build on, repeated verbatim by the challenges.
 
 * `E d = EuclideanSpace ℝ (Fin d)`, the ambient space `ℝ^d`.
 * `AdmLoss K f`: `f` is convex on `K` with values in `[0, 1]` on `K` (values off `K` play no role).
+* `Advs K n`: the sequences of losses whose first `n` terms are in `AdmLoss K`. The proof of `TheoremConj1Upper`
+  states the machine layer for every sequence of this class, and the losses that a strategy chose on a run are one.
 -/
 
 open MeasureTheory Real
@@ -34,5 +36,9 @@ abbrev E (d : ℕ) := EuclideanSpace ℝ (Fin d)
 /-- A loss of the class: convex on `K`, with values in `[0, 1]` on `K`. -/
 def AdmLoss {d : ℕ} (K : Set (E d)) (f : E d → ℝ) : Prop :=
   ConvexOn ℝ K f ∧ ∀ x ∈ K, f x ∈ Set.Icc (0 : ℝ) 1
+
+/-- The oblivious adversary's choices over `n` rounds: sequences whose first `n` terms are admissible. -/
+def Advs {d : ℕ} (K : Set (E d)) (n : ℕ) : Set (ℕ → E d → ℝ) :=
+  {f | ∀ t < n, AdmLoss K (f t)}
 
 end AdversarialBco

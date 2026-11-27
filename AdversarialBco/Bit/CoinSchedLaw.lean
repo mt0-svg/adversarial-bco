@@ -134,15 +134,6 @@ theorem coinIdx_injective {K0 B : ℕ} (hB : 0 < B) : Function.Injective (coinId
           _ = y - K0 := Nat.div_add_mod (y - K0) (2 * B)
       rw [hx_sub, hy_sub, h_eq]
 
-theorem beta_local (d K0 B j : ℕ) (x y : ℕ → ℝ) (h : ∀ i ∈ grp d K0 B j, x i = y i) :
-    beta d K0 B x j = beta d K0 B y j := by
-  unfold beta
-  have ha : (pairOf d (blkOf K0 B j)).1 ∈ grp d K0 B j := by
-    simp [grp]
-  have hb : (pairOf d (blkOf K0 B j)).2 ∈ grp d K0 B j := by
-    simp [grp]
-  simp [h _ ha, h _ hb]
-
 theorem grp_past (d K0 B t : ℕ) : ∀ j ∈ rdBefore d K0 B t, grp d K0 B j ⊆ idxC d t := by
   intro j hj
   rw [rdBefore, Set.mem_setOf_eq] at hj

@@ -124,16 +124,6 @@ def xR1body (L : Layout) : XCmd :=
   (.seq (.prim (.frag (.nadd rT rT rOne)))
   (.ifN rT rD (toX (VL.aset L aGam rT (oBM + 41))) .skip)))))
 
-/-- R1: `d + 2` into `rD2`, then the `nBlk d` blocks. -/
-def xR1 (L : Layout) : XCmd :=
-  .seq (.prim (.frag (.nadd rD2 rD rOne))) (.seq (.prim (.frag (.nadd rD2 rD2 rOne))) (xforN rJ rNb rOne (xR1body L)))
-
-/-- The units of R1. -/
-def r1Units (d B : ℕ) : ℕ := Sched.nBlk d * (bmUnits B + 18) + 5
-
-/-- The cells R1 changes. -/
-def SR1 (y : ℕ) : Prop := y = sZeta ∨ (oBM ≤ y ∧ y < oBM + 43)
-def NR1 (j : ℕ) : Prop := j = rJ ∨ j = rT ∨ j = rD2 ∨ (rB < j ∧ j < rB + 12)
 def AR1 (d a k : ℕ) : Prop := a = aGam ∧ k < d
 
 /-! ## Conditionals with one empty branch -/
@@ -316,74 +306,5 @@ theorem XV.r1body {L : Layout} {X : XCtx d} {ℓa ℓ : ℕ} (hL : LayOK L d ℓ
 theorem blkStart_next (d K0 B t : ℕ) :
     Sched.blkStart d K0 B t (Sched.nBlk d) = Sched.blkStart d K0 B (t + 1) 0 := by
   unfold Sched.blkStart; ring
-
-set_option maxHeartbeats 1000000 in
-/-- **R1 DRAW**: from the start of round `t` on the schedule, the integers `Γ_i` (`i < d`) and `Γ_ζ` of the draw of
-round `t`, the count of draws at the start of round `t + 1`. -/
-theorem XV.r1 {L : Layout} {X : XCtx d} {ℓa ℓ : ℕ} (hL : LayOK L d ℓa) (hlay : BLLay L) {cs : ℕ → Bool}
-    (hX : X.wb.cs = cs) {K0 B t : ℕ} {σ : Env d} (hB1 : 1 ≤ B) (hB : σ.nat rB = B) (hD : σ.nat rD = d)
-    (h1 : σ.nat rOne = 1) (hNb : σ.nat rNb = Sched.nBlk d) (hz : σ.sc sZ = 0)
-    (hdr : σ.draws = Sched.blkStart d K0 B t 0) (hℓa : 4 * gsm_prec B + 2 < 2 ^ ℓa) (hℓ : 4 * gsm_prec B + 4 ≤ ℓ)
-    (hda : d + 2 < 2 ^ ℓa) :
-    XRunsB L X ℓa ℓ (xR1 L) σ (r1Units d B) (fun σ' =>
-      (∀ i : Fin d, σ'.arr aGam i = gamI cs K0 B d t i) ∧ σ'.sc sZeta = zetI cs K0 B d t ∧
-      σ'.draws = Sched.blkStart d K0 B (t + 1) 0 ∧ FrameA SR1 NR1 (AR1 d) σ σ') := by
-  have hlay' := hlay
-  obtain ⟨hS, hN, hA⟩ := hlay'
-  have hnb : 2 * Sched.nBlk d ≤ d + 3 := by unfold Sched.nBlk; omega
-  have hnb' : d < 2 * Sched.nBlk d := by unfold Sched.nBlk; omega
-  have hzn : (d + 1) / 2 < Sched.nBlk d := by unfold Sched.nBlk; omega
-  -- `rD2 := d + 2`
-  refine XV.mono (K := 1 + (1 + (Sched.nBlk d * (bmUnits B + 15 + 3) + 3))) ?_ (by unfold r1Units; ring_nf; omega)
-    fun _ h => h
-  refine XV.seq (XV.nadd hL (σ := σ) (i := rD2) (a := rD) (b := rOne) (by lomega) (by lomega) (by lomega)
-    (by rw [hD]; omega) (by rw [h1]; omega)) fun σ0 e0 => ?_
-  subst e0
-  refine XV.seq (XV.nadd hL (i := rD2) (a := rD2) (b := rOne) (by lomega) (by lomega) (by lomega)
-    (by simp [hD]; omega) (by rw [Env.setNat_nat, if_neg (by lomega), h1]; omega)) fun σ0 e0 => ?_
-  subst e0
-  set σ0 := (σ.setNat rD2 (σ.nat rD + σ.nat rOne)).setNat rD2
-    ((σ.setNat rD2 (σ.nat rD + σ.nat rOne)).nat rD2 + (σ.setNat rD2 (σ.nat rD + σ.nat rOne)).nat rOne) with hσ0
-  have F0 : FrameA SR1 NR1 (AR1 d) σ σ0 :=
-    ((FrameA.refl _ _ _ σ).setNat (Or.inr (Or.inr (Or.inl rfl))) _).setNat (Or.inr (Or.inr (Or.inl rfl))) _
-  have dd0 : σ0.nat rD2 = d + 2 := by simp [hσ0, hD, h1]
-  let J : ℕ → Env d → Prop := fun j σ' => σ'.draws = Sched.blkStart d K0 B t j ∧ σ'.nat rD2 = d + 2 ∧
-    (∀ i, i < d → i < 2 * j → σ'.arr aGam i = gamI cs K0 B d t i) ∧
-    ((d + 1) / 2 < j → σ'.sc sZeta = zetI cs K0 B d t) ∧ FrameA SR1 NR1 (AR1 d) σ σ'
-  refine XV.mono (XV.forN hL (i := rJ) (n := rNb) (one := rOne) (body := xR1body L) (by lomega) (by lomega)
-    (by lomega) (by lomega) (by lomega) (Sched.nBlk d) (bmUnits B + 15) (by omega) J σ0
-    (by simp [hσ0, hNb]) (by simp [hσ0, h1])
-    ⟨by simp [hσ0, hdr], by simp [dd0], fun i _ h => absurd h (by omega), fun h => absurd h (by omega),
-      F0.setNat (Or.inl rfl) 0⟩ ?_) le_rfl fun σ' ⟨⟨hd', _, ha', hz', F'⟩, _⟩ =>
-      ⟨fun i => ha' i i.2 (by omega), hz' hzn, by rw [hd', blkStart_next], F'⟩
-  intro j hj σ' ⟨hd', hdd', ha', hz', F'⟩ hjj hjn hj1
-  have nB : σ'.nat rB = B := by rw [F'.1 rB (by simp only [NR1]; lomega), hB]
-  have nD : σ'.nat rD = d := by rw [F'.1 rD (by simp only [NR1]; lomega), hD]
-  have zz : σ'.sc sZ = 0 := by rw [F'.2.1 sZ (by simp only [SR1]; lomega), hz]
-  refine XV.mono (XV.r1body hL hlay hX hB1 nB nD hj1 hdd' hjj zz hd' hℓa hℓ (by omega) hda) le_rfl
-    fun σ'' ⟨hd'', ha'', hz'', F''⟩ => ?_
-  have nJ : σ''.nat rJ = j := by rw [F''.1 rJ (by simp only [NB1]; lomega), hjj]
-  have nN : σ''.nat rNb = Sched.nBlk d := by rw [F''.1 rNb (by simp only [NB1]; lomega), hjn]
-  have nO : σ''.nat rOne = 1 := by rw [F''.1 rOne (by simp only [NB1]; lomega), hj1]
-  have nD2 : σ''.nat rD2 = d + 2 := by rw [F''.1 rD2 (by simp only [NB1]; lomega), hdd']
-  refine ⟨nJ, nN, nO, by simp [hd''], by simp [nD2], fun i hi hi2 => ?_, fun h => ?_, ?_⟩
-  · simp only [Env.setNat_arr]
-    by_cases hij : i = 2 * j ∨ i = 2 * j + 1
-    · exact ha'' i hi hij
-    · rw [F''.2.2.1 aGam i (fun h => hij h.2.2)]
-      exact ha' i hi (by omega)
-  · simp only [Env.setNat_sc]
-    by_cases hzj : (d + 1) / 2 = j
-    · exact hz'' hzj
-    · rw [F''.2.1 sZeta (fun h => by rcases h with h | h <;> [exact hzj h.2; (simp only [oBM, sZeta] at h; omega)])]
-      exact hz' (by omega)
-  · refine (F'.trans (F''.mono (fun y hy => ?_) (fun i hi => ?_) (fun a k hk => ⟨hk.1, hk.2.1⟩))).setNat
-      (Or.inl rfl) _
-    · rcases hy with h | h
-      · exact Or.inl h.1
-      · exact Or.inr h
-    · rcases hi with h | h
-      · exact Or.inr (Or.inl h)
-      · exact Or.inr (Or.inr (Or.inr h))
 
 end AdversarialBco.Bit.Transfer.BLM

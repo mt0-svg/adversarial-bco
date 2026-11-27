@@ -143,4 +143,19 @@ def StratsLip {d : ℕ} (K : Set (E d)) (n : ℕ) : Set (Strategy d) :=
 
 end Lower
 
+open Lower RealRAM in
+/-- The lower half of Conjecture 1 of Bubeck, Eldan and Lee in its non-oblivious reading (Theorem 1.3 (a) of the
+paper on the unit ball (`K = B(0,1)`)): in `ℝ^d`, `d ≥ 4·10^6`, for every `n ≥ d^10` and every measurable randomised
+learner with plays in the ball there is a deterministic strategy that reads the past plays, with convex `1/4`-Lipschitz
+losses with values in `[0, 1]`, against which the regret is integrable with mean at least
+`7·10^-9 d^{3/2} n^{1/2} / log d`. Nothing is claimed for an oblivious adversary. -/
+def TheoremConj1Lower : Prop :=
+  ∀ d : ℕ, 4000000 ≤ d → ∀ n : ℕ, d ^ 10 ≤ n →
+    ∀ (Ω : Type) (_ : MeasurableSpace Ω) (μ : Measure Ω), IsProbabilityMeasure μ →
+    ∀ pol : Learner Ω d, IsLearnerAd (Metric.closedBall 0 1) n pol →
+      ∃ σ ∈ StratsLip (Metric.closedBall (0 : E d) 1) n,
+        Integrable (fun ω => regretAd (Metric.closedBall 0 1) σ (fun t => pol t ω) n) μ ∧
+          7 / 10 ^ 9 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n / Real.log d ≤
+            ∫ ω, regretAd (Metric.closedBall 0 1) σ (fun t => pol t ω) n ∂μ
+
 end AdversarialBco

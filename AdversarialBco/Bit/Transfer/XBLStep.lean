@@ -13,8 +13,7 @@ public import AdversarialBco.Bit.Transfer.XBLInv
 # BL's round in mode `run` as named values
 
 The values of `BLPure.step` in mode `run` as definitions (`rY`, `rc`, `ra`, `rq`, the roots, `A'`, `B'`, `b'`, `k'`,
-`g`, `G'`, `l'`, `P'`, `w'`, the call of R11, `s5`, `w_μ`, the call of R14), and `modeAt_succ`: the mode after round
-`t` is `step` at the play, the draw and the reading of round `t`.
+`g`, `G'`, `l'`, `P'`, `w'`, the call of R11, `s5`, `w_μ`, the call of R14).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -63,27 +62,10 @@ def rg : Fin d → ℚ := rndV cfg.par.p ((rY cfg st ξ ζ obs * cfg.par.nu) •
 def rG' : Fin d → ℚ := st.G + rg cfg st ξ ζ obs
 def rl' : ℚ := st.l + rnd cfg.par.p (rg cfg st ξ ζ obs ⬝ᵥ st.mu)
 
-/-- R10: `P' = B'B'ᵀ`, `w' = b' - (η/2) G'`. -/
-def rPp : Matrix (Fin d) (Fin d) ℚ := rB' cfg st ξ ζ obs * (rB' cfg st ξ ζ obs)ᵀ
-
 /-- R13: `s5`, `w_μ`. -/
 def rs5 : ℚ := rnd cfg.par.p (cfg.par.eta * rY cfg st ξ ζ obs * cfg.par.nu / rq cfg st ξ ζ obs)
 def rwmu : Fin d → ℚ := st.mu - rs5 cfg st ξ ζ obs • (st.A *ᵥ ξ)
 
-/-- R14: the call. -/
-def rcallL (n : ℕ) : CallQ d :=
-  callOf cfg (rPp cfg st ξ ζ obs) (rb' cfg st ξ ζ obs) (Lmu cfg.par - rk' cfg st ξ ζ obs) (BLP.rB cfg.par / 2)
-    (rPp cfg st ξ ζ obs) (rPp cfg st ξ ζ obs *ᵥ rwmu cfg st ξ ζ obs) (eBL cfg.par d n)
-
 end Vals
-
-/-- The mode after round `t`: `step` at the mode, the draw and the reading of round `t`. -/
-theorem modeAt_succ (R : Routines) (n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ) (σs : Strategy d)
-    (cs : ℕ → Bool) (t : ℕ) :
-    modeAt R d n m A b σs cs (t + 1) =
-      step R.ap (cfgOf R d n m A b cs) n (modeAt R d n m A b σs cs t) (drawAt R d n cs t).1 (drawAt R d n cs t).2
-        ⌊(2 : ℝ) ^ (cfgOf R d n m A b cs).par.p *
-          lossAd σs 0 (fun i => toE ((traj R d n m A b σs cs (t + 1)).2 i)) t
-            (toE (play R d n m A b σs cs t))⌋ := rfl
 
 end AdversarialBco.Bit.Transfer.BLM

@@ -28,6 +28,7 @@ public import AdversarialBco.Poly.PgProcBase
 
 open MeasureTheory ProbabilityTheory Matrix
 open AdversarialBco.RealRAM
+open AdversarialBco.Conj1Arith (PgMeasN clampNSRoutine)
 
 namespace AdversarialBco.Poly
 
@@ -213,13 +214,75 @@ theorem play_interior {K : Set (E d)} (hKconv : Convex ℝ K) {p : Df2OPar} {q :
   have hint := (gauge_lt_one_iff_mem_interior hconv hnhds).mp hg
   exact affine_interior_mem K C (pgMu q) (pgOp q) (pgOp_surjective hdet) (fun y hy => hy.1) _ hint
 
-open Classical in
-theorem measurable_piecewise_interior {K : Set (E d)} {g : E d → ℝ} (hg : ConvexOn ℝ K g) :
-    Measurable ((interior K).piecewise g 0) := by
-  exact ContinuousOn.measurable_piecewise hg.continuousOn_interior continuousOn_const
-    isOpen_interior.measurableSet
+theorem next_kTh_meas {n : ℕ} {δ : ℝ} {K : Set (E d)} (hd : 1 ≤ d) (hKc : IsClosed K) (hKconv : Convex ℝ K)
+    (hG : PgGoodMeas) (hAp : Df2ApCallMeas) :
+    Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
+      df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (kTh n δ K x.1) (df2oPar d n δ).eps) x.2.1 x.2.2.1
+        (x.2.1.A *ᵥ x.2.2.1) x.2.2.2 := by
+  classical
+  have h1 := hAp d n δ K hd hKc hKconv
+  have h2 := (hAp d n δ Set.univ hd isClosed_univ convex_univ).comp
+    (measurable_const.prodMk measurable_snd : Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
+      ((0 : PgSp d), x.2))
+  have heq : (fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
+      df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (kTh n δ K x.1) (df2oPar d n δ).eps) x.2.1 x.2.2.1
+        (x.2.1.A *ᵥ x.2.2.1) x.2.2.2) = fun x =>
+      if PgGood d K (df2oPar d n δ).R (some x.1) then
+        df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (df2Kp K x.1 (df2oPar d n δ).R) (df2oPar d n δ).eps) x.2.1
+          x.2.2.1 (x.2.1.A *ᵥ x.2.2.1) x.2.2.2
+      else df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (df2Kp Set.univ 0 (df2oPar d n δ).R)
+          (df2oPar d n δ).eps) x.2.1 x.2.2.1 (x.2.1.A *ᵥ x.2.2.1) x.2.2.2 := by
+    funext x
+    by_cases hq : PgGood d K (df2oPar d n δ).R (some x.1) <;> simp [kTh, hq]
+  rw [heq]
+  exact Measurable.ite (measurable_fst (hG d K _ hKconv hKc)) h1 h2
 
 /-! ## The position as parameter -/
+
+theorem measurable_pi_gen {Ω ι : Type*} {β : ι → Type*} [∀ i, MeasurableSpace (β i)] {m : MeasurableSpace Ω}
+    {g : Ω → ∀ i, β i} (h : ∀ i, Measurable[m] fun x => g x i) : Measurable[m] g :=
+  measurable_pi_iff.mpr h
+
+/-- The stream of PG is measurable before round `0` of every instance: PG never reads the indices of `lay`. -/
+theorem omega_meas_𝒢w (n : ℕ) (r0 R0 δ1 : ℝ) (a : ℕ) :
+    Measurable[𝒢w (df2oN0 d r0 R0 δ1) (df2oSpare d n r0 R0 δ1) n d a 0]
+      fun ω : WΩ => df2oOmega d n r0 R0 δ1 ω.1 := by
+  have hW : ∀ i, df2oPgW d (df2oPgDelta r0 R0 δ1) i = pgNs d (pgRhoStage d i) +
+      pgMT (df2oPgDelta r0 R0 δ1) * pgNT d (pgRhoStage d i) := fun _ => rfl
+  have hN0 : df2oN0 d r0 R0 δ1 =
+      mrOff (pgJr (df2oPgDelta r0 R0 δ1)) d (df2oPgW d (df2oPgDelta r0 R0 δ1)) (pgStages r0 R0) := rfl
+  have hS : df2oSpare d n r0 R0 δ1 = mrOff (pgJr (df2oPgDelta r0 R0 δ1)) d (df2oPgW d (df2oPgDelta r0 R0 δ1))
+      (pgStages r0 R0) + n * (d + 1) := rfl
+  have hA : ∀ i r k (c : Fin d), gσ (df2oIdxA d n r0 R0 δ1 i r k c) ≤
+      𝒢w (df2oN0 d r0 R0 δ1) (df2oSpare d n r0 R0 δ1) n d a 0 := fun i r k c =>
+    gσ_le_𝒢w _ _ _ _ 0 _ (by
+      rintro ⟨s', _, c', h⟩
+      rw [idxA_eq, hN0] at h
+      exact mrA_ne_lay _ _ _ _ _ _ _ _ _ hW hS i r k c a s' c' h.symm)
+  have hT : ∀ i r v k (c : Fin d), gσ (df2oIdxT d n r0 R0 δ1 i r v k c) ≤
+      𝒢w (df2oN0 d r0 R0 δ1) (df2oSpare d n r0 R0 δ1) n d a 0 := fun i r v k c =>
+    gσ_le_𝒢w _ _ _ _ 0 _ (by
+      rintro ⟨s', _, c', h⟩
+      rw [idxT_eq, hN0] at h
+      exact mrT_ne_lay _ _ _ _ _ _ _ _ _ hW hS i r v k c a s' c' h.symm)
+  unfold df2oOmega
+  refine measurable_pi_gen fun i => measurable_pi_gen fun r => Measurable.prodMk
+    (measurable_pi_gen fun k => ?_) (measurable_pi_gen fun v => measurable_pi_gen fun k => ?_)
+  · exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_of fun c => meas_coord _ (hA i r k c))
+  · exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_of fun c => meas_coord _ (hT i r v k c))
+
+theorem theta_meas (hPG : PgMeasN clampNSRoutine) {n : ℕ} {r0 R0 δ : ℝ} {K : Set (E d)} (hKc : IsClosed K)
+    (f : ℕ → E d → ℝ) (a : ℕ) :
+    Measurable[𝒢w (df2oN0 d r0 R0 (df2oPar d n δ).δ1) (df2oSpare d n r0 R0 (df2oPar d n δ).δ1) n d a 0]
+      fun ω : WΩ => df2oPs d n r0 R0 δ (df2World K f ω) :=
+  (hPG d K r0 R0 (df2oPar d n δ).δ1 hKc).2.comp (omega_meas_𝒢w n r0 R0 (df2oPar d n δ).δ1 a)
+
+theorem case_good {n : ℕ} {r0 R0 δ : ℝ} {w : World d} (h : Df2Case d n r0 R0 δ w) :
+    PgGood d w.K (df2oPar d n δ).R (some (df2oPs d n r0 R0 δ w)) := by
+  obtain ⟨P, hP, hrest⟩ := h.1
+  have : df2oPs d n r0 R0 δ w = P := by simp [df2oPs, hP]
+  rw [this]
+  exact ⟨P, rfl, hrest⟩
 
 theorem eps_pos_of_rows {p : Df2OPar} {d n : ℕ} (H : RowHyp p d n) : 0 < p.eps := by
   rw [H.eps]

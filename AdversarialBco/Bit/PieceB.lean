@@ -13,12 +13,7 @@ public import AdversarialBco.Bit.BoxMuller
 @[expose] public section
 
 /-!
-# Piece B of the cut of `RunOK`: BL's draws
-
-* `bitsB : BitsB` (the lemma of the draws (b)): under the Gaussian stream, BL's draws of the rounds `t < n`
-  are unsound (`(Ebits R d n)ᶜ`) with probability at most `2^{-p-2}`.
-* `measDrawB : MeasDrawB`: BL's draw `ξ'_t` is measurable for the sigma-field of the draw group
-  `ξg d t`.
+# Piece B: BL's draws
 
 The draws: block `q` of round `t` reads the cells `U = ⌈2^B u⌉ - 1`, `W = ⌈2^B w⌉ - 1` of the exact pair
 `(u, w) = bmInv (x, y)` of its two terms `(x, y)` of the stream (`readCoins_blk_u`, `readCoins_blk_w`), and BM-INT's
@@ -26,8 +21,8 @@ outputs are within `2^{-B}` of Box-Muller at `((U + 1)/2^B, (W + 1)/2^B)` (`gsSp
 `K = 2^{1 - B/2} + 2π B^{1/2} 2^{-B}` of Box-Muller at `(u, w)`, that is of `(x, y)` (`bm_bmInv`), off the event
 `badBM B` of `boxMuller_pair` (`gOut_err`). So the draws of round `t` are within `K + 2^{-B} ≤ 4/2^{B/2}` of the
 terms of the draw group and the dither (`errB_le`). Each block's pair `(u, w)` is uniform on `(0, 1]²` (`uw_pair_law`,
-from `map_bmInv`), so the event `badBM B` has probability at most `2^{-B/2}` (`boxMuller_pair`), and the union over
-the `n (⌈d/2⌉ + 1)` blocks is at most `2^{-p-2}` (`coins_le`, `B/2 = p + size (n (d + 2)) + 2`).
+from `map_bmInv`), so the event `badBM B` has probability at most `2^{-B/2}` (`boxMuller_pair`, `gauss_bad_le`), and
+the bound `2^{-p-2}` of the union over the `n (⌈d/2⌉ + 1)` blocks at `B/2 = p + size (n (d + 2)) + 2` is `coins_arith`.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -486,144 +481,6 @@ theorem coins_arith (n d p : ℕ) :
     _ ≤ 1 / ((2 : ℝ) ^ p * 4) := h_right
     _ = 1 / 2 ^ p / 4 := by ring
 
-/-! ## The draw group determines the draw -/
-
-/-- The stream with the draw group `y` of round `t` (roles `c ≤ d`) and `0` elsewhere. -/
-noncomputable def extG (d t : ℕ) (y : Fin (d + 1) → ℝ) : ℕ → ℝ :=
-  Function.extend (fun c : Fin (d + 1) => cIdx d t c) y 0
-
-theorem extG_cIdx (d t : ℕ) (y : Fin (d + 1) → ℝ) (c : Fin (d + 1)) : extG d t y (cIdx d t c) = y c := by
-  unfold extG
-  have hinj : Function.Injective (fun c : Fin (d + 1) => cIdx d t c) := by
-    intro a b h
-    apply Fin.ext
-    unfold cIdx at h
-    have h' : t * (d + 5) + a.val = t * (d + 5) + b.val :=
-      Nat.eq_of_mul_eq_mul_left (by norm_num : 0 < 2) h
-    omega
-  exact Function.Injective.extend_apply hinj y 0 c
-
-theorem measurable_extG (d t : ℕ) : Measurable (extG d t) := by
-  rw [measurable_pi_iff]
-  intro i
-  by_cases h : ∃ c : Fin (d + 1), cIdx d t c = i
-  · rcases h with ⟨c, hc⟩
-    subst hc
-    have h_eq : (fun (y : Fin (d + 1) → ℝ) => extG d t y (cIdx d t c)) = fun y => y c := by
-      ext y
-      exact extG_cIdx d t y c
-    rw [h_eq]
-    exact measurable_pi_apply c
-  · have h_ne : ¬∃ (a : Fin (d + 1)), (fun c : Fin (d + 1) => cIdx d t c) a = i := by
-      simpa using h
-    have h_val : ∀ y : Fin (d + 1) → ℝ, extG d t y i = (0 : ℝ) := by
-      intro y
-      dsimp [extG]
-      rw [Function.extend_apply' y (0 : ℕ → ℝ) i h_ne]
-      rfl
-    have h_const : (fun (y : Fin (d + 1) → ℝ) => extG d t y i) = fun _ => (0 : ℝ) := by
-      ext y; exact h_val y
-    rw [h_const]
-    exact measurable_const
-
-/-- A draw block of round `t` reads the draw group of round `t` only. -/
-theorem blkUW_congr_grp {d K0 B : ℕ} (t q : ℕ) (hq : q < (d + 1) / 2) {x x' : ℕ → ℝ}
-    (h : ∀ c ≤ d, x (cIdx d t c) = x' (cIdx d t c)) :
-    blkUW (beta d K0 B x) K0 B d t q = blkUW (beta d K0 B x') K0 B d t q := by
-  have h2q_le_d : 2 * q ≤ d := by
-    have h' : 2 * q < d + 1 := by omega
-    omega
-  have h2q1_le_d : 2 * q + 1 ≤ d := by
-    have h' : 2 * q + 1 < d + 1 := by omega
-    omega
-  have h_beta_eq : ∀ j, blkStart d K0 B t q ≤ j → j < blkStart d K0 B t q + (2 * B) → beta d K0 B x j = beta d K0 B x' j := by
-    intro j hj_le hj_lt
-    set s := j - blkStart d K0 B t q with hs_def
-    have hs_lt : s < 2 * B := by
-      rw [hs_def]
-      omega
-    have hj_eq : j = blkStart d K0 B t q + s := by
-      rw [hs_def]
-      omega
-    have h_blkOf : blkOf K0 B j = .inr (t * nBlk d + q) := by
-      rw [hj_eq]
-      exact (blkOf_posOf_blkStart hs_lt).1
-    have hq_lt_nBlk : q < nBlk d := by
-      unfold nBlk
-      omega
-    have hmod : (t * nBlk d + q) % nBlk d = q := by
-      rw [Nat.add_mod]
-      have h0 : (t * nBlk d) % nBlk d = 0 := by simp
-      rw [h0, zero_add]
-      have hq_mod : q % nBlk d = q := Nat.mod_eq_of_lt hq_lt_nBlk
-      rw [hq_mod]
-      exact Nat.mod_eq_of_lt hq_lt_nBlk
-    have h_ineq : t * nBlk d + q < nBlk d * (t + 1) := by
-      have h1 : t * nBlk d + q < t * nBlk d + nBlk d := Nat.add_lt_add_left hq_lt_nBlk _
-      have h2 : t * nBlk d + nBlk d = nBlk d * (t + 1) := by
-        rw [mul_comm t (nBlk d), ← Nat.mul_succ]
-      exact h1.trans_eq h2
-    have hdiv : (t * nBlk d + q) / nBlk d = t :=
-      Nat.div_eq_of_lt_le
-        (Nat.le_add_right _ _)
-        (by simpa [mul_comm] using h_ineq)
-    have hpair : pairOf d (.inr (t * nBlk d + q)) = (cIdx d t (2 * q), cIdx d t (2 * q + 1)) := by
-      unfold pairOf
-      simp
-      rw [Nat.mod_eq_of_lt hq_lt_nBlk, hdiv]
-      have h_not_eq : q + 1 ≠ nBlk d := by
-        unfold nBlk
-        omega
-      simp [h_not_eq]
-    have h_grp : grp d K0 B j = {cIdx d t (2 * q), cIdx d t (2 * q + 1)} := by
-      rw [grp, h_blkOf, hpair]
-    apply beta_local d K0 B j x x'
-    rw [h_grp]
-    intro i hi
-    simp_rw [Set.mem_insert_iff, Set.mem_singleton_iff] at hi
-    rcases hi with (rfl | rfl)
-    · exact h (2 * q) h2q_le_d
-    · exact h (2 * q + 1) h2q1_le_d
-  unfold blkUW
-  have h_first : readCoins (beta d K0 B x) (blkStart d K0 B t q) B = readCoins (beta d K0 B x') (blkStart d K0 B t q) B :=
-    BLP.readCoins_congr (beta d K0 B x) (beta d K0 B x') (blkStart d K0 B t q) B (by
-      intro j hj_le hj_lt
-      apply h_beta_eq j hj_le
-      omega)
-  have h_second : readCoins (beta d K0 B x) (blkStart d K0 B t q + B) B = readCoins (beta d K0 B x') (blkStart d K0 B t q + B) B :=
-    BLP.readCoins_congr (beta d K0 B x) (beta d K0 B x') (blkStart d K0 B t q + B) B (by
-      intro j hj_le' hj_lt'
-      have hj_le : blkStart d K0 B t q ≤ j := by omega
-      apply h_beta_eq j hj_le
-      omega)
-  simp [h_first, h_second]
-
-theorem measurable_blkUW (d K0 B t q : ℕ) : Measurable fun x : ℕ → ℝ => blkUW (beta d K0 B x) K0 B d t q := by
-  have hbeta : Measurable (beta d K0 B) := measurable_beta d K0 B
-  have h_readCoins (c k : ℕ) : Measurable (fun (cs : ℕ → Bool) => readCoins cs c k) := by
-    induction' k with k ih
-    · simp [readCoins]
-    · simp [readCoins]
-      refine Measurable.add ?_ ?_
-      · refine (measurable_const_mul 2).comp ih
-      · refine Measurable.ite ?_ measurable_const measurable_const
-        -- prove that {cs | cs (c + k) = true} is measurable
-        have h_set : MeasurableSet {cs : ℕ → Bool | cs (c + k)} := by
-          -- this set is the preimage of {true} under the projection cs ↦ cs (c + k)
-          -- which is measurable because projections are measurable
-          have h_proj : Measurable (fun (cs : ℕ → Bool) => cs (c + k)) :=
-            measurable_pi_apply (c + k)
-          have : {cs : ℕ → Bool | cs (c + k)} = (fun (cs : ℕ → Bool) => cs (c + k)) ⁻¹' {true} := by
-            ext cs; simp
-          rw [this]
-          exact measurableSet_preimage h_proj (MeasurableSet.singleton true)
-        exact h_set
-  have h_toNat : Measurable (Int.toNat : ℤ → ℕ) := Measurable.of_discrete
-  have h1 : Measurable (fun (x : ℕ → ℝ) => (readCoins (beta d K0 B x) (Sched.blkStart d K0 B t q) B).toNat) :=
-    h_toNat.comp ((h_readCoins (Sched.blkStart d K0 B t q) B).comp hbeta)
-  have h2 : Measurable (fun (x : ℕ → ℝ) => (readCoins (beta d K0 B x) (Sched.blkStart d K0 B t q + B) B).toNat) :=
-    h_toNat.comp ((h_readCoins (Sched.blkStart d K0 B t q + B) B).comp hbeta)
-  simpa [blkUW] using Measurable.prodMk h1 h2
 /-! ## The draws of one block -/
 
 /-- BM-INT's outputs on block `q` of round `t` are within `errB B` of the block's two terms of the stream, when the
@@ -667,115 +524,11 @@ theorem gOut_err {d K0 B : ℕ} (t q : ℕ) (hB : 8 ≤ B) (x : ℕ → ℝ)
       _ ≤ 1 / 2 ^ B + KB B := add_le_add h2 (by rw [abs_sub_comm]; exact g2)
       _ = KB B + 1 / 2 ^ B := add_comm _ _
 
-/-! ## BL's parameters -/
-
-theorem par_B (d n : ℕ) : 8 ≤ (par d n).B ∧ Even (par d n).B := by
-  refine ⟨?_, ?_⟩
-  · show 8 ≤ 2 * (10 * (BLP.Ne d n).size + 16 * d.size + 160 + (n * (d + 2)).size + 2)
-    omega
-  · exact ⟨_, (two_mul _)⟩
-
-theorem coins_le (d n : ℕ) :
-    (n : ℝ) * (nBlk d : ℝ) * (2 : ℝ) ^ (-((par d n).B : ℝ) / 2) ≤ Bud.dbits d n := by
-  have h := coins_arith n d (par d n).p
-  have hB : (par d n).B = 2 * ((par d n).p + (n * (d + 2)).size + 2) := rfl
-  rw [hB]
-  simpa [Bud.dbits, Bud.tp, nBlk] using h
-
-
 /-! ## Piece B -/
-
-/-- Off the bad events of the blocks of the rounds `t < n`, BL's draws are sound. -/
-theorem ebits_compl_subset (R : Routines) (d n : ℕ) :
-    (Ebits R d n)ᶜ ⊆ ⋃ t ∈ Finset.range n, ⋃ q ∈ Finset.range (nBlk d),
-      {ω : WΩ | bmInv (blkPair d ω.1 (t * nBlk d + q)) ∈ badBM (par d n).B} := by
-  intro ω hω
-  by_contra hno
-  apply hω
-  simp only [Set.mem_iUnion, Finset.mem_range, Set.mem_ofPred_eq, not_exists] at hno
-  obtain ⟨hB8, hBev⟩ := par_B d n
-  have herr := errB_le hB8 hBev
-  intro t ht
-  have hd : drawW R d n t ω = draw (beta d (R.K0 d n) (par d n).B ω.1) (R.K0 d n) (par d n).B d t := rfl
-  rw [hd]
-  refine ⟨fun i => ?_, ?_⟩
-  · have hq : (i : ℕ) / 2 < (d + 1) / 2 := by have := i.2; omega
-    have hgood := hno t ht ((i : ℕ) / 2) (by unfold nBlk; omega)
-    obtain ⟨e1, e2⟩ := gOut_err (K0 := R.K0 d n) t ((i : ℕ) / 2) hB8 ω.1 hgood
-    rw [blkPair_draw d ω.1 t _ hq] at e1 e2
-    simp only [draw, ξc]
-    unfold eXi0
-    split_ifs with hi
-    · have : 2 * ((i : ℕ) / 2) = (i : ℕ) := by omega
-      rw [this] at e1
-      exact e1.trans herr
-    · have : 2 * ((i : ℕ) / 2) + 1 = (i : ℕ) := by omega
-      rw [this] at e2
-      exact e2.trans herr
-  · have hgood := hno t ht ((d + 1) / 2) (by unfold nBlk; omega)
-    obtain ⟨e1, -⟩ := gOut_err (K0 := R.K0 d n) t ((d + 1) / 2) hB8 ω.1 hgood
-    rw [blkPair_dither d ω.1 t] at e1
-    simp only [draw, zc, Matrix.cons_val_zero]
-    unfold eZt0
-    push_cast
-    have h2 : (2 : ℝ) / 2 ^ ((par d n).B / 2) = (4 / 2 ^ ((par d n).B / 2)) / 2 := by ring
-    rw [h2, ← sub_div, abs_div, abs_two]
-    exact div_le_div_of_nonneg_right (e1.trans herr) (by norm_num)
 
 theorem pairOf_ne (d : ℕ) (s : ℕ ⊕ ℕ) : (pairOf d s).1 ≠ (pairOf d s).2 := by
   intro h
   have := pairIdx_injective d (a₁ := (s, 0)) (a₂ := (s, 1)) (by simpa [pairIdx] using h)
   simp at this
-
-theorem bitsB : BitsB := by
-  intro R d n _ _ _
-  have hfst : ∀ S : Set (ℕ → ℝ), μs (Measure.dirac 0) {ω : WΩ | ω.1 ∈ S} = gaussStream S := by
-    intro S
-    have : {ω : WΩ | ω.1 ∈ S} = S ×ˢ Set.univ := by ext ω; simp
-    rw [this, Measure.prod_prod, measure_univ, mul_one]
-  calc μs (Measure.dirac 0) (Ebits R d n)ᶜ
-      ≤ μs (Measure.dirac 0) (⋃ t ∈ Finset.range n, ⋃ q ∈ Finset.range (nBlk d),
-          {ω : WΩ | bmInv (blkPair d ω.1 (t * nBlk d + q)) ∈ badBM (par d n).B}) :=
-        measure_mono (ebits_compl_subset R d n)
-    _ ≤ ∑ t ∈ Finset.range n, ∑ q ∈ Finset.range (nBlk d),
-          μs (Measure.dirac 0) {ω : WΩ | bmInv (blkPair d ω.1 (t * nBlk d + q)) ∈ badBM (par d n).B} := by
-        refine (measure_biUnion_finset_le _ _).trans (Finset.sum_le_sum fun t _ => ?_)
-        exact measure_biUnion_finset_le _ _
-    _ ≤ ∑ t ∈ Finset.range n, ∑ q ∈ Finset.range (nBlk d),
-          ENNReal.ofReal ((2 : ℝ) ^ (-((par d n).B : ℝ) / 2)) := by
-        refine Finset.sum_le_sum fun t _ => Finset.sum_le_sum fun q _ => ?_
-        exact (hfst {x | bmInv (blkPair d x (t * nBlk d + q)) ∈ badBM (par d n).B}).trans_le
-          (gauss_bad_le (pairOf_ne d (.inr (t * nBlk d + q))) _)
-    _ = ENNReal.ofReal ((n : ℝ) * (nBlk d : ℝ) * (2 : ℝ) ^ (-((par d n).B : ℝ) / 2)) := by
-        simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
-        rw [ENNReal.ofReal_mul (by positivity), ENNReal.ofReal_mul (by positivity),
-          ENNReal.ofReal_natCast, ENNReal.ofReal_natCast, mul_assoc]
-    _ ≤ ENNReal.ofReal (Bud.dbits d n) := ENNReal.ofReal_le_ofReal (coins_le d n)
-
-theorem measDrawB : MeasDrawB := by
-  intro R d n t
-  set K0 := R.K0 d n
-  set B := (par d n).B
-  have hcongr : ∀ ω : WΩ, (drawW R d n t ω).1 =
-      (draw (beta d K0 B (extG d t (ξg d t ω))) K0 B d t).1 := by
-    intro ω
-    funext i
-    have hq : (i : ℕ) / 2 < (d + 1) / 2 := by have := i.2; omega
-    have h := blkUW_congr_grp (K0 := K0) (B := B) t ((i : ℕ) / 2) hq (x := ω.1)
-      (x' := extG d t (ξg d t ω)) (fun c hc => by
-        rw [show cIdx d t c = cIdx d t ((⟨c, by omega⟩ : Fin (d + 1)) : ℕ) from rfl, extG_cIdx]
-        rfl)
-    show (draw (beta d K0 B ω.1) K0 B d t).1 i = _
-    simp only [draw, h]
-  have hF : Measurable fun y : Fin (d + 1) → ℝ => (draw (beta d K0 B (extG d t y)) K0 B d t).1 := by
-    refine measurable_pi_iff.mpr fun i => ?_
-    simp only [draw]
-    split_ifs
-    · exact (measurable_of_countable (fun UW : ℕ × ℕ => (gOut B UW).1)).comp
-        ((measurable_blkUW d K0 B t _).comp (measurable_extG d t))
-    · exact (measurable_of_countable (fun UW : ℕ × ℕ => (gOut B UW).2)).comp
-        ((measurable_blkUW d K0 B t _).comp (measurable_extG d t))
-  simp only [hcongr]
-  exact hF.comp (comap_measurable (ξg d t))
 
 end AdversarialBco.Bit.PieceB

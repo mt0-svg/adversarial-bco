@@ -102,20 +102,8 @@ noncomputable def eb (r : Reg) : ℝ :=
 noncomputable def ek (r : Reg) : ℝ :=
   tp r / 2 + Dc r * R r ^ 2 * (103 / 100) * Lam r * (Xi1 r ^ 2 + 1) / 2 +
     cb r / 2 * R r ^ 2 * (203 / 100 * Real.sqrt (Lam r) * Xi1 r * Du r + DP r)
-/-- E11: `e_g`. -/
-noncomputable def eg (r : Reg) : ℝ :=
-  Real.sqrt (d r) * tp r / 2 + 101 / 100 * (eY r + Yb r * tp r / 16) * (101 / 100) * Real.sqrt (Lam r) * Xi1 r +
-    101 / 100 * Yb r * Du r
-/-- E11: `e_l`. -/
-noncomputable def el (r : Reg) : ℝ := tp r / 2 + R r * eg r
-/-- E11: `Ḡ`. -/
-noncomputable def Gb (r : Reg) : ℝ := n r * (101 / 100) * Yb r * Real.sqrt (Lam r) * Xi r
 /-- E12: `e_Φ`. -/
 noncomputable def ePhi (r : Reg) : ℝ := R r ^ 2 / 2 * DP r + R r * n r * eb r + n r * ek r
-/-- E13: `e_X`. -/
-noncomputable def eX (r : Reg) : ℝ :=
-  eta r * (101 / 100) * (n r * el r + R r * n r * eg r) + eta r * tp r / 16 * (21 / 10) * R r * Gb r +
-    2 * ePhi r
 /-- `w_ρ = 2^{-p-4} ρ`. -/
 noncomputable def wr (r : Reg) : ℝ := tp r / 16 * rho r
 /-- `w_ε = 2^{-p-4} ε`. -/
@@ -123,14 +111,10 @@ noncomputable def we (r : Reg) : ℝ := tp r / 16 * eps r
 /-- E14: the Hausdorff gap `h`. -/
 noncomputable def h (r : Reg) : ℝ :=
   R r * (ePhi r + eh r + 8 * wr r) + 2 * R r ^ 3 * we r / de r ^ 2 + 2 * R r * we r
-/-- `r_min = δe²/(2R(R + 1))`. -/
-noncomputable def rmin (r : Reg) : ℝ := de r ^ 2 / (2 * R r * (R r + 1))
 /-- `Lip_F = 4R/δe²`. -/
 noncomputable def LipF (r : Reg) : ℝ := 4 * R r / de r ^ 2
 /-- E15: the left side of SEL. -/
 noncomputable def sel (r : Reg) : ℝ := 4 * eh r + LipF r * h r + wr r
-/-- E15: the right side of SEL, `(3/4)(δe/d) r_min²`. -/
-noncomputable def selR (r : Reg) : ℝ := 3 / 4 * de r / d r * rmin r ^ 2
 /-- E16: `Δ_q`. -/
 noncomputable def Dq (r : Reg) : ℝ := Dc r * (1 + Xi1 r ^ 2) + 202 / 100 * cb r * Xi1 r * exi r
 /-- E16: `Δs_5`. -/
@@ -145,16 +129,10 @@ noncomputable def DF (r : Reg) : ℝ :=
 noncomputable def LF (r : Reg) : ℝ := Lam r * (R r + W0 r)
 /-- E16: the left side of VAL. -/
 noncomputable def val (r : Reg) : ℝ := 2 * DF r + LF r * h r
-/-- E16: the right side of VAL, `δe/(128 n² R² d)`. -/
-noncomputable def valR (r : Reg) : ℝ := de r / (128 * n r ^ 2 * R r ^ 2 * d r)
 /-- E17: `m_par`. -/
 noncomputable def mpar (r : Reg) : ℝ := tp r / 4 * pib r * (R r + 10) / eps r
-/-- E17: the regret transfer term. -/
-noncomputable def reg (r : Reg) : ℝ := n r / eps r * ((1 + 2 * R r) * Xb r + 4 * R r * pib r * we r)
 /-- E17: `κ0 = (4/3)((2 + 16/ε) X̄ + m_par)` (`κ1 = 0`). -/
 noncomputable def kap0 (r : Reg) : ℝ := 4 / 3 * ((2 + 16 / eps r) * Xb r + mpar r)
-/-- `δbits = 2^{-p-2}` (the lemma of the draws). -/
-noncomputable def dbits (r : Reg) : ℝ := tp r / 4
 
 /-- The definitions of the base constants and the regime facts at `RunCase`. -/
 structure OK (r : Reg) : Prop where

@@ -8,20 +8,18 @@ module
 public import AdversarialBco.Bit.Transfer.XBLTailSpec
 public import AdversarialBco.Bit.Transfer.XBLR13
 public import AdversarialBco.Bit.Transfer.XBLRt
-public import AdversarialBco.Bit.Transfer.XBLEll
+public import AdversarialBco.Bit.RoutQ
 
 @[expose] public section
 
 /-!
 # The tail of BL's round, part a: the pure links and the cells of the tail
 
-* The parameters that the tail reads lie on the grid `2^{-pF}` (`η'`, `ρ'`, `W'`), `ê = 1/H` with `H` a power of two.
-* The modes of the tail's stages (`m14`, `m13`, `m12`, `m11`): `tailMode` is R10's test, then `m11` (`tailMode_eq`).
-* The calls: `callTOf` as `callOf` with the data of `DataT`; `apQ` from `ellRI`.
-* R12 and R13 on the integers the machine computes (`tl_r12_dec`, `tl_wmu`, `tl_r13_dec`); the point of a call is
-  at most `2^(X + E)` when `R_int ≤ 2^E` (`tl_pt_abs`).
+* `tl_grid`: a value on the grid `2^{-k}` as its numerator over `2^k`.
+* R12 and R13 on the integers the machine computes (`tl_r12_dec`, `tl_wmu`, `tl_r13_dec`).
 * `TIn`: the cells that the tail reads (BLInv at `E`, the points, the slots `41..43, 59, 63, 72`, the arrays
-  `25..29`), stable under every frame of the tail's segments (`TIn.frame`).
+  `25..29`), stable under every frame of the tail's segments (`TIn.frame`); the bounds of the persistent cells that
+  hold integers (`BLInv.slot_abs`, `BLInv.arr_abs`).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -32,96 +30,9 @@ variable {d : ℕ}
 
 /-! ## The parameters on the grid -/
 
-theorem tl_onG_eta (d n : ℕ) : OnG (par d n).pF (par d n).eta := onG_div_pow _ _
-
-theorem tl_onG_rho (d n : ℕ) : OnG (par d n).pF (par d n).rho := onG_div_pow _ _
-
-theorem tl_onG_W (d n : ℕ) : OnG (par d n).pF (par d n).W := onG_div_pow _ _
-
-/-- `1/ê` as an integer. -/
-def tlH (d n : ℕ) : ℤ := 2 ^ ((par d n).p - 3 * (BLP.Ne d n).size - 6 * d.size - 64)
-
-theorem tlH_pos (d n : ℕ) : 0 < tlH d n := by unfold tlH; positivity
-
-theorem tl_eHat (d n : ℕ) : (par d n).eHat = 1 / ((tlH d n : ℤ) : ℚ) := by
-  rw [tlH]; push_cast; rfl
-
-theorem tlH_eq (d n : ℕ) : (((par d n).eHat⁻¹ : ℚ) : ℝ) = ((tlH d n : ℤ) : ℝ) := by
-  rw [tl_eHat, one_div, inv_inv]; push_cast; rfl
-
 /-- A point of the grid as its numerator over `2^k`. -/
 theorem tl_grid (k : ℕ) {x : ℚ} (h : OnG k x) : x = ((qn k x : ℤ) : ℚ) / (((2 : ℤ) ^ k : ℤ) : ℚ) := by
   push_cast; exact eq_qn_div k h
-
-/-! ## The modes of the stages -/
-
-/-- R14 LINE and R15 COMMIT. -/
-def m14 (cfg : Cfg d) (n : ℕ) (Ap Bp : Matrix (Fin d) (Fin d) ℚ) (bp Gp : Fin d → ℚ) (kp lp : ℚ)
-    (wmu : Fin d → ℚ) : Mode d :=
-  match RoutinesQ.ap (callLOf cfg n Bp bp kp wmu) with
-  | none => .guard
-  | some mu' => .run ⟨false, mu', Ap, Bp, bp, kp, Gp, lp⟩
-
-/-- R13's guard, then R14 and R15. -/
-def m13 (cfg : Cfg d) (n : ℕ) (Ap Bp : Matrix (Fin d) (Fin d) ℚ) (bp Gp : Fin d → ℚ) (kp lp : ℚ)
-    (wmu : Fin d → ℚ) : Mode d :=
-  if (2 * cfg.par.W) ^ 2 < wmu ⬝ᵥ wmu then .guard else m14 cfg n Ap Bp bp Gp kp lp wmu
-
-/-- R12 FIRE at the test point `p'`, then R13 to R15. -/
-def m12 (cfg : Cfg d) (n : ℕ) (Ap Bp : Matrix (Fin d) (Fin d) ℚ) (bp Gp : Fin d → ℚ) (kp lp : ℚ)
-    (wmu p' : Fin d → ℚ) : Mode d :=
-  if cfg.par.eta * (lp - Gp ⬝ᵥ p') - 2 * (p' ⬝ᵥ ((Bp * Bpᵀ) *ᵥ p') / 2 - bp ⬝ᵥ p' + kp) ≤
-      -cfg.par.rho + cfg.par.eHat then .run (init cfg.par d) else m13 cfg n Ap Bp bp Gp kp lp wmu
-
-/-- R11 TEST, then R12 to R15. -/
-def m11 (cfg : Cfg d) (n : ℕ) (st : St d) (Ap Bp : Matrix (Fin d) (Fin d) ℚ) (bp Gp : Fin d → ℚ) (kp lp : ℚ)
-    (wmu : Fin d → ℚ) : Mode d :=
-  match RoutinesQ.ap (callTOf cfg st Bp bp Gp) with
-  | none => .guard
-  | some p' => m12 cfg n Ap Bp bp Gp kp lp wmu p'
-
-theorem tailMode_eq (cfg : Cfg d) (n : ℕ) (st : St d) (Ap Bp : Matrix (Fin d) (Fin d) ℚ) (bp Gp : Fin d → ℚ)
-    (kp lp : ℚ) (wmu : Fin d → ℚ) :
-    tailMode RoutinesQ.ap cfg n st Ap Bp bp Gp kp lp wmu =
-      if 2 * (cfg.par.Lam : ℚ) < frob2 Bp ∨ 2 * (cfg.par.Lam : ℚ) < frob2 Ap then .guard else
-        m11 cfg n st Ap Bp bp Gp kp lp wmu := by
-  unfold tailMode m11 m12 m13 m14
-  rfl
-
-/-! ## The calls -/
-
-theorem tl_callT (cfg : Cfg d) (st : St d) (Bp : Matrix (Fin d) (Fin d) ℚ) (bp Gp : Fin d → ℚ) :
-    callTOf cfg st Bp bp Gp =
-      callOf cfg (if st.first then 0 else st.B * st.Bᵀ) (if st.first then 0 else st.b)
-        (if st.first then 0 else LT cfg.par - st.k) (if st.first then 1 - cfg.par.eps else BLP.rB cfg.par / 2)
-        (Bp * Bpᵀ) (bp - (cfg.par.eta / 2) • Gp)
-        (if st.first then (1 - cfg.par.eps) ^ 2 / (cfg.par.Ne * d * 8)
-          else BLP.rB cfg.par ^ 2 / (cfg.par.Ne * d * 8)) := by
-  unfold callTOf; cases st.first <;> rfl
-
-theorem tl_ap_none (D : CallQ d) (h : ellRI (clearQ D) = none) : RoutinesQ.ap D = none := by
-  show apQ D = none
-  unfold apQ; rw [h]; rfl
-
-theorem tl_ap_some (D : CallQ d) (x : Fin d → ℤ) (h : ellRI (clearQ D) = some x) :
-    RoutinesQ.ap D = some fun i => (x i : ℚ) / 2 ^ ellExp (clearQ D) := by
-  show apQ D = _
-  unfold apQ; rw [h]; rfl
-
-/-- The point of a call is in the box of radius `R_int`. -/
-theorem tl_pt_abs (cfg : Cfg d) (H : Matrix (Fin d) (Fin d) ℚ) (g : Fin d → ℚ) (ℓq r : ℚ)
-    (P : Matrix (Fin d) (Fin d) ℚ) (f : Fin d → ℚ) (e : ℚ) (x : Fin d → ℤ) (E : ℕ)
-    (h : ellRI (clearQ (callOf cfg H g ℓq r P f e)) = some x) (hR : (cfg.par.Rint : ℤ) ≤ 2 ^ E) (j : Fin d) :
-    |x j| ≤ 2 ^ (ellExp (clearQ (callOf cfg H g ℓq r P f e)) + E) := by
-  have hb := ellRI_box _ x h
-  have hR' : (clearQ (callOf cfg H g ℓq r P f e)).R = ((cfg.par.Rint : ℕ) : ℚ) := rfl
-  rw [hR', Rat.num_natCast, Rat.den_natCast] at hb
-  have h1 := num_le_of_box x 1 (cfg.par.Rint : ℤ) _ one_pos (by positivity) (by simpa using hb) j
-  rw [pow_add]
-  have h2 : (0 : ℤ) ≤ 2 ^ ellExp (clearQ (callOf cfg H g ℓq r P f e)) := by positivity
-  calc |x j| = |x j| * 1 := (mul_one _).symm
-    _ ≤ _ := h1
-    _ ≤ _ := mul_le_mul_of_nonneg_left hR h2
 
 /-! ## R12 and R13 on the machine's integers -/
 

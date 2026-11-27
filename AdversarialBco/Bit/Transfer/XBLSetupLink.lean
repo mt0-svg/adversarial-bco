@@ -402,121 +402,10 @@ theorem rnd_eq_qn (k : ℕ) (x : ℚ) : rnd k x = (qn k (rnd k x) : ℚ) / 2 ^ k
 
 theorem up_eq_qn (k : ℕ) (x : ℚ) : up k x = (qn k (up k x) : ℚ) / 2 ^ k := by rw [qn_up]; rfl
 
-theorem par_Ne (d n : ℕ) : (par d n).Ne = BLP.Ne d n := rfl
-
-theorem par_Lam (d n : ℕ) : (par d n).Lam = d * BLP.Ne d n := rfl
-
-theorem par_Rint (d n : ℕ) : (par d n).Rint = ⌈(par d n).R⌉₊ := rfl
-
-theorem par_eHat (d n : ℕ) :
-    (par d n).eHat = 1 / 2 ^ ((par d n).p - 3 * (BLP.Ne d n).size - 6 * d.size - 64) := rfl
-
-theorem par_eHat_inv (d n : ℕ) :
-    (par d n).eHat⁻¹ = 2 ^ ((par d n).p - 3 * (BLP.Ne d n).size - 6 * d.size - 64) := by
-  rw [par_eHat, one_div, inv_inv]
-
 section Par
 
 variable {d n : ℕ}
 
-theorem par_Le_eq (hd : 1 ≤ d) (hn : 1 ≤ n) : (par d n).Le = (LeN d n : ℚ) / 2 ^ (par d n).q :=
-  (LeN_div hd hn).symm
-
-theorem par_Lh (hd : 1 ≤ d) (hn : 1 ≤ n) :
-    36 * (PieceA.L0 d n + PieceA.ee d n) = (LhN d n : ℚ) / 2 ^ (par d n).q := by
-  rw [PieceA.L0, PieceA.ee, lnQ_eq _ _ (Ne_pos hd hn), LhN, L0N, EN, lnErr]
-  push_cast; field_simp
-
-theorem Le_ge_one (hd : 1 ≤ d) (hn : 1 ≤ n) : 1 ≤ (par d n).Le := by
-  have hq1 : 1 ≤ (par d n).q := by have := q_ge d n; omega
-  have hL0 := PieceA.lnQ_err (par d n).q (BLP.Ne d n) hq1 (Ne_pos hd hn)
-  have hee := PieceA.lnErr_le d n (BLP.Ne d n) hd hn le_rfl
-  have hu : PieceA.u d n ≤ 1 := by
-    unfold PieceA.u; rw [div_le_one (by positivity)]; exact one_le_pow₀ (by norm_num)
-  have hN20 : (2 : ℝ) ^ 20 ≤ (BLP.Ne d n : ℝ) := by
-    have h1 := (PieceA.NeN_ge d n hd hn).1
-    have h3 : 1 ≤ d ^ 3 := Nat.one_le_pow _ _ hd
-    have h2 : 2 ^ 20 ≤ BLP.Ne d n := le_trans (by nlinarith) h1
-    exact_mod_cast h2
-  have hlog : 20 * Real.log 2 ≤ Real.log (BLP.Ne d n) := by
-    have h20 : Real.log ((2 : ℝ) ^ 20) = 20 * Real.log 2 := by rw [Real.log_pow]; norm_num
-    linarith [Real.log_le_log (by positivity) hN20]
-  have h2 := Real.log_two_gt_d9
-  obtain ⟨hA, -⟩ := abs_le.mp hL0
-  have hLe : (((par d n).Le : ℚ) : ℝ) = 36 * (((lnQ (par d n).q (BLP.Ne d n) : ℚ) : ℝ) -
-      ((lnErr (par d n).q (BLP.Ne d n) : ℚ) : ℝ)) := by
-    rw [PieceA.par_Le, PieceA.L0, PieceA.ee]; push_cast; ring
-  have hpos : (1 : ℝ) ≤ (((par d n).Le : ℚ) : ℝ) := by
-    rw [hLe]
-    have : (PieceA.u d n) / 2 ^ 16 ≤ 1 := by linarith
-    linarith
-  exact_mod_cast hpos
-
-theorem qn_par_eps (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).eps = epsZ d n := by
-  rw [qn_eps_eq d n hn (LhN d n) (par_Lh hd hn)]; rfl
-
-theorem qn_par_lam (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).lam = lamZ d n := by
-  rw [PieceA.par_lam, par_Le_eq hd hn]
-  exact qn_lam_gen d _ _ hd (LeN d n) (LeN_pos hd hn).ne'
-
-theorem qn_par_eta (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).eta = etaZ d n := by
-  rw [PieceA.par_eta, par_Le_eq hd hn]
-  exact qn_eta_gen d n _ _ hn (LeN d n) (LeN_pos hd hn)
-
-theorem qn_par_sig (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).sig2 = sigZ d n := by
-  rw [PieceA.par_sig2, par_Le_eq hd hn]
-  exact qn_sig_gen _ _ (LeN d n) (LeN_pos hd hn)
-
-theorem qn_par_rho (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).rho = rhoZ d n := by
-  rw [PieceA.par_rho, par_Le_eq hd hn]
-  exact qn_rho_gen d _ _ (LeN d n)
-
-theorem par_lam_eq (hd : 1 ≤ d) (hn : 1 ≤ n) : (par d n).lam = (lamZ d n : ℚ) / 2 ^ (par d n).pF := by
-  rw [← qn_par_lam hd hn, PieceA.par_lam]; exact rnd_eq_qn _ _
-
-theorem par_eta_eq (hd : 1 ≤ d) (hn : 1 ≤ n) : (par d n).eta = (etaZ d n : ℚ) / 2 ^ (par d n).pF := by
-  rw [← qn_par_eta hd hn, PieceA.par_eta]; exact rnd_eq_qn _ _
-
-theorem par_sig_eq (hd : 1 ≤ d) (hn : 1 ≤ n) : (par d n).sig2 = (sigZ d n : ℚ) / 2 ^ (par d n).pF := by
-  rw [← qn_par_sig hd hn, PieceA.par_sig2]; exact rnd_eq_qn _ _
-
-theorem qn_par_kapc (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).kapc = kapZ d n := by
-  rw [PieceA.par_kapc, par_eta_eq hd hn, par_lam_eq hd hn]
-  exact qn_kapc_gen _ (etaZ d n) (lamZ d n)
-
-/-- `λ' < 1`: `qn pF λ' < 2^pF`. -/
-theorem lamZ_lt (hd : 1 ≤ d) (hn : 1 ≤ n) : lamZ d n < 2 ^ (par d n).pF := by
-  have hL := Le_ge_one hd hn
-  have hd' : (1 : ℚ) ≤ d := by exact_mod_cast hd
-  have hP : (1 : ℚ) ≤ 2 ^ (par d n).pF := one_le_pow₀ (by norm_num)
-  have h1 : (1 : ℚ) ≤ d * (par d n).Le ^ 2 := one_le_mul_of_one_le_of_one_le hd' (one_le_pow₀ hL)
-  have hx : 1 / (725 * (d : ℚ) * (par d n).Le ^ 2) ≤ 1 / 725 :=
-    one_div_le_one_div_of_le (by norm_num) (by nlinarith)
-  have hx2 := mul_le_mul_of_nonneg_right hx (by positivity : (0 : ℚ) ≤ 2 ^ (par d n).pF)
-  rw [← qn_par_lam hd hn, PieceA.par_lam, qn_rnd, Int.floor_lt]
-  push_cast
-  linarith
-
-theorem qn_par_nu (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).nu = nuZ d n := by
-  rw [PieceA.par_nu, par_lam_eq hd hn]
-  exact qn_nu_gen _ (lamZ d n) (lamZ_lt hd hn)
-
-theorem qn_par_A0 (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).p (par d n).A0 = A0Z d n := by
-  rw [PieceA.par_A0, par_sig_eq hd hn]
-  exact qn_A0_gen _ _ _ (sigZ d n)
-
-
-theorem l1Q_eq : PieceA.l1Q d n = ((L1N d n + E1N d n : ℤ) : ℚ) / 2 ^ (par d n).q := by
-  rw [PieceA.l1Q, lnQ_eq _ _ (by omega : 1 ≤ 2 * d + 2), L1N, E1N, lnErr]
-  push_cast; field_simp
-
-theorem qn_par_R : qn (par d n).pF (par d n).R = RZ d n := by
-  rw [PieceA.par_R, l1Q_eq]
-  unfold RZ RSZ PFZ QZ
-  exact qn_R_gen d _ _ _
-
-theorem par_R_eq : (par d n).R = (RZ d n : ℚ) / 2 ^ (par d n).pF := by
-  rw [← qn_par_R, PieceA.par_R]; exact up_eq_qn _ _
 
 theorem RI_nonneg (d : ℕ) (T : ℤ) (pF q : ℕ) :
     0 ≤ RI d ((Nat.sqrt T.toNat : ℤ) + 1) (2 ^ pF) (2 ^ q) := by
@@ -526,27 +415,6 @@ theorem RI_nonneg (d : ℕ) (T : ℤ) (pF q : ℕ) :
   have h2 : 0 ≤ 134 * (d : ℤ) * ((Nat.sqrt T.toNat : ℤ) + 1) * 2 ^ pF := by positivity
   exact Int.ediv_nonneg (by linarith) (by linarith)
 
-theorem RZ_nonneg : 0 ≤ RZ d n := RI_nonneg d _ _ _
-
-theorem qn_par_sb : qn (par d n).pF (par d n).sb = sbZ d n := by
-  rw [PieceA.par_sb, par_R_eq]
-  unfold sbZ PFZ
-  exact qn_sb_gen _ _ _ RZ_nonneg
-
-theorem qn_par_W (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).pF (par d n).W = WZ d n := by
-  rw [PieceA.par_W, par_R_eq, par_Le_eq hd hn]
-  unfold WZ SWZ PFZ QZ
-  exact qn_W_gen d _ _ _ (RZ d n) (LeN d n) (LeN_pos hd hn)
-
-theorem qn_par_B0 (hd : 1 ≤ d) (hn : 1 ≤ n) : qn (par d n).p (par d n).B0 = B0Z d n := by
-  rw [PieceA.par_B0, par_sig_eq hd hn]
-  unfold B0Z S1Z PZ QZ PFZ
-  exact qn_B0_gen _ _ _ (sigZ d n)
-
-theorem Rint_eq : ((par d n).Rint : ℤ) = RintZ d n := by
-  rw [par_Rint, par_R_eq]
-  unfold RintZ rintI PFZ
-  exact rint_gen _ _ RZ_nonneg
 end Par
 
 end AdversarialBco.Bit.Transfer.BLM

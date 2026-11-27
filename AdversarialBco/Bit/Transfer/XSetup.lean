@@ -15,9 +15,8 @@ public import AdversarialBco.Bit.Transfer.XDriver
 `xsetup L dv`, a command of the extended language, run from the zero state: `rS x := x`; `rZ := NS`; the natural
 variable `dv` reads `d` from the input cell `0` (through the scalar `0`, by `rdIn` and `rtoN`); `rSZ := d² + d` (by
 `nmul`, `nadd`); `rA a := NS + 1 + a (d² + d)`. `xsetup_exec`: it runs within `NS + 2 NA + 7` units to a state that
-represents `envSetup dv d` (natural variable `dv` and scalar `0` hold `d`, everything else `0`). This is the setup the
-driver `prog_okR` (XDrvReach.lean) asks for; the other inputs (`n`, `m`, the entries of `A` and `b`) are read later by
-`XV.rdIn` at addresses computed with `XV.nmul`, `XV.nadd`.
+represents `envSetup dv d` (natural variable `dv` and scalar `0` hold `d`, everything else `0`). The other inputs
+(`n`, `m`, the entries of `A` and `b`) are read later by `XV.rdIn` at addresses computed with `XV.nmul`, `XV.nadd`.
 -/
 
 namespace AdversarialBco.Bit.Transfer
@@ -240,5 +239,19 @@ theorem xsetup_exec (hL : LayOK L d ℓa) {dv : ℕ} (hdv : dv < L.NN) (hNS : 1 
   · rw [d₉]; show s₁.draws = 0; rw [d₁]; rfl
   · rw [r₉]; show s₁.rounds = 0; rw [r₁]; rfl
   · rw [p₉]; show s₁.pts = _; rw [p₁]; rfl
+
+/-- The setup hypothesis for `xsetup` followed by a routine `init` proved with `XRunsB` from `envSetup dv d`: in a
+given world `w`, on the input `d, n, m, A, b`. -/
+theorem setup_ok (hL : LayOK L d ℓa) {dv : ℕ} (hdv : dv < L.NN) (hNS : 1 ≤ L.NS) (hNA : 1 ≤ L.NA)
+    (hdl : (d : ℝ) < 2 ^ ℓ) {n m : ℕ} {A : Matrix (Fin m) (Fin d) ℚ} {b : Fin m → ℚ} {init : XCmd} {Ki : ℕ}
+    {Inv : Env d → Prop} (hinit : ∀ w : BitRAM.World d, XRunsB L (ctxOf w n m A b) ℓa ℓ init (envSetup dv d) Ki Inv)
+    (w : BitRAM.World d) :
+    ∃ k s1 σ1, k ≤ L.NS + 2 * L.NA + 7 + Ki ∧ XExecB (ctxOf w n m A b) ℓa ℓ (.seq (xsetup L dv) init) zeroState k s1 ∧
+      Rep L σ1 s1 ∧ Inv σ1 := by
+  have hX0 : (ctxOf w n m A b).inp 0 = d := (BitRAM.Conj1BitSanity.inputMem_small (n := n) A b).1
+  have hoff : 1 ≤ (ctxOf w n m A b).off := by show 1 ≤ offOf d m; unfold offOf; omega
+  obtain ⟨s₁, e₁, r₁⟩ := xsetup_exec (X := ctxOf w n m A b) hL hdv hNS hNA hX0 hoff hdl
+  obtain ⟨k, s₂, σ₂, hk, e₂, r₂, q₂⟩ := hinit w s₁ r₁
+  exact ⟨_, s₂, σ₂, by omega, XExecB.seq e₁ e₂, r₂, q₂⟩
 
 end AdversarialBco.Bit.Transfer

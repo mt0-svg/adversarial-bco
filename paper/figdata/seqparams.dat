@@ -1,0 +1,13 @@
+# Figure U2 (b): central cuts (Lemma cc, exact) from B(0, R) until the centre lies in Q: (i) Q = B(z, r) with c = a_k - z (files without suffix); (ii) Q = the rectangle of slab.dat with the normal of its most violated side (suffix _slab)
+name value
+d 2
+R 1
+r 0.015625
+z 0.37 -0.21
+slab_normal_deg 20
+slab_halfwidths 0.015625 0.45
+cuts_ball 5
+cuts_slab 7
+cut_bound 4.990659700032e1
+cut_bound_exact_ratio 3.179281671934e1
+floor -1.663553233344e1

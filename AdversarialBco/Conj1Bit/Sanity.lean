@@ -15,8 +15,8 @@ public import Mathlib.Probability.Distributions.Bernoulli
 /-!
 # Sanity checks of the statement `TheoremConj1UpperBit` (StatementConj1Bit.lean, StatementBitRAM.lean)
 
-The theorems stated in the sanity block of the challenge (ChallengeConj1Bit.lean) are proved here under the same
-names.
+The witnesses stated in the challenge ChallengeConj1BitHP.lean (the hypotheses of `TheoremConj1UpperBitHP` are those of
+`TheoremConj1UpperBit`) are proved here under the same names.
 
 * The coins: `coinLaw` is a probability measure (`isProbabilityMeasure_coinLaw`), and so is the stream
   (`isProbabilityMeasure_coinStream`), so `Measure.infinitePi` is the true product and does not take its junk value
@@ -49,6 +49,9 @@ namespace AdversarialBco.BitRAM.Conj1BitSanity
 open RealRAM (Strategy Strats lossAd obsAd polytope HeightLE)
 
 /-! ## The coins -/
+
+theorem coinLaw_singleton (c : Bool) : coinLaw {c} = 2⁻¹ := by
+  cases c <;> simp [coinLaw]
 
 instance isProbabilityMeasure_coinLaw : IsProbabilityMeasure coinLaw := by
   constructor
@@ -265,7 +268,24 @@ theorem runBit_eq_run (P : List Instr) (σ : Strategy d) (cs : ℕ → Bool) (s0
 
 /-! ## The space clause -/
 
+theorem len_le_self (k : ℕ) : len k ≤ k := by
+  unfold len
+  rw [Int.natAbs_natCast]
+  exact Nat.size_le.2 Nat.lt_two_pow_self
+
 theorem len_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : len a ≤ len b := Nat.size_le_size h
+
+theorem len_mul_log_le (k : ℕ) (hk : 1 ≤ k) : (len k : ℝ) * Real.log 2 ≤ Real.log (2 * k) := by
+  unfold len
+  rw [Int.natAbs_natCast]
+  have h1 : 0 < k.size := Nat.size_pos.2 hk
+  have h2 : 2 ^ (k.size - 1) ≤ k := Nat.lt_size.1 (by omega)
+  have h3 : 2 ^ k.size ≤ 2 * k := by
+    calc 2 ^ k.size = 2 * 2 ^ (k.size - 1) := by rw [← pow_succ']; congr 1; omega
+      _ ≤ 2 * k := by omega
+  have h3' : (2 : ℝ) ^ k.size ≤ 2 * k := by exact_mod_cast h3
+  rw [← Real.log_pow]
+  exact Real.log_le_log (by positivity) h3'
 
 /-- The entries of the input are bounded by the height. -/
 theorem entry_height {m M : ℕ} {A : Matrix (Fin m) (Fin d) ℚ} {b : Fin m → ℚ} (hH : HeightLE A b M)

@@ -19,6 +19,8 @@ public import AdversarialBco.Poly.Df2AzumaProof
 public import AdversarialBco.Poly.Df2OracleProof
 public import AdversarialBco.Poly.Df2PropGProof
 public import AdversarialBco.Poly.Df2ApMeasProof
+public import AdversarialBco.Poly.MachDf2Caps
+public import AdversarialBco.Conj1Arith.ProcStage
 
 @[expose] public section
 

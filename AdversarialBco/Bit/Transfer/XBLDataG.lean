@@ -6,7 +6,7 @@ Authors: mt0-svg
 module
 
 public import AdversarialBco.Bit.Transfer.XBLRowS
-public import AdversarialBco.Bit.Transfer.XBLData
+public import AdversarialBco.Bit.Transfer.XBLCall
 
 @[expose] public section
 

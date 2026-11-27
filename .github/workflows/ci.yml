@@ -4,11 +4,11 @@ name: CI
 # code/formal-proof/clean_build.sh in dependency order, the heavy modules a few at a time (its header lists its
 # settings). The package's .lake/build is restored first, from the actions cache (the last build on this toolchain and
 # manifest), else from the Lake build archive of the latest release, so only the modules that changed and those that
-# import them are compiled; Comparator replays the theorems of each of its three configurations (config-*.json, one job
+# import them are compiled; Comparator replays the theorems of each of its six configurations (config-*.json, one job
 # each) and every declaration they depend on, in the kernel the
 # configuration names (nanoda alone with lean_kernel false, the Lean kernel with enable_nanoda false), whatever was
-# restored. Then the checks: every target up to date, the axioms of the theorems of the three configurations, a scan
-# of the sources, Comparator and the negative controls of config-conj1-bit.json
+# restored. Then the checks: every target up to date, the axioms of the theorems of the six configurations, a scan
+# of the sources, Comparator and the negative controls of config-unified.json
 # (.github/comparator-controls.tsv, when present).
 # The build runs as a chain of up to five jobs. Each one continues the build of the previous one (handed over
 # as the artifact lake-build) for at most 300 minutes, under the 6 hour limit of a job, and the chain stops at
@@ -369,7 +369,7 @@ jobs:
           printf 'axioms\tlake env lean code/formal-proof/main_axioms.lean\t%s theorems\t%s\tlean/axioms.txt\n' \
             "$(grep -c 'depends on axioms' axioms.txt)" "$r" > verify/results/axioms.tsv
           [ "$r" = PASS ]
-      # For the badges: the hypotheses of the theorem of config-conj1-bit.json and its axioms.
+      # For the badges: the hypotheses of the theorem of config-unified.json and its axioms.
       - name: code/formal-proof/facts.lean
         id: facts
         shell: bash
@@ -393,8 +393,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { config: config-conj1-bit.json, out: comparator-conj1-bit }
-          - { config: config-conj1-bit-exp.json, out: comparator-conj1-bit-exp }
+          - { config: config-unified.json, out: comparator-unified }
+          - { config: config-unified-lower.json, out: comparator-unified-lower }
+          - { config: config-match.json, out: comparator-match }
+          - { config: config-conj1-bit-hp.json, out: comparator-conj1-bit-hp }
+          - { config: config-conj1.json, out: comparator-conj1 }
           - { config: config-conj1-lower-poly.json, out: comparator-conj1-lower-poly }
     env:
       CONFIG: ${{ matrix.config }}
@@ -518,12 +521,12 @@ jobs:
           echo "retry=$retry" >> "$GITHUB_OUTPUT"
           exit "$rc"
 
-      # The negative controls of .github/comparator-controls.tsv, when the repository has one, after a pass on config-conj1-bit.json: each
+      # The negative controls of .github/comparator-controls.tsv, when the repository has one, after a pass on config-unified.json: each
       # changes one line of the challenge in place, and Comparator must reject it with the expected message (at the
       # comparison, before any kernel); the file is restored after each control.
       - name: Negative controls
         id: controls
-        if: steps.run.outcome == 'success' && matrix.config == 'config-conj1-bit.json' && hashFiles('.github/comparator-controls.tsv') != ''
+        if: steps.run.outcome == 'success' && matrix.config == 'config-unified.json' && hashFiles('.github/comparator-controls.tsv') != ''
         shell: bash
         env:
           COMPARATOR_LANDRUN: ${{ github.workspace }}/.ci/landrun/landrun
@@ -542,8 +545,8 @@ jobs:
             if [ "$n" = 1 ]; then
               cp "$file" "$RUNNER_TEMP/original"
               awk -v o="$old" -v n="$new" '$0 == o { print n; next } { print }' "$RUNNER_TEMP/original" > "$file"
-              rm -rf ".lake/build/lib/lean/$ROOT/ChallengeConj1Bit" .lake/build/lib/lean/"$ROOT"/ChallengeConj1Bit.* \
-                ".lake/build/ir/$ROOT/ChallengeConj1Bit" .lake/build/ir/"$ROOT"/ChallengeConj1Bit.*
+              rm -rf ".lake/build/lib/lean/$ROOT/ChallengeUnified" .lake/build/lib/lean/"$ROOT"/ChallengeUnified.* \
+                ".lake/build/ir/$ROOT/ChallengeUnified" .lake/build/ir/"$ROOT"/ChallengeUnified.*
               { echo "control $name: in $file only, the line"; echo "  $old"; echo "is changed to"; echo "  $new"
                 echo "lines that differ from the original: $(diff "$RUNNER_TEMP/original" "$file" | grep -c '^>')"
               } > "$log"
@@ -554,7 +557,7 @@ jobs:
                 -E COMPARATOR_LEAN4EXPORT="$COMPARATOR_LEAN4EXPORT" \
                 -E COMPARATOR_NANODA="$COMPARATOR_NANODA" \
                 --working-directory "$PWD" -- \
-                bash -c 'lake env .ci/comparator/.lake/build/bin/comparator config-conj1-bit.json' \
+                bash -c 'lake env .ci/comparator/.lake/build/bin/comparator config-unified.json' \
                 2>&1 | tee -a "$log" || rc=$?
               cp "$RUNNER_TEMP/original" "$file"
               if [ "$rc" != 0 ] && tr -d '\r' < "$log" | grep -qF -- "$expect"; then r=PASS; else r=FAIL; fi
@@ -562,7 +565,7 @@ jobs:
               echo "control $name: the line to change is found $n times in $file" > "$log"; r=FAIL
             fi
             echo "control $name: $r (exit $rc, expected a rejection with: $expect)" | tee -a "$log"
-            printf 'comparator-%s\tcomparator config-conj1-bit.json, %s changed in one line (negative control)\t%s s\t%s\t%s\n' \
+            printf 'comparator-%s\tcomparator config-unified.json, %s changed in one line (negative control)\t%s s\t%s\t%s\n' \
               "$name" "$file" "$(($(date +%s) - s0))" "$r" "lean/comparator-$name.txt" >> controls.tsv
             [ "$r" = PASS ] || fail=1
           done < .github/comparator-controls.tsv
@@ -631,7 +634,7 @@ jobs:
             badge lean "Lean Proved" failed red "$logo"
           fi
           if [ "$(result comparator)" = success ]; then
-            k=$(jq -r '[.enable_nanoda // false, .lean_kernel != false] | map(tostring) | join(" ")' config-conj1-bit.json)
+            k=$(jq -r '[.enable_nanoda // false, .lean_kernel != false] | map(tostring) | join(" ")' config-unified.json)
             case $k in "true true") m="statement checked · 2 kernels" ;; "true false") m="statement checked · nanoda" ;; *) m="statement checked · Lean kernel" ;; esac
             badge comparator "Lean Comparator" "$m" brightgreen
           else

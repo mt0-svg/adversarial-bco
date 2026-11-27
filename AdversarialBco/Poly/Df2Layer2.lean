@@ -69,6 +69,7 @@ open scoped Matrix
 namespace AdversarialBco.Poly
 
 open AdversarialBco.RealRAM
+open AdversarialBco.Conj1Arith (PgThmN PgMeasN clampNSRoutine)
 
 variable {d : ℕ}
 
@@ -248,6 +249,36 @@ noncomputable def df2RoundGa (p : Df2OPar) (n : ℕ) (K : Set (E d)) (Ps : PgSp 
     if x ∈ K then
       (x, df2NextAP ap p n (df2Keps K Ps p.R p.eps) st ξ w (pt * (ft x + nt + ζ) / 2 + 2 * (pt - 1) / p.eps))
     else (0, .off)
+
+/-- Definitional check: `df2Round` is `df2RoundGa` at the bisection gauge and `apCall`. -/
+theorem df2Round_eq_Ga (p : Df2OPar) (n : ℕ) (K : Set (E d)) (Ps : PgSp d) (ft : E d → ℝ) (nt : ℝ)
+    (ξ : Fin d → ℝ) (ζ : ℝ) (m : Df2Mode d) :
+    df2Round p n K Ps ft nt ξ ζ m = df2RoundGa p n K Ps (piTilde (df2Kp K Ps p.R) p.R p.j) apCall ft nt ξ ζ m := by
+  cases m <;> rfl
+
+/-! ## D0: the learner with the exact gauge, on the world -/
+
+/-- The position read off the world, `0` when PG returns none. -/
+noncomputable def df2oPs (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : PgSp d := (df2oPos d n r0 R0 δ w).getD 0
+
+/-- Round `t` of D0 from the mode `m`: `df2oRoundAt` with the exact gauge `gauge K'` of `K' = df2Kp K Ps R`. -/
+noncomputable def df2zRoundAt (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) (m : Df2Mode d) : E d × Df2Mode d :=
+  df2RoundGa (df2oPar d n δ) n w.K (df2oPs d n r0 R0 δ w)
+    (gauge (df2Kp w.K (df2oPs d n r0 R0 δ w) (df2oPar d n δ).R)) apCall (w.f t) (w.noise t)
+    (df2oXi (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs t) (df2oZeta d (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs t) m
+
+/-- The mode of D0 before round `a + s`, started in the mode `m` before round `a`. -/
+noncomputable def df2zFrom (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (a : ℕ) (m : Df2Mode d) : ℕ → Df2Mode d
+  | 0 => m
+  | s + 1 => (df2zRoundAt d n r0 R0 δ w (a + s) (df2zFrom d n r0 R0 δ w a m s)).2
+
+/-- The mode of D0 before round `t`. -/
+noncomputable def df2zMode (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) : Df2Mode d :=
+  df2zFrom d n r0 R0 δ w 0 (df2oMode0 d n r0 R0 δ w) t
+
+/-- The point played by D0 in round `t`. -/
+noncomputable def df2zPlay (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) : E d :=
+  (df2zRoundAt d n r0 R0 δ w t (df2zMode d n r0 R0 δ w t)).1
 
 /-! ## One epoch on a path (setting (E), pathwise) -/
 
@@ -556,7 +587,23 @@ def Df2LayerOne : Prop :=
   LemmaDFI ∧ LemmaMON ∧ PropINC2 ∧ LemmaD2 ∧ LemmaONS2Core ∧ LemmaZCore ∧ Df2RowZ ∧ PlayShift ∧ LemmaUBPrime ∧
     PlayHess ∧ Df2Trivial ∧ Df2Carriers ∧ LemmaR1i ∧ LemmaR1ii ∧ LemmaR1iii ∧ LemmaR1iv ∧ LemmaR1v
 
-/-! ## Setting (E) and the measurability of a round -/
+/-- DET, one epoch on every path. The
+losses are any admissible functions on the body, the routine is any `ap` with `ApSpec`, the five events are
+hypotheses; the conclusion is (a) and (b5'). The proof is the induction on the rounds: the closure,
+the monotonicity lemma, the region proposition, the online Newton step lemma with the defects, the dichotomy lemma, the
+restart-wrapper lemma, the inner-ball lemma, the lemma of the centre of the test. -/
+def Df2Det : Prop :=
+  ∀ (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ApFun d) (π : Df2Path d) (m : ℕ),
+    1 ≤ d → 1 ≤ n → 0 < δ → δ < 1 → (df2oPar d n δ).eps ≤ 1 / 2 → 1 ≤ m → m ≤ n →
+    Df2Body d (df2oPar d n δ).R Kt → ApSpec ap → (∀ s < m, AdmLoss Kt (π.g s)) →
+    (df2CtxAt d n δ Kt ap).EvG π m → (df2CtxAt d n δ Kt ap).EvY π m → (df2CtxAt d n δ Kt ap).EvLQ π m →
+    (df2CtxAt d n δ Kt ap).EvSDF π m → (df2CtxAt d n δ Kt ap).EvDQ π m →
+    (df2CtxAt d n δ Kt ap).EpochOK π m
+
+/-- DET from its inputs. -/
+def Df2DetOf : Prop := Df2LayerOne → LemmaW → Df2SIFacts → Df2RowsHold → Df2Det
+
+/-! ## Setting (E) -/
 
 /-- The fields of a state, as a point of a product of Borel spaces. -/
 def Df2St.code (st : Df2St d) :
@@ -621,5 +668,63 @@ def LemmaNZProd : Prop :=
     Integrable h ν →
     (γ.prod ν)[fun ω => h ω.2 | MeasurableSpace.comap Prod.fst mX ⊔ MeasurableSpace.comap Prod.snd m] =ᵐ[γ.prod ν]
       fun ω => (ν[h | m]) ω.2
+
+/-! ## The run of D0 on the world -/
+
+/-- The world of the frozen statement at `ω = (gs, noise)`. -/
+def df2World (K : Set (E d)) (f : ℕ → E d → ℝ) (ω : (ℕ → ℝ) × (ℕ → ℝ)) : World d := ⟨K, f, ω.2, ω.1⟩
+
+/-- The case of the analysis: PG returned a position of `G_pos` (`PgGood` at the radius `R` of the learner) and
+`ε ≤ 1/2`. -/
+def Df2Case (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : Prop :=
+  PgGood d w.K (df2oPar d n δ).R (df2oPos d n r0 R0 δ w) ∧ (df2oPar d n δ).eps ≤ 1 / 2
+
+/-- The context of the epochs of D0 on the world. -/
+noncomputable def df2zCtx (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : Df2Ctx d :=
+  df2CtxAt d n δ (df2Kp w.K (df2oPs d n r0 R0 δ w) (df2oPar d n δ).R) apCall
+
+/-- The path of the virtual epoch of D0 started before round `a`: the losses
+`g_s(y) = f_{a+s}(S⁻¹ y)/2`, the noise `(ε_{a+s} + ζ_{a+s})/2`, the draws `ξ_{a+s}`. It is read at the rounds
+`s < n - a` only. -/
+noncomputable def df2zPath (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (a : ℕ) : Df2Path d :=
+  ⟨fun s y => w.f (a + s) (pgMu (df2oPs d n r0 R0 δ w) + pgOp (df2oPs d n r0 R0 δ w) y) / 2,
+    fun s => (w.noise (a + s) + df2oZeta d (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs (a + s)) / 2,
+    fun s => df2oXi (df2oN0 d r0 R0 (df2oPar d n δ).δ1) w.gs (a + s)⟩
+
+/-- The mean of the loss of round `t` of D0 given the past: the integral over the draw of round `t` of the loss at
+the point played from the mode before round `t` (the point does not read the loss, the noise or the dither). -/
+noncomputable def df2zMean (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) (t : ℕ) : ℝ :=
+  ∫ z, w.f t (df2RoundGa (df2oPar d n δ) n w.K (df2oPs d n r0 R0 δ w)
+      (gauge (df2Kp w.K (df2oPs d n r0 R0 δ w) (df2oPar d n δ).R)) apCall (w.f t) 0 z 0 (df2zMode d n r0 R0 δ w t)).1
+    ∂(Measure.pi fun _ : Fin d => gaussianReal 0 1)
+
+/-- The Azuma event of the run of D0. -/
+def Df2AzPath (d n : ℕ) (r0 R0 δ : ℝ) (w : World d) : Prop :=
+  ∑ t ∈ Finset.range n, w.f t (df2zPlay d n r0 R0 δ w t) ≤
+    ∑ t ∈ Finset.range n, df2zMean d n r0 R0 δ w t + Real.sqrt (2 * n * Real.log (7 / (df2oPar d n δ).δe))
+
+/-- The quantifier block of the world statements: the hypotheses of `TheoremConj1Upper` on the dimension, the horizon,
+the radii, the confidence and the body, and an admissible sequence of losses `f ∈ Advs K n`. -/
+def Df2WorldHyp (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ) : Prop :=
+  1 ≤ d ∧ 1 ≤ n ∧ 0 < r0 ∧ r0 ≤ R0 ∧ 0 < δ ∧ δ < 1 ∧ IsCompact K ∧ Convex ℝ K ∧ Metric.closedBall 0 r0 ⊆ K ∧
+    K ⊆ Metric.closedBall 0 R0 ∧ f ∈ Advs K n
+
+/-- The measurability (L1) of the round map of DF2-O after the observation, jointly in the position. -/
+def Df2ApCallMeas : Prop :=
+  ∀ (d n : ℕ) (δ : ℝ) (K : Set (E d)), 1 ≤ d → IsClosed K → Convex ℝ K →
+    Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
+      df2NextAP apCall (df2oPar d n δ) n (df2KepsOf (df2Kp K x.1 (df2oPar d n δ).R) (df2oPar d n δ).eps) x.2.1 x.2.2.1
+        (x.2.1.A *ᵥ x.2.2.1) x.2.2.2
+
+/-- The one-run lemma with the regret, on every world: in the
+case of the analysis, if every virtual epoch of D0 meets (a) and (b5') and the Azuma event holds, the regret of D0
+is at most `2 ρ/η + n ε + (2 n log(7/δ_e))^{1/2}` (the factor 2 is that of the losses `f/2`). -/
+def Df2WorldDet : Prop :=
+  ∀ (d n : ℕ) (r0 R0 δ : ℝ) (K : Set (E d)) (f : ℕ → E d → ℝ), Df2WorldHyp d n r0 R0 δ K f →
+    ∀ w : World d, w.K = K → w.f = f → Df2Case d n r0 R0 δ w →
+      (∀ a < n, (df2zCtx d n r0 R0 δ w).EpochOK (df2zPath d n r0 R0 δ w a) (n - a)) → Df2AzPath d n r0 R0 δ w →
+      regretPts K f (df2zPlay d n r0 R0 δ w) n ≤
+        2 * ((df2oPar d n δ).rho / (df2oPar d n δ).eta) + n * (df2oPar d n δ).eps +
+          Real.sqrt (2 * n * Real.log (7 / (df2oPar d n δ).δe))
 
 end AdversarialBco.Poly

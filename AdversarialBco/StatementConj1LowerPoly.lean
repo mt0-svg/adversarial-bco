@@ -44,8 +44,8 @@ learner, so a learner that knows it is covered.
 Why one polytope and not every polytope of the class: "no algorithm can achieve a better regret bound" denies an upper
 bound over the class, so it says that for every algorithm the worst case of `E R_T` over the instances of the class
 (bodies and adversaries) is at least of order `n^{1.5} T^{1/2}` up to logarithms; one polytope of the class on which
-every learner meets such an adversary is that worst case. The upper statements (`TheoremConj1UpperBit`,
-`TheoremConj1UpperBitExp`) quantify over every polytope of the class because an upper bound must hold on every instance;
+every learner meets such an adversary is that worst case. The upper statements (`TheoremConj1UpperBitHP`,
+`TheoremConj1UpperBit`) quantify over every polytope of the class because an upper bound must hold on every instance;
 a lower bound needs one.
 
 The class conditions are those of the upper statements, in the same forms: `HeightLE A b 1` is BEL's height bound with

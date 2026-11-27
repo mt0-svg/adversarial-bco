@@ -1,0 +1,24 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeMatch",
+  "solution_module": "AdversarialBco.UnifiedMatch.Main",
+  "theorem_names": [
+    "AdversarialBco.corollaryMatch",
+    "AdversarialBco.Unified.UnifiedSanity.weakMemOracle_exact",
+    "AdversarialBco.Unified.UnifiedSanity.histσ_le",
+    "AdversarialBco.Unified.UnifiedSanity.hyps_satisfiable",
+    "AdversarialBco.Unified.UnifiedSanity.noisyAdv_signNoise",
+    "AdversarialBco.Unified.UnifiedSanity.nil_not_costOKO",
+    "AdversarialBco.UnifiedLower.LowerSanity.lowerU_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.lowerU_zero",
+    "AdversarialBco.UnifiedLower.LowerSanity.progU_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.nil_not_machineOK",
+    "AdversarialBco.UnifiedLower.LowerSanity.progU_zero",
+    "AdversarialBco.UnifiedLower.LowerSanity.bodyU_of_unified",
+    "AdversarialBco.UnifiedLower.LowerSanity.theoremConj1Lower_of_lowerU",
+    "AdversarialBco.UnifiedLower.LowerSanity.corollaryMatch_of_unified_lower",
+    "AdversarialBco.UnifiedLower.LowerSanity.theoremUnified_of_corollaryMatch"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

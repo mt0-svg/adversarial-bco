@@ -1,0 +1,11 @@
+# Figure U2 (a): one central cut of Lemma cc at d = 2, exact (no rounding)
+name value
+A 0.9 0.3 0.3 0.4
+a 0.15 -0.1
+c 0.8 0.6
+Aprime 4.857142857143e-1 1.904761904762e-2 1.904761904762e-2 3.301587301587e-1
+aprime -1.488071523336e-1 -2.593638145779e-1
+det_ratio 5.925925925926e-1
+det_ratio_formula 5.925925925926e-1
+exp_bound 7.165313105738e-1
+area_ratio 7.698003589195e-1

@@ -1,0 +1,21 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeUnifiedLower",
+  "solution_module": "AdversarialBco.UnifiedLower.Main",
+  "theorem_names": [
+    "AdversarialBco.theoremLowerU",
+    "AdversarialBco.theoremLowerUProg",
+    "AdversarialBco.theoremLowerU_cube",
+    "AdversarialBco.UnifiedLower.LowerSanity.lowerU_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.lowerU_zero",
+    "AdversarialBco.UnifiedLower.LowerSanity.progU_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.nil_not_machineOK",
+    "AdversarialBco.UnifiedLower.LowerSanity.progU_zero",
+    "AdversarialBco.UnifiedLower.LowerSanity.bodyU_of_unified",
+    "AdversarialBco.UnifiedLower.LowerSanity.theoremConj1Lower_of_lowerU",
+    "AdversarialBco.UnifiedLower.LowerSanity.corollaryMatch_of_unified_lower",
+    "AdversarialBco.UnifiedLower.LowerSanity.theoremUnified_of_corollaryMatch"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

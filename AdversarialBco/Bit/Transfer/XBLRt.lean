@@ -120,37 +120,6 @@ theorem AdversarialBco.Bit.Transfer.BLM.dot_self_le {d : ℕ} (x : Fin d → ℤ
       _ = (2 : ℤ) ^ (2 * E + d) := by rw [add_comm]
   exact And.intro h_lower h_upper
 
-/-- A point `x / 2^X` in the box of radius `N/D` (`(x·x) D² ≤ 2^(2X) N²`) has every coordinate `|x_j| D ≤ 2^X N`. -/
-theorem AdversarialBco.Bit.Transfer.BLM.num_le_of_box {d : ℕ} (x : Fin d → ℤ) (D N : ℤ) (X : ℕ) (hD : 0 < D)
-    (hN : 0 ≤ N) (h : (x ⬝ᵥ x) * D ^ 2 ≤ 2 ^ (2 * X) * N ^ 2) (j : Fin d) : |x j| * D ≤ 2 ^ X * N := by
-  have hD_sq_nonneg : 0 ≤ D ^ 2 := by nlinarith
-  have h_two_pow_nonneg : 0 ≤ (2 : ℤ) ^ X := by
-    apply pow_nonneg (by norm_num) X
-  have h_rhs_nonneg : 0 ≤ 2 ^ X * N := by
-    nlinarith
-  have h_single_le : (x j) ^ 2 ≤ x ⬝ᵥ x := by
-    -- x ⬝ᵥ x is definitionally ∑ i, x i * x i
-    simpa [sq, dotProduct] using Finset.single_le_sum (fun i _ => mul_self_nonneg (x i)) (Finset.mem_univ j)
-  have h_mul : (x j) ^ 2 * D ^ 2 ≤ (x ⬝ᵥ x) * D ^ 2 := by
-    nlinarith
-  have h_sq : (x j) ^ 2 * D ^ 2 ≤ (2 : ℤ) ^ (2 * X) * N ^ 2 := by
-    nlinarith
-  have h_sq' : (|x j| * D) ^ 2 ≤ (2 ^ X * N) ^ 2 := by
-    calc
-      (|x j| * D) ^ 2 = (|x j|) ^ 2 * D ^ 2 := by ring
-      _ = (x j) ^ 2 * D ^ 2 := by simp [sq_abs]
-      _ ≤ (2 : ℤ) ^ (2 * X) * N ^ 2 := h_sq
-      _ = ((2 : ℤ) ^ X) ^ 2 * N ^ 2 := by
-        have h_pow : (2 : ℤ) ^ (2 * X) = ((2 : ℤ) ^ X) ^ 2 := by
-          simpa [mul_comm] using pow_mul (2 : ℤ) X 2
-        rw [h_pow]
-      _ = (2 ^ X * N) ^ 2 := by ring
-  have h_abs_nonneg : 0 ≤ |x j| * D := by
-    have h_abs : 0 ≤ |x j| := abs_nonneg _
-    nlinarith
-  rcases abs_le_of_sq_le_sq' h_sq' h_rhs_nonneg with ⟨_, hle⟩
-  exact hle
-
 /-- The numerator of `rnd_p (u/v)`, `(2 u Q + v)/(2 v)`, is at most `2^(a + b + 1)` in absolute value for `|u| ≤ 2^a`,
 `0 ≤ Q ≤ 2^b`, `v ≥ 1`. -/
 theorem AdversarialBco.Bit.Transfer.BLM.rndZ_abs_pow (u v Q : ℤ) (a b : ℕ) (hv : 1 ≤ v) (hQ : 0 ≤ Q)

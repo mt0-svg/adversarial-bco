@@ -332,14 +332,6 @@ noncomputable def blRun (R : Routines) (d n m : ℕ) (A : Matrix (Fin m) (Fin d)
   bits := Ebits R d n ∩ Zn n
   Coup := coupMax
 
-/-- The instance of `BLInst`: the program `P`, the prologue length and block length of BL at `(d, n)`, the record. -/
-noncomputable def blInst (P : List Instr) (R : Routines) : BLInst where
-  P := P
-  K0 := R.K0
-  B d n := (par d n).B
-  B_pos d n := by unfold par; simp only; omega
-  run := blRun R
-
 
 /-! ## Piece A: the constants and the precision theorem
 
@@ -560,22 +552,6 @@ structure BudOK (d n : ℕ) : Prop where
 
 end Bud
 
-/-- Piece A: the enclosure lemma and the precision theorem at every `(d, n)` of the case `RunCase`. -/
-def BudA : Prop := ∀ d n : ℕ, 1 ≤ d → 1 ≤ n → RunCase d n → Bud.BudOK d n
-
-/-! ## Piece B: BL's draws -/
-
-/-- Piece B, the probability (the lemma of the draws (b)): BL's draws of the rounds `< n` are unsound with
-probability at most `2^{-p-2}` under the Gaussian stream. -/
-def BitsB : Prop :=
-  ∀ (R : Routines) (d n : ℕ), 1 ≤ d → 1 ≤ n → RunCase d n →
-    μs (Measure.dirac 0) (Ebits R d n)ᶜ ≤ ENNReal.ofReal (Bud.dbits d n)
-
-/-- Piece B, the measurability: BL's draw `ξ'_t` is a function of the draw group `ξg d t`. -/
-def MeasDrawB : Prop :=
-  ∀ (R : Routines) (d n t : ℕ),
-    Measurable[MeasurableSpace.comap (ξg d t) inferInstance] fun ω : WΩ => (drawW R d n t ω).1
-
 /-! ## Piece C: one round of BL against one round of P°'s epoch -/
 
 /-- The tracking relation (the tracking lemma) between BL's state `st` and P°'s
@@ -649,19 +625,5 @@ def RoundC : Prop :=
     (step R.ap cfg n (.run st) ξ' ζ' obs = .run (init cfg.par d) ∧ c.fire π s) ∨
       ∃ st' : St d, step R.ap cfg n (.run st) ξ' ζ' obs = .run st' ∧ c.cont π s ∧
         Track d n st' (c.st π (s + 1)) (s + 1)
-
-/-! ## The position routine: the requirement of `PosInst` -/
-
-/-- What `PosInst (blInst P R)` asks of BL's position routine (for the routine that provides `R.pos`): TRI-OGD staged
-(`triPos` of Bit/TriStage.lean) on rows of `K`, at a frame centre `c` with `B̄(c, 1/2) ⊆ K`, with an integer
-`ℓ ≥ log (m_st/δpos)` for some `δpos` with `n δpos ≤ 1/4`, reading the first `m_st L ≤ K0 d n` coins, and
-`posR R` equal to its output on every coin sequence. -/
-def PosTri (R : Routines) : Prop :=
-  ∀ (d n m M : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ), InputOK d n m M A b → RunCase d n →
-    ∃ (m' : ℕ) (α : Fin m' → E d) (β' : Fin m' → ℝ) (c : E d) (ℓ : ℕ) (δpos : ℝ),
-      polytope A b = {y | ∀ k, inner ℝ (α k) y ≤ β' k} ∧ Metric.closedBall c (1 / 2) ⊆ polytope A b ∧
-      0 < δpos ∧ (n : ℝ) * δpos ≤ 1 / 4 ∧ Real.log (triMst (1 / 2) n / δpos) ≤ ℓ ∧
-      triMst (1 / 2) n * triL d ℓ ≤ R.K0 d n ∧
-      ∀ cs : ℕ → Bool, posR R d n m A b cs = triPos α β' c (1 / 2) n ℓ cs
 
 end AdversarialBco.Bit.BLP

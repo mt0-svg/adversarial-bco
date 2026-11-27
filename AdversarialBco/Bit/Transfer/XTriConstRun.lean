@@ -12,8 +12,8 @@ public import AdversarialBco.Bit.Transfer.XTriConst
 /-!
 # TRI-M, the constants on the machine
 
-* `tcG`: the parameter of the bounds of the two straight lines of XTriConst.lean; `tsSt_sem`, `tcSt_sem`: their
-  side conditions;
+* `tcG`: the parameter of the bounds of the straight lines of XTriConst.lean; `tsSt_sem`: the side conditions of the
+  test line;
 * `xsearch`, `XV.search`: `triSQ d` by the test of the parameter lemma at `s = 4, 5, ...`, into the slot `o + 115`.
 -/
 
@@ -38,19 +38,6 @@ theorem tsSt_sem {d n s : ℕ} (hs : s ≤ triSQ d) :
   interval_cases k <;> simp only [tsSt, List.getD_cons_succ, List.getD_cons_zero, SStep.Sem, tsV_9]
   exact ⟨Nat.cast_nonneg _, by exact_mod_cast (show triLa s ≤ tcG d n by unfold tcG; omega)⟩
 
-set_option maxHeartbeats 1000000 in
-theorem tcSt_sem {d n : ℕ} (hd : 1 ≤ d) (hn : 1 ≤ n) :
-    ∀ k < tcSt.length, (tcSt.getD k (.cst 0)).Sem (tcV d n) (tcG d n) := by
-  intro k hk
-  rw [tcSt_length] at hk
-  have p : ∀ x : ℕ, x ≤ tcG d n → (0 : ℤ) ≤ x ∧ (x : ℤ) ≤ ((tcG d n : ℕ) : ℤ) :=
-    fun x h => ⟨Nat.cast_nonneg x, by exact_mod_cast h⟩
-  interval_cases k <;> simp only [tcSt, List.getD_cons_succ, List.getD_cons_zero, SStep.Sem, tcV_22, tcV_23,
-    tcV_25, tcV_30, tcV_31, tcV_34, tcV_40 d n hd, tcV_42 d n hd, tcV_46 d n hd, tcV_48 d n hd, tcV_50 d n hd,
-    tcV_52 d n hd, tcV_56, tcV_58, tcV_62 d n hd hn, tcV_63 d n hd hn, tcV_67 d n hd hn, tcV_70 d n hd hn,
-    tcV_71 d n hd hn, tcV_74 d n hd hn, tcV_77 d n hd hn, tcV_79 d n hd hn] <;>
-    first | exact Nat.cast_nonneg _ | exact p _ (by unfold tcG tzGc tzG; omega)
-
 theorem tcG_in {d n x : ℕ} (h : x ≤ tcG d n) : |(x : ℤ)| ≤ 2 ^ ev (tcG d n) (tcInP 0) := by
   rw [abs_of_nonneg (Nat.cast_nonneg x)]
   simp only [tcInP, ev, one_mul, add_zero]
@@ -62,19 +49,6 @@ theorem tsIn_bound {d n s : ℕ} (hs : s ≤ triSQ d) : ∀ y ∈ [113, 115], |t
   rcases hy with rfl | rfl
   · simp only [tsIn, ↓reduceIte]; exact tcG_in (by unfold tcG; omega)
   · simp only [tsIn, Nat.reduceEqDiff, ↓reduceIte]; exact tcG_in (by unfold tcG; omega)
-
-theorem tcIn_bound {d n : ℕ} : ∀ y ∈ [113, 114, 115], |tcIn d n y| ≤ 2 ^ ev (tcG d n) (tcInP y) := by
-  intro y hy
-  simp only [List.mem_cons, List.mem_nil_iff, or_false] at hy
-  rcases hy with rfl | rfl | rfl
-  · simp only [tcIn, ↓reduceIte]; exact tcG_in (by unfold tcG; omega)
-  · simp only [tcIn, Nat.reduceEqDiff, ↓reduceIte]
-    rw [abs_of_nonneg (Nat.cast_nonneg n)]
-    simp only [tcInP, ev, one_mul, add_zero]
-    have h1 : n < 2 ^ n.size := Nat.lt_size_self n
-    have h2 : 2 ^ n.size ≤ 2 ^ tcG d n := Nat.pow_le_pow_right (by norm_num) (by unfold tcG; omega)
-    exact_mod_cast (h1.trans_le h2).le
-  · simp only [tcIn, Nat.reduceEqDiff, ↓reduceIte]; exact tcG_in (by unfold tcG; omega)
 
 theorem tcC_ok {L : Layout} {o r : ℕ} (hS : o + 245 ≤ L.NS) (hN : r + 31 ≤ L.NN) : (SLC.atB o r tcC).OK L 40 := by
   constructor <;> simp only [SLC.atB, tcC, List.nodup_cons, List.mem_cons, List.mem_nil_iff, or_false, not_or,

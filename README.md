@@ -10,28 +10,31 @@
 
 <p align="center"><i>This is AI-generated research: the results, proofs and code were found and written by AI.<br>Credit goes to all the humans whose work it builds on.</i></p>
 
+
+
 ## The result
 
-In adversarial bandit convex optimisation a learner plays $`n`$ rounds in a convex body of $`\mathbb R^d`$ against convex losses in $`[0,1]`$, seeing only its loss. Bubeck, Eldan and Lee conjectured that on rational polytopes some learner whose rounds take time polynomial in $`d`$ and $`\ln n`$ has expected regret $`\tilde O(d^{3/2}\sqrt n)`$, and that none does better. We prove both in their game, against an adversary that sees the earlier plays. On each such polytope, given by $`m`$ rational constraints with numerators and denominators at most $`M`$ in absolute value, a program on a random access machine with logarithmic cost plays each round in a number of bit operations polynomial in $`d`$, $`m`$, $`\ln n`$ and $`\ln M`$, with expected regret at most a constant times $`d^{3/2}\sqrt n\,\ln^5(2dn)`$. On the cube, for $`d\ge4\cdot10^6`$ and $`n\ge d^{10}`$, every learner has expected regret at least $`7\cdot10^{-9}d^{3/2}\sqrt n/\ln d`$ against some adversary.
+In adversarial bandit convex optimisation a learner plays $`n`$ rounds in a convex body of $`\mathbb R^d`$ against convex losses with values in $`[0,1]`$, and observes only its loss, possibly with a noise. We give one program of a random access machine with logarithmic cost and a weak membership oracle which, on every convex body $`\mathcal K`$ given by such an oracle and by two rational balls $`B(a,r_0)\subset\mathcal K\subset B(a,R_0)`$, and for every rational confidence $`\delta`$ that it reads, plays each round in a number of bit operations polynomial in $`d`$, $`\ln n`$ and the bit length of $`\delta`$, $`a`$, $`r_0`$ and $`R_0`$. With probability at least $`1-\delta`$ its regret is at most a constant times $`d^{3/2}\sqrt n\,\ln^5(2dn/\delta)`$, and the mean of its positive part is at most that bound plus $`n\delta`$. The adversary chooses each loss from the whole past, the earlier random bits of the learner included, and the noise of a round has mean $`0`$ and $`\mathbb E\,e^{\varepsilon^2}\le2`$ given the past and the draw of the learner in that round. On every such body, for $`d\ge4\cdot10^6`$ and $`n\ge d^{10}`$, every learner has regret at least $`7\cdot10^{-9}d^{3/2}\sqrt n/\ln d`$ in mean, and at least $`2.8\cdot10^{-9}d^{3/2}\sqrt n/\ln d`$ with probability at least $`\frac12`$, against some adversary of the same kind without noise. On the rational polytopes of Bubeck, Eldan and Lee a program of the same machine without an oracle has expected regret at most a constant times $`d^{3/2}\sqrt n\,\ln^5(2dn)`$, which with the lower bound on the cube proves their Conjecture 1 in their game, against an adversary that chooses each loss from the earlier plays, with time counted in bit operations.
 
-The conjecture is Conjecture 1 of Bubeck, Eldan and Lee, [Kernel-based methods for bandit convex optimization](https://doi.org/10.1145/3453721), J. ACM 68 (2021) ([arXiv:1607.03084](https://arxiv.org/abs/1607.03084)).
+The conjecture is Conjecture 1 of Bubeck, Eldan and Lee, [Kernel-based methods for bandit convex optimization](https://doi.org/10.1145/3453721), J. ACM 68 (2021) ([arXiv:1607.03084](https://arxiv.org/abs/1607.03084)). The regret $`d^{3/2}\sqrt n`$ up to logarithms against an adaptive adversary was obtained first by Bakhtiari, Jamieson, Lattimore and Ratliff, [arXiv:2611.33531](https://arxiv.org/abs/2611.33531).
 
 ```lean
-theorem AdversarialBco.theoremConj1UpperBit : TheoremConj1UpperBit
-theorem AdversarialBco.theoremConj1UpperBitExp : TheoremConj1UpperBitExp
+theorem AdversarialBco.theoremUnified : TheoremUnified
+theorem AdversarialBco.theoremLowerU : TheoremLowerU
+theorem AdversarialBco.theoremLowerUProg : TheoremLowerUProg
+theorem AdversarialBco.corollaryMatch : CorollaryMatch
+theorem AdversarialBco.theoremConj1UpperBitHP : TheoremConj1UpperBitHP
 theorem AdversarialBco.theoremConj1LowerPoly_holds : TheoremConj1LowerPoly
+theorem AdversarialBco.theoremConj1Upper : TheoremConj1Upper
 ```
 
-`TheoremConj1UpperBit` (`AdversarialBco/StatementConj1Bit.lean`) is Theorem 1.1 of the paper: one program of the random access machine with logarithmic cost of `AdversarialBco/StatementBitRAM.lean`, which reads $`d`$, $`n`$, $`m`$ and the rational constraints of a polytope that contains a ball of radius $`1`$ and has diameter at most $`n`$, and nothing else. Against every randomised adversary that chooses each loss from the earlier plays, it plays every round at a rational point of the polytope within cost $`C'(dm\ln(2dn)\ln(2M))^k`$, where $`M`$ bounds the numerators and denominators of the constraints, with memory under the same bound; some measurable function above its regret on every run has expectation at most $`C d^{3/2}\sqrt n\,\ln^5(2dn)`$, a bound on the upper expectation of the positive part of the regret. `TheoremConj1UpperBitExp` (`AdversarialBco/StatementConj1BitExp.lean`) is Corollary 1.2: a program with the same cost, space and play clauses whose regret is integrable, with expectation at most $`C d^{3/2}\sqrt n\,\ln^5(2dn)`$. `TheoremConj1LowerPoly` (`AdversarialBco/StatementConj1LowerPoly.lean`) is Theorem 1.3: for $`d\ge4\cdot10^6`$ some polytope with $`2d`$ constraints of height $`1`$ that contains a ball of radius $`1`$ (the cube $`[-1,1]^d`$) has, for every $`n\ge d^{10}`$ and every learner given by jointly measurable maps of a seed and its history, a strategy whose loss of round $`t`$ reads only the earlier plays and is $`\frac14`$-Lipschitz, against which the expected regret is at least $`7\cdot10^{-9}d^{3/2}\sqrt n/\ln d`$.
+`TheoremUnified` (`AdversarialBco/StatementUnified.lean`, over the machine of `AdversarialBco/StatementBitRAMO.lean`) is Theorem 1.2 of the paper: one program of the random access machine with logarithmic cost and a weak membership oracle, with its cost, space, play and coin clauses against every sequence of losses, noises and coins, and its regret bound in probability and in mean for every environment with its windows (Definition 1.1). `TheoremLowerU` and `TheoremLowerUProg` (`AdversarialBco/StatementUnifiedLower.lean`) are Theorem 1.3, for every learner and for every program of the same machine; `CorollaryMatch` (same file) is Corollary 1.4, the two bounds for one program. `TheoremConj1UpperBitHP` (`AdversarialBco/StatementConj1BitHP.lean`) and `TheoremConj1LowerPoly` (`AdversarialBco/StatementConj1LowerPoly.lean`) are the two halves of Corollary 1.5 on the polytopes of Bubeck, Eldan and Lee. `TheoremConj1Upper` (`AdversarialBco/StatementConj1.lean`) is Theorem 3.2, the learner on a machine with exact real arithmetic.
 
 ## What is checked
 
-- **Lean 4.** The results are proved in Lean 4 with Mathlib, with no `sorry` and no axiom beyond `propext`, `Classical.choice` and `Quot.sound`:
-  - Theorem 1.1: `AdversarialBco.theoremConj1UpperBit`;
-  - Corollary 1.2: `AdversarialBco.theoremConj1UpperBitExp`, from Theorem 1.1 by `AdversarialBco.theoremConj1UpperBit_exp`;
-  - Theorem 1.3: `AdversarialBco.theoremConj1LowerPoly_holds`.
+- **Lean 4.** The results are proved in Lean 4 with Mathlib, with no `sorry` and no axiom beyond `propext`, `Classical.choice` and `Quot.sound`: Theorem 1.2 (`AdversarialBco.theoremUnified`), Theorem 1.3 (`AdversarialBco.theoremLowerU` and `AdversarialBco.theoremLowerUProg`), Corollary 1.4 (`AdversarialBco.corollaryMatch`), Corollary 1.5 (`AdversarialBco.theoremConj1UpperBitHP` and `AdversarialBco.theoremConj1LowerPoly_holds`) and Theorem 3.2 (`AdversarialBco.theoremConj1Upper`).
 
-  The statements are written out from the definitions of the paper in `AdversarialBco/StatementConj1Bit.lean` over `AdversarialBco/StatementBitRAM.lean`, `AdversarialBco/StatementConj1BitExp.lean` and `AdversarialBco/StatementConj1LowerPoly.lean`; Section 6.1 of the paper explains them. Comparator checks each theorem against a copy of its statement file that imports only Mathlib (`config-conj1-bit.json`, `config-conj1-bit-exp.json` and `config-conj1-lower-poly.json`), and nanoda, a second implementation of the Lean kernel, checks the proofs again. Next to each theorem, Comparator checks a witness that the hypotheses of the theorem can be met, so that none of the three holds vacuously. Every numerical constant of the paper is proved in Lean, and so is every other numbered statement; [`STATEMENTS.md`](STATEMENTS.md) gives the Lean declarations of each numbered statement.
+  The statements are written out from the definitions of the paper in the `AdversarialBco/Statement*.lean` files; Section 7.1 of the paper explains them. Comparator checks each theorem against a copy of its statement files that imports only Mathlib (the `config-*.json` files), and nanoda, a second implementation of the Lean kernel, checks the proofs again. Next to each theorem, Comparator checks witnesses that its hypotheses can be met, so that none holds vacuously. Every other numbered statement of the paper is a step of these proofs; [`STATEMENTS.md`](STATEMENTS.md) gives the Lean declarations of each one.
 
 The CI builds the package, reusing an earlier build from its cache or from the latest release. It fails on any other axiom, scans the sources for `sorry`, `admit` and `native_decide`, and runs Comparator with nanoda on each configuration, after building the package one module at a time in Comparator's sandbox.
 
@@ -39,9 +42,9 @@ The CI builds the package, reusing an earlier build from its cache or from the l
 
 | Path | Content |
 | --- | --- |
-| `AdversarialBco/` | the Lean proof (Lean and Mathlib `v4.34.1`), the import closure of the three theorems: `Conj1Bit/Main.lean`, `Conj1BitExp/Main.lean` and `Conj1LowerPoly/Main.lean` prove Theorem 1.1, Corollary 1.2 and Theorem 1.3; `Bit/` the program BL, its machine and its analysis (Section 3 and Appendices A, D and E); `Poly/` and `Conj1/` the reference learner and its regret (Section 2 and Appendices B and C); `Conj1Poly/` the geometry of a rational polytope (Lemma 3.6); `Conj1Exp/` and `Conj1PolyExp/` the bound on the regret and its measurable majorant (Section 3.12); `Conj1Lower/` and `Conj1LowerPoly/` the lower bound (Section 4 and Appendix F); `Gauss/` Gaussian concentration (Appendix B), with the lemmas of Maiti2026Power listed under Built on; `Body/`, `Body2/` and `Lemmas.lean` Gaussian identities, convexity lemmas and definitions that these modules import |
+| `AdversarialBco/` | the Lean proof (Lean and Mathlib `v4.34.1`): `Unified/` the program BL-O, its machine with the oracle and its analysis (Section 4 and Appendix E), and in `Unified/Poly*.lean` the compiler of Corollary 1.5 from the program of Theorem 1.2 to the machine without an oracle on polytopes; `UnifiedLower/` the lower bound on every body and for every program (Section 5 and Appendix G); `Poly/` and `Conj1/` the reference learner and its regret (Section 2 and Appendices A to C); `Bit/` the parts of the program on the bit RAM that BL-O shares with the program on polytopes; `Conj1BitHP/` and `Conj1LowerPoly/` Corollary 1.5; `Gauss/` Gaussian concentration, with the lemmas of Maiti2026Power listed under Built on |
 | `AdversarialBco/Statement*.lean` | the definitions of the statements |
-| `AdversarialBco/Challenge*.lean`, `AdversarialBco/ChallengeBase/`, `config-conj1-bit.json`, `config-conj1-bit-exp.json`, `config-conj1-lower-poly.json` | the Comparator challenges (the statement files copied by `code/formal-proof/challenges.sh`, the theorems with `sorry`) and the three Comparator configurations |
+| `AdversarialBco/Challenge*.lean`, `AdversarialBco/ChallengeBase/`, `config-*.json` | the Comparator challenges (the statement files copied by `code/formal-proof/challenges.sh`, the theorems with `sorry`) and the Comparator configurations |
 | `paper/` | the TeX source |
 | `code/formal-proof/` | the scripts of the CI (build, sequential build in the sandbox, challenges, axioms, badges); `code/README.md` describes them |
 
@@ -57,8 +60,8 @@ rm -f .lake/build/lib/lean/AdversarialBco/Challenge*.* .lake/build/ir/Adversaria
 # then Comparator with each config*.json, as .github/workflows/ci.yml runs it
 ```
 
-On the release tree, Comparator with nanoda ran in 226 s of wall time for `config-conj1-bit.json`, 294 s for `config-conj1-bit-exp.json` and 75 s for `config-conj1-lower-poly.json`.
-The outputs of Comparator, with those of every other check of the CI run, are in `verification-v2.2.0.tar.gz`, an asset of the release.
+On one machine, Comparator with nanoda at 4 threads takes between 101 s and 336 s per configuration (unified 336 s, unified-lower 151 s, match 331 s, conj1-bit-hp 329 s, conj1 222 s, conj1-lower-poly 101 s), with a memory peak of 11 GiB: a Comparator job needs a runner with at least 12 GiB of memory, 16 GiB to be safe. The full build from an empty build directory takes 66 min at 3 threads, with a peak of 8.3 GiB.
+The outputs of Comparator, with those of every other check of the CI run, are in `verification-v2.3.0.tar.gz`, an asset of the release.
 
 Full check, from source:
 
@@ -68,19 +71,16 @@ rm -f .lake/build/lib/lean/AdversarialBco/Challenge*.* .lake/build/ir/Adversaria
 # then Comparator with each config*.json, as for the fast check
 ```
 
-From an empty build directory, with Mathlib from its cache, `lake build` ran in 39 min 44.68 s of wall time.
-
 As a dependency (Lean and Mathlib `v4.34.1`):
 
 ```toml
 [[require]]
 name = "adversarial-bco"
 git = "https://github.com/mt0-svg/adversarial-bco"
-rev = "v2.2.0"
+rev = "v2.3.0"
 ```
 
 then `lake update adversarial-bco`, `lake exe cache get` and `lake build`, which downloads the build archive of the release.
-
 ## Built on
 
 - [Lean 4](https://github.com/leanprover/lean4) and [Mathlib](https://github.com/leanprover-community/mathlib4) (Apache 2.0): the formalization.

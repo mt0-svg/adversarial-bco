@@ -95,7 +95,40 @@ theorem measurable_ite_code {α : Type*} [MeasurableSpace α] {tag : α → Fin 
   Measurable.ite (htag (measurableSet_singleton 0)) measurable_const
     (Measurable.ite (htag (measurableSet_singleton 1)) measurable_const hf)
 
+theorem measurable_roundOf (hmeas : Df2EpochMeas (df2oPar d n δ) n m Kθ gθ ap) {s : ℕ} (hs : s < m) :
+    Measurable (roundOf n δ Kθ gθ ap s) := by
+  have heq : roundOf n δ Kθ gθ ap s = fun x =>
+      if x.2.1.code.1 = 0 then .off else if x.2.1.code.1 = 1 then .guard else
+        df2NextAP ap (df2oPar d n δ) n (df2KepsOf (Kθ x.1) (df2oPar d n δ).eps) x.2.1.code.2 x.2.2.1
+          (x.2.1.code.2.A *ᵥ x.2.2.1) (yOf n δ Kθ gθ s x.1 x.2.1.code.2 x.2.2.1 x.2.2.2) :=
+    funext (roundOf_eq n δ Kθ gθ ap s)
+  rw [heq]
+  have hcode : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.1.code :=
+    measurable_mode_code.comp (measurable_fst.comp measurable_snd)
+  have htag : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.1.code.1 := measurable_fst.comp hcode
+  have hst : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.1.code.2 := measurable_snd.comp hcode
+  have hξ : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.2.1 :=
+    measurable_fst.comp (measurable_snd.comp measurable_snd)
+  have he : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => x.2.2.2 :=
+    measurable_snd.comp (measurable_snd.comp measurable_snd)
+  have hin1 : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ => (x.1, x.2.1.code.2, x.2.2.1, x.2.2.2) :=
+    measurable_fst.prodMk (hst.prodMk (hξ.prodMk he))
+  have hY : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ =>
+      yOf n δ Kθ gθ s x.1 x.2.1.code.2 x.2.2.1 x.2.2.2 :=
+    by have h := (measurable_yOf n δ Kθ gθ ap hmeas hs).comp hin1; exact h
+  have hin2 : Measurable fun x : Θ × Df2Mode d × (Fin d → ℝ) × ℝ =>
+      (x.1, x.2.1.code.2, x.2.2.1, yOf n δ Kθ gθ s x.1 x.2.1.code.2 x.2.2.1 x.2.2.2) :=
+    measurable_fst.prodMk (hst.prodMk (hξ.prodMk hY))
+  have hN := hmeas.2.2.comp hin2
+  have h := measurable_ite_code htag hN
+  exact h
+
+/-! ## The process on `Ω` -/
+
 variable {Ω : Type} {m0 : MeasurableSpace Ω}
+
+/-- The context of the epoch at `ω`. -/
+noncomputable def ctxW (θ : Ω → Θ) (ω : Ω) : Df2Ctx d := df2CtxAt d n δ (Kθ (θ ω)) ap
 
 end EvGY
 

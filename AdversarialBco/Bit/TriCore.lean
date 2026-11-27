@@ -60,24 +60,6 @@ theorem triIter_congr (r a b s : ℝ) (Vt Vt' : PgSp d → EuclideanSpace ℝ (F
   | zero => rfl
   | succ t ih => simp only [triIter, ih, h]
 
-/-- The iterate `t` depends on the draws before `t` only. -/
-theorem triIter_congr_y (r a b s : ℝ) (Vt : PgSp d → EuclideanSpace ℝ (Fin d) → PgSp d)
-    (y y' : ℕ → EuclideanSpace ℝ (Fin d)) (t : ℕ) (h : ∀ i < t, y i = y' i) :
-    triIter r a b s Vt y t = triIter r a b s Vt y' t := by
-  induction t with
-  | zero => rfl
-  | succ t ih =>
-    simp only [triIter, ih fun i hi => h i (Nat.lt_succ_of_lt hi), h t (Nat.lt_succ_self t)]
-
-/-- The average of the first `N` iterates depends on the first `N` draws only. -/
-theorem triAvg_congr_y (r a b s : ℝ) (Vt : PgSp d → EuclideanSpace ℝ (Fin d) → PgSp d)
-    (y y' : ℕ → EuclideanSpace ℝ (Fin d)) (N : ℕ) (h : ∀ i < N, y i = y' i) :
-    triAvg r a b s Vt y N = triAvg r a b s Vt y' N := by
-  unfold triAvg
-  congr 1
-  refine Finset.sum_congr rfl fun t ht => triIter_congr_y r a b s Vt y y' t fun i hi => h i ?_
-  exact lt_trans hi (Finset.mem_range.1 ht)
-
 /-- `(0, I)` is a point of the box when `a ≤ 1 ≤ b` and `0 ≤ r`. -/
 theorem tri_start_mem (r a b : ℝ) (hr : 0 ≤ r) (ha : a ≤ 1) (hb : 1 ≤ b) :
     (pgPack 0 1 : PgSp d) ∈ triBox d r a b := by

@@ -294,25 +294,6 @@ theorem AdversarialBco.Bit.Transfer.BLM.hb_lp {d : ℕ} (F Q G D yh nh lh : ℤ)
         _ = (2 : ℤ) ^ ((13 * U + 9) + 1) := by rw [← pow_succ]
         _ = (2 : ℤ) ^ (13 * U + 10) := by rw [show (13 * U + 9) + 1 = 13 * U + 10 by omega]
 
-/-- A numerator over `2^e` whose value is at most `R ≤ 2^a` is at most `2^E` when `a + e ≤ E`. -/
-theorem AdversarialBco.Bit.Transfer.BLM.hb_x (x : ℤ) (e a E : ℕ) (R : ℚ) (h : |(x : ℚ) / 2 ^ e| ≤ R)
-    (hR : R ≤ 2 ^ a) (hE : a + e ≤ E) : |x| ≤ 2 ^ E := by
-  have hpos : 0 < (2 : ℚ) ^ e := pow_pos (by norm_num) e
-  have hx_abs_eq : |(x : ℚ)| = |(x : ℚ) / (2 : ℚ) ^ e| * (2 : ℚ) ^ e := by
-    calc
-      |(x : ℚ)| = |((x : ℚ) / (2 : ℚ) ^ e) * (2 : ℚ) ^ e| := by
-        field_simp [hpos.ne']
-      _ = |(x : ℚ) / (2 : ℚ) ^ e| * |(2 : ℚ) ^ e| := by rw [abs_mul]
-      _ = |(x : ℚ) / (2 : ℚ) ^ e| * (2 : ℚ) ^ e := by rw [abs_of_pos hpos]
-  have hx_abs_le : |(x : ℚ)| ≤ (2 : ℚ) ^ E := by
-    calc
-      |(x : ℚ)| = |(x : ℚ) / (2 : ℚ) ^ e| * (2 : ℚ) ^ e := hx_abs_eq
-      _ ≤ R * (2 : ℚ) ^ e := mul_le_mul_of_nonneg_right h (by positivity)
-      _ ≤ (2 : ℚ) ^ a * (2 : ℚ) ^ e := mul_le_mul_of_nonneg_right hR (by positivity)
-      _ = (2 : ℚ) ^ (a + e) := by rw [pow_add]
-      _ ≤ (2 : ℚ) ^ E := pow_le_pow_right₀ (by norm_num) hE
-  exact_mod_cast hx_abs_le
-
 /-- `(B Bᵀ) w` from bounds on the entries of `B` and of `w`. -/
 theorem AdversarialBco.Bit.Transfer.BLM.hb_Pw {d : ℕ} (Bp : Matrix (Fin d) (Fin d) ℚ) (w : Fin d → ℚ) (T R : ℚ)
     (hT : 0 ≤ T) (hR : 0 ≤ R) (hB : ∀ i j, |Bp i j| ≤ T) (hw : ∀ j, |w j| ≤ R) (i : Fin d) :
@@ -390,12 +371,6 @@ theorem AdversarialBco.Bit.Transfer.BLM.hb_wmu {d : ℕ} (w : Fin d → ℚ) (W 
       _ ≤ (2 * W) ^ 2 := hsq_bound
       _ = (2 * |W|) ^ 2 := hsq_abs
   exact abs_le_of_sq_le_sq h_abs_sq h_nonneg
-
-/-- The units of R2 to R4 are quadratic. -/
-theorem AdversarialBco.Bit.Transfer.BLM.units_r24 (d m : ℕ) : r24Units d m ≤ 200 * (d + m + 1) ^ 2 := by
-  unfold r24Units r2xUnits r2gUnits r2pUnits
-  ring_nf
-  nlinarith
 
 /-- R9: the numerator of `G'_j`. -/
 theorem AdversarialBco.Bit.Transfer.BLM.hb_Gp {d : ℕ} (F Q G yh nh : ℤ) (Bh : Matrix (Fin d) (Fin d) ℤ)

@@ -86,4 +86,12 @@ theorem lemmaNZProd : LemmaNZProd := by
   beta_reduce
   rw [e1, e2, integral_indicator (hm _ hsl), integral_indicator (hm _ hsl), setIntegral_condExp hm hint hsl]
 
+/-! ## DET -/
+
+/-- DET from its inputs: one epoch on every path, (F) or (N). -/
+theorem df2DetOf_holds : Df2DetOf := by
+  intro L1 W SI RH d n δ Kt ap π m hd hn hδ0 hδ1 heps hm1 hmn hbody hap hadm evG evY evLQ evSDF evDQ
+  exact (DetHyp.mk (DetBase.mk (c := df2CtxAt d n δ Kt ap) L1 W SI hd hn hδ0 hδ1 rfl heps
+    (RH d n δ hd hn hδ0 hδ1 heps) hm1 hmn hbody (fun _ => hap) hadm) evG evY evLQ evSDF evDQ).epoch_ok
+
 end AdversarialBco.Poly

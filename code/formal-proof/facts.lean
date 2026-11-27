@@ -1,15 +1,15 @@
 import Lean
-import AdversarialBco.Conj1Bit.Main
+import AdversarialBco.Unified.Main
 
-/-! For the badges of ci.yml: the hypotheses of the theorem of config-conj1-bit.json (the binders whose type is a
+/-! For the badges of ci.yml: the hypotheses of the theorem of config-unified.json (the binders whose type is a
 proposition, with the definitions at the head of the type unfolded, so that a premise hidden in a definition
-such as `TheoremConj1UpperBit` counts) and the axioms they use. Run with `lake env lean code/formal-proof/facts.lean`. -/
+such as `TheoremUnified` counts) and the axioms they use. Run with `lake env lean code/formal-proof/facts.lean`. -/
 
 open Lean Meta in
 #eval show MetaM Unit from do
   let mut hyps := 0
   let mut axs : Array Name := #[]
-  for n in [``AdversarialBco.theoremConj1UpperBit] do
+  for n in [``AdversarialBco.theoremUnified] do
     let c ← getConstInfo n
     hyps := hyps + (← forallTelescopeReducing c.type fun xs _ =>
       xs.foldlM (fun k x => do return if ← isProp (← inferType x) then k + 1 else k) 0)

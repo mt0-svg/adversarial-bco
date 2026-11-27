@@ -16,7 +16,7 @@ public import AdversarialBco.StatementConj1Bit
 
 The bit learner BL in exact rational and integer arithmetic: the parameters of Procedure PARAM, the prologue P3 to P5
 (rows, mode), the draws of R1 (coins read through `readCoins`, Procedure BM-INT as `gsSpec`), the play of R2 and the
-round R5 to R15. This file is the interface between the analysis (the record `Run` and `EngineHyp`)
+round R5 to R15. This file is the interface between the analysis of BL's run
 and the machine program: the program must compute these values.
 
 What BL calls and does not define here:

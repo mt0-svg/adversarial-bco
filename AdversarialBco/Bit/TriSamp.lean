@@ -149,14 +149,6 @@ variable {d : ℕ}
 /-- The cube `{y | |y_i - c_i| ≤ s for every i}`. -/
 def triCube (c : EuclideanSpace ℝ (Fin d)) (s : ℝ) : Set (EuclideanSpace ℝ (Fin d)) := {y | ∀ i, |y i - c i| ≤ s}
 
-/-- The rows of `K ∩ triCube c s`: the rows `A` of `K`, then `e_i` and `-e_i`. -/
-noncomputable def triRowsA {m : ℕ} (A : Fin m → EuclideanSpace ℝ (Fin d)) : Fin (m + (d + d)) → EuclideanSpace ℝ (Fin d) :=
-  Fin.append A (Fin.append (fun i => EuclideanSpace.single i 1) (fun i => -EuclideanSpace.single i 1))
-
-/-- The right-hand sides of `K ∩ triCube c s`: `b`, then `c_i + s` and `s - c_i`. -/
-noncomputable def triRowsB {m : ℕ} (b : Fin m → ℝ) (c : EuclideanSpace ℝ (Fin d)) (s : ℝ) : Fin (m + (d + d)) → ℝ :=
-  Fin.append b (Fin.append (fun i => c i + s) (fun i => s - c i))
-
 /-- The number of stages `max 1 ⌈log₂ ⌈R0/r0⌉⌉`. -/
 noncomputable def triMst (r0 R0 : ℝ) : ℕ := max 1 (Nat.clog 2 ⌈R0 / r0⌉₊)
 
@@ -1159,35 +1151,6 @@ theorem _root_.AdversarialBco.Bit.rows_norm_le {d m : ℕ} (α : Fin m → Eucli
 
 end AdversarialBco.Bit.Aux_rows_norm_le
 
-namespace AdversarialBco.Bit.Aux_tri_rows_pull
-
-
-open Matrix MeasureTheory ProbabilityTheory
-open scoped ENNReal NNReal InnerProductSpace Matrix.Norms.Frobenius
-open AdversarialBco.Poly AdversarialBco.Bit
-
-theorem _root_.AdversarialBco.Bit.tri_rows_pull {d m : ℕ} (α : Fin m → EuclideanSpace ℝ (Fin d)) (β : Fin m → ℝ)
-    (μ : EuclideanSpace ℝ (Fin d)) (A : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) :
-    posBody {y | ∀ k, inner ℝ (α k) y ≤ β k} μ A =
-      {z | ∀ k, inner ℝ (ContinuousLinearMap.adjoint A (α k)) z ≤ β k - inner ℝ (α k) μ} := by
-  ext z
-  simp [posBody]
-  constructor
-  · intro h k
-    have hk := h k
-    rw [inner_add_right] at hk
-    rw [← ContinuousLinearMap.adjoint_inner_left A z (α k)] at hk
-    rw [le_sub_iff_add_le]
-    rw [add_comm]
-    exact hk
-  · intro h k
-    have hk := h k
-    rw [le_sub_iff_add_le] at hk
-    rw [add_comm] at hk
-    simpa [inner_add_right, ContinuousLinearMap.adjoint_inner_left A z (α k)] using hk
-
-end AdversarialBco.Bit.Aux_tri_rows_pull
-
 namespace AdversarialBco.Bit.Aux_tri_cube_mid
 
 
@@ -1584,72 +1547,3 @@ theorem _root_.AdversarialBco.Bit.tri_par_stage (d : ℕ) (hd : 1 ≤ d) :
 
 end AdversarialBco.Bit.Aux_tri_par_stage
 
-namespace AdversarialBco.Bit.Aux_tri_poly_cc
-
-
-open Matrix MeasureTheory ProbabilityTheory
-open scoped ENNReal NNReal InnerProductSpace Matrix.Norms.Frobenius
-open AdversarialBco.Poly AdversarialBco.Bit
-
-theorem _root_.AdversarialBco.Bit.tri_poly_cc {d m : ℕ} (A : Fin m → EuclideanSpace ℝ (Fin d)) (b : Fin m → ℝ)
-    (c : EuclideanSpace ℝ (Fin d)) (s : ℝ) :
-    Convex ℝ {y | ∀ k, inner ℝ (A k) y ≤ b k} ∧ IsClosed {y | ∀ k, inner ℝ (A k) y ≤ b k} ∧
-      Convex ℝ (triCube c s) ∧ IsClosed (triCube c s) := by
-  have h_poly_eq : {y | ∀ k, inner ℝ (A k) y ≤ b k} = ⋂ k, {y | inner ℝ (A k) y ≤ b k} := by
-    ext y; simp
-  have h_poly_convex : Convex ℝ {y | ∀ k, inner ℝ (A k) y ≤ b k} := by
-    rw [h_poly_eq]
-    apply convex_iInter
-    intro k
-    apply convex_halfSpace_le ?_ (b k)
-    exact LinearMap.isLinear ((innerₗ (EuclideanSpace ℝ (Fin d))) (A k))
-  have h_poly_closed : IsClosed {y | ∀ k, inner ℝ (A k) y ≤ b k} := by
-    rw [h_poly_eq]
-    apply isClosed_iInter
-    intro k
-    apply isClosed_le ?_ ?_
-    · exact continuous_const.inner continuous_id
-    · exact continuous_const
-  have h_cube_eq : triCube c s = ⋂ i, {y | |y i - c i| ≤ s} := by
-    ext y
-    rw [triCube, Set.mem_iInter]
-    simp
-  have h_slice_convex (i : Fin d) : Convex ℝ {y : EuclideanSpace ℝ (Fin d) | |y i - c i| ≤ s} := by
-    have h_eq : {y : EuclideanSpace ℝ (Fin d) | |y i - c i| ≤ s} = {y : EuclideanSpace ℝ (Fin d) | y i - c i ≤ s} ∩ {y : EuclideanSpace ℝ (Fin d) | c i - s ≤ y i} := by
-      ext y; simp [abs_sub_le_iff, add_comm]
-    rw [h_eq]
-    apply Convex.inter
-    · have h_half : {y : EuclideanSpace ℝ (Fin d) | y i - c i ≤ s} = {y | (EuclideanSpace.projₗ i) y ≤ s + c i} := by
-        ext y; simp [EuclideanSpace.projₗ]
-      rw [h_half]
-      apply convex_halfSpace_le ?_ (s + c i)
-      exact LinearMap.isLinear (EuclideanSpace.projₗ i)
-    · have h_half : {y : EuclideanSpace ℝ (Fin d) | c i - s ≤ y i} = {y | (-(EuclideanSpace.projₗ i)) y ≤ s - c i} := by
-        ext y; simp [EuclideanSpace.projₗ, add_comm]
-      rw [h_half]
-      apply convex_halfSpace_le ?_ (s - c i)
-      exact LinearMap.isLinear (-(EuclideanSpace.projₗ i))
-  have h_slice_closed (i : Fin d) : IsClosed {y : EuclideanSpace ℝ (Fin d) | |y i - c i| ≤ s} := by
-    have h_eq : {y : EuclideanSpace ℝ (Fin d) | |y i - c i| ≤ s} = {y : EuclideanSpace ℝ (Fin d) | y i - c i ≤ s} ∩ {y : EuclideanSpace ℝ (Fin d) | c i - s ≤ y i} := by
-      ext y; simp [abs_sub_le_iff, add_comm]
-    rw [h_eq]
-    apply IsClosed.inter
-    · apply isClosed_le ?_ ?_
-      · exact (PiLp.continuous_apply 2 (fun _ : Fin d => ℝ) i).sub continuous_const
-      · exact continuous_const
-    · apply isClosed_le ?_ ?_
-      · exact continuous_const
-      · exact PiLp.continuous_apply 2 (fun _ : Fin d => ℝ) i
-  have h_cube_convex : Convex ℝ (triCube c s) := by
-    rw [h_cube_eq]
-    apply convex_iInter
-    intro i
-    exact h_slice_convex i
-  have h_cube_closed : IsClosed (triCube c s) := by
-    rw [h_cube_eq]
-    apply isClosed_iInter
-    intro i
-    exact h_slice_closed i
-  exact And.intro h_poly_convex (And.intro h_poly_closed (And.intro h_cube_convex h_cube_closed))
-
-end AdversarialBco.Bit.Aux_tri_poly_cc

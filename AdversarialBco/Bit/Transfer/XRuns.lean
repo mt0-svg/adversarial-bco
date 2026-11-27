@@ -20,8 +20,8 @@ representing an environment that satisfies `Q`.
 * `RunsB.toX`: a routine of the fragment proved with `RunsB` is a routine of the extended language.
 * The control rules: sequence, both conditionals, both loops, `xforN`.
 * The leaves on variables: `xsidiv` (Euclidean quotient of two scalars), `xcoins` (a block of coins into a scalar),
-  `xobs` (digits of the feedback into a scalar), `xplay` (play the point stored in an array, denominator first),
-  `xrtoN` (a scalar to a natural variable), `xnmul` (product of naturals), `xrdIn` (an input cell into a scalar).
+  `xplay` (play the point stored in an array, denominator first), `xrtoN` (a scalar to a natural variable), `xnmul`
+  (product of naturals), `xrdIn` (an input cell into a scalar).
 -/
 
 namespace AdversarialBco.Bit.Transfer
@@ -55,9 +55,6 @@ def xsidiv (L : Layout) (x a b : ℕ) : XCmd := .prim (.leaf (.idiv (L.rS x) (L.
 
 /-- `x :=` the integer of the next `nat i` coins. -/
 def xcoins (L : Layout) (x i : ℕ) : XCmd := .prim (.leaf (.coins (L.rS x) i))
-
-/-- `x := ⌊2^(nat i) o⌋`, `o` the feedback of the last round played. -/
-def xobs (L : Layout) (x i : ℕ) : XCmd := .prim (.leaf (.obs (L.rS x) i))
 
 /-- Play the point `(arr v (1 + j) / arr v 0)_{j < d}`. -/
 def xplay (L : Layout) (v : ℕ) : XCmd := .prim (.leaf (.play (L.rA v)))
@@ -258,16 +255,6 @@ theorem coins (hL : LayOK L d ℓa) {x i : ℕ} (hx : x < L.NS) (hi : i < L.NN) 
     dsimp only [Leaf.exec]
     rw [hs.rS x hx, hs.nat i hi, hs.draws]
     exact rep_draws (hs.setSc hx _) _
-
-theorem obs (hL : LayOK L d ℓa) {x i : ℕ} (hx : x < L.NS) (hi : i < L.NN) (hp : σ.nat i ≤ ℓ)
-    (hpa : σ.nat i < 2 ^ ℓa) (hz : |((⌊(2 : ℝ) ^ (σ.nat i) * fbE X σ⌋ : ℤ) : ℝ)| < 2 ^ ℓ) :
-    XRunsB L X ℓa ℓ (xobs L x i) σ 1 (· = σ.setSc x (⌊(2 : ℝ) ^ (σ.nat i) * fbE X σ⌋ : ℝ)) :=
-  leaf fun s hs => by
-    refine ⟨⟨VB.regOK_rS hL hs hx, VB.regOK_nat hL hi (by rw [hs.nat i hi]; exact hpa), by
-      rw [hs.nat i hi]; exact hp, by rw [hs.nat i hi, fbR_eq hs]; exact hz⟩, ?_⟩
-    dsimp only [Leaf.exec]
-    rw [hs.rS x hx, hs.nat i hi, fbR_eq hs]
-    exact hs.setSc hx _
 
 theorem play (hL : LayOK L d ℓa) (hd : 1 ≤ d) {v : ℕ} (hv : v < L.NA) (hb : ∀ j ≤ d, |σ.arr v j| < 2 ^ ℓ) :
     XRunsB L X ℓa ℓ (xplay L v) σ (d + 2)

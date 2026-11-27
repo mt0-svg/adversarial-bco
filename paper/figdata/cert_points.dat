@@ -1,0 +1,6 @@
+# sample points y on the ray from a along (0.55, 0.35), their pushed points y', the answers the weak oracle may give at y' (1, 0, or 01 for either), and the gauge of y about a
+name x y xp yp allowed gauge
+deep 0.72532751 0.46157205 0.90665939 0.57696507 1 0.50000000
+free 1.16052402 0.73851528 1.45065502 0.92314410 01 0.80000000
+reject_in_K 1.35295937 0.86097414 1.69119921 1.07621768 0 0.93265411
+outside 1.56670742 0.99699563 1.95838428 1.24624454 0 1.08000000

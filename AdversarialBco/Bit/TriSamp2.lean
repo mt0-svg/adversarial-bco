@@ -21,9 +21,9 @@ The leaves of the position theorem that rest on those of Bit/TriSamp.lean:
   of a draw), `cells_V_law` (blocks of `B` fair coins are independent with the law of a cell), `tri_draws_law` (the
   draws read off the coin stream are independent with the sampler law), `tri_draw_facts` (bound, measurability and
   locality of a draw);
-* measurability: `triU_meas2`, `tri_V_meas2`, `triIter_meas2` (jointly in a parameter);
-* the stages: `tri_cube_rows` (the rows of `K ∩ triCube c s`), `tri_stage_body`, `tri_stage0_body` (the body of a
-  stage in the position of the previous one, and of the first stage).
+* measurability: `tri_V_meas2`, `triIter_meas2` (jointly in a parameter);
+* the stages: `tri_stage_body`, `tri_stage0_body` (the body of a stage in the position of the previous one, and of
+  the first stage).
 
 Each lemma sits in a namespace `AdversarialBco.Bit.Aux_<name>`
 with its helpers, the lemma itself at `AdversarialBco.Bit.<name>`.
@@ -1392,84 +1392,6 @@ theorem _root_.AdversarialBco.Bit.gs_cpl (d B : ℕ) (hB : 8 ≤ B) (F : Euclide
 
 end AdversarialBco.Bit.Aux_gs_cpl
 
-namespace AdversarialBco.Bit.Aux_triU_meas2
-
-
-open Matrix MeasureTheory ProbabilityTheory
-open scoped ENNReal NNReal InnerProductSpace Matrix.Norms.Frobenius
-open AdversarialBco.Poly AdversarialBco.Bit
-
-theorem _root_.AdversarialBco.Bit.triU_meas2 (d m : ℕ) :
-    Measurable (fun q : (Fin m → EuclideanSpace ℝ (Fin d)) × (Fin m → ℝ) × EuclideanSpace ℝ (Fin d) =>
-      triU q.1 q.2.1 q.2.2) := by
-  -- Unfold the definitions of triU and triQ
-  unfold triU triQ
-  -- Goal: Measurable (fun q => ∑ k, if 0 < inner ℝ (q.1 k) q.2.2 / q.2.1 k ∧ ... then (q.2.1 k)⁻¹ • q.1 k else 0)
-  -- Use Finset.measurable_sum over Fin m
-  refine Finset.measurable_sum Finset.univ ?_
-  intro k hk
-  -- For each k, we need to show the if-then-else is measurable
-  -- Define the measurable functions we'll need
-  let α := fun q : (Fin m → EuclideanSpace ℝ (Fin d)) × (Fin m → ℝ) × EuclideanSpace ℝ (Fin d) => q.1
-  let β := fun q : (Fin m → EuclideanSpace ℝ (Fin d)) × (Fin m → ℝ) × EuclideanSpace ℝ (Fin d) => q.2.1
-  let z := fun q : (Fin m → EuclideanSpace ℝ (Fin d)) × (Fin m → ℝ) × EuclideanSpace ℝ (Fin d) => q.2.2
-  have hα : Measurable α := measurable_fst
-  have hβ : Measurable β := measurable_fst.comp measurable_snd
-  have hz : Measurable z := measurable_snd.comp measurable_snd
-  have hαk (k' : Fin m) : Measurable (fun q => α q k') :=
-    (measurable_pi_apply k').comp hα
-  have hβk (k' : Fin m) : Measurable (fun q => β q k') :=
-    (measurable_pi_apply k').comp hβ
-  -- f k' q = inner ℝ (α q k') (z q) / β q k'
-  let f (k' : Fin m) (q : (Fin m → EuclideanSpace ℝ (Fin d)) × (Fin m → ℝ) × EuclideanSpace ℝ (Fin d)) : ℝ :=
-    inner ℝ (α q k') (z q) / β q k'
-  have hf (k' : Fin m) : Measurable (f k') := by
-    dsimp [f]
-    refine Measurable.div ?_ ?_
-    · exact Measurable.inner (hαk k') hz
-    · exact hβk k'
-  -- The condition C k q = 0 < f k q ∧ (∀ k', f k' q ≤ f k q) ∧ (∀ k', k' < k → f k' q < f k q)
-  -- Each part is a measurable set
-  have h_cond : MeasurableSet {q | 0 < f k q ∧ (∀ k', f k' q ≤ f k q) ∧ (∀ k', k' < k → f k' q < f k q)} := by
-    -- First conjunct: 0 < f k q
-    have h1 : MeasurableSet {q | 0 < f k q} :=
-      measurableSet_lt measurable_const (hf k)
-    -- Second conjunct: ∀ k', f k' q ≤ f k q  (finite conjunction over Fin m)
-    have h2 : MeasurableSet {q | ∀ k', f k' q ≤ f k q} := by
-      -- Convert ∀ k' to intersection over Finset.univ
-      have : {q | ∀ k', f k' q ≤ f k q} = ⋂ k' ∈ Finset.univ, {q | f k' q ≤ f k q} := by
-        ext q; simp
-      rw [this]
-      refine Finset.measurableSet_biInter Finset.univ ?_
-      intro k' hk'
-      exact measurableSet_le (hf k') (hf k)
-    -- Third conjunct: ∀ k', k' < k → f k' q < f k q  (finite conjunction over k' < k)
-    have h3 : MeasurableSet {q | ∀ k', k' < k → f k' q < f k q} := by
-      have : {q | ∀ k', k' < k → f k' q < f k q} =
-          ⋂ k' ∈ (Finset.univ.filter fun k' => k' < k), {q | f k' q < f k q} := by
-        ext q; simp [Finset.mem_filter]
-      rw [this]
-      refine Finset.measurableSet_biInter (Finset.univ.filter fun k' => k' < k) ?_
-      intro k' hk'
-      exact measurableSet_lt (hf k') (hf k)
-    -- Intersection of three measurable sets
-    have h_eq : {q | 0 < f k q ∧ (∀ k', f k' q ≤ f k q) ∧ (∀ k', k' < k → f k' q < f k q)} =
-        ({q | 0 < f k q} ∩ {q | ∀ k', f k' q ≤ f k q}) ∩ {q | ∀ k', k' < k → f k' q < f k q} := by
-      ext q; simp [and_assoc]
-    rw [h_eq]
-    exact MeasurableSet.inter (MeasurableSet.inter h1 h2) h3
-  -- The "then" branch: (β q k)⁻¹ • α q k
-  have h_then : Measurable (fun q => (β q k)⁻¹ • α q k) := by
-    have h_inv : Measurable (fun q => (β q k)⁻¹) := Measurable.inv (hβk k)
-    refine Measurable.smul (f := fun q => (β q k)⁻¹) (g := fun q => α q k) h_inv (hαk k)
-  -- The "else" branch: 0
-  have h_else : Measurable (fun _ : (Fin m → EuclideanSpace ℝ (Fin d)) × (Fin m → ℝ) × EuclideanSpace ℝ (Fin d) => (0 : EuclideanSpace ℝ (Fin d))) :=
-    measurable_const
-  -- Apply Measurable.ite
-  exact Measurable.ite h_cond h_then h_else
-
-end AdversarialBco.Bit.Aux_triU_meas2
-
 namespace AdversarialBco.Bit.Aux_tri_V_meas2
 
 
@@ -1592,62 +1514,6 @@ theorem _root_.AdversarialBco.Bit.triIter_meas2 {d : ℕ} {Θ : Type*} [Measurab
   exact ⟨h_iter, h_avg⟩
 
 end AdversarialBco.Bit.Aux_triIter_meas2
-
-namespace AdversarialBco.Bit.Aux_tri_cube_rows
-
-
-open Matrix MeasureTheory ProbabilityTheory
-open scoped ENNReal NNReal InnerProductSpace Matrix.Norms.Frobenius
-open AdversarialBco.Poly AdversarialBco.Bit
-
-theorem _root_.AdversarialBco.Bit.tri_cube_rows {d m : ℕ} (A : Fin m → EuclideanSpace ℝ (Fin d)) (b : Fin m → ℝ)
-    (c : EuclideanSpace ℝ (Fin d)) (s : ℝ) :
-    {y | ∀ k, inner ℝ (triRowsA A k) y ≤ triRowsB b c s k} = {y | ∀ k, inner ℝ (A k) y ≤ b k} ∩ triCube c s := by
-  ext y
-  constructor
-  · intro h
-    refine ⟨?_, ?_⟩
-    · intro k
-      have := h (Fin.castAdd (d + d) k)
-      simpa [triRowsA, triRowsB, Fin.append_left, -Fin.natAdd_eq_addNat] using this
-    · intro i
-      have hpos : inner ℝ (EuclideanSpace.single i 1) y ≤ c i + s := by
-        have := h (Fin.natAdd m (Fin.castAdd d i))
-        simpa [triRowsA, triRowsB, Fin.append_right, Fin.append_left, -Fin.natAdd_eq_addNat] using this
-      have hneg : inner ℝ (-EuclideanSpace.single i 1) y ≤ s - c i := by
-        have := h (Fin.natAdd m (Fin.natAdd d i))
-        simpa [triRowsA, triRowsB, Fin.append_right, -Fin.natAdd_eq_addNat] using this
-      have hypos : y i ≤ c i + s := by
-        simpa [EuclideanSpace.inner_single_left, conj_trivial, one_mul] using hpos
-      have hyneg : -y i ≤ s - c i := by
-        simpa [EuclideanSpace.inner_single_left, inner_neg_left, conj_trivial, one_mul] using hneg
-      rw [abs_le]
-      constructor <;> linarith
-  · intro h
-    rcases h with ⟨hA, hc⟩
-    rw [Set.mem_setOf_eq]
-    rw [Fin.forall_fin_add]
-    refine ⟨?_, ?_⟩
-    · intro k
-      simpa [triRowsA, triRowsB, Fin.append_left, -Fin.natAdd_eq_addNat] using hA k
-    · rw [Fin.forall_fin_add]
-      refine ⟨?_, ?_⟩
-      · intro i
-        have hy_le : y i ≤ c i + s := by
-          have hci := hc i
-          rw [abs_le] at hci
-          rcases hci with ⟨hle, _⟩
-          linarith
-        simpa [triRowsA, triRowsB, Fin.append_right, Fin.append_left, EuclideanSpace.inner_single_left, conj_trivial, one_mul, -Fin.natAdd_eq_addNat] using hy_le
-      · intro i
-        have hneg_y : -y i ≤ s - c i := by
-          have hci := hc i
-          rw [abs_le] at hci
-          rcases hci with ⟨_, hge⟩
-          linarith
-        simpa [triRowsA, triRowsB, Fin.append_right, EuclideanSpace.inner_single_left, inner_neg_left, conj_trivial, one_mul, -Fin.natAdd_eq_addNat] using hneg_y
-
-end AdversarialBco.Bit.Aux_tri_cube_rows
 
 namespace AdversarialBco.Bit.Aux_tri_stage_body
 

@@ -1,0 +1,31 @@
+# Figure L, theorem parameters (Theorem LU, Prop. game): d = 4e6, n = d^10, K = B(0,1) so R0 = 1, r0 = 1/2, round 1
+name value
+d 4.000000000000e6
+ln_n 1.520180491908e2
+k 1.892216590290e3
+r1 1.000000000000e4
+sigma 4.138917885890e-3
+ell 3.020113069316e1
+L 4.138917885890e-3
+Gamma 7.600902459542e1
+g 2.979672756009e-32
+kappa 1.574699625455e-35
+wstar 3.804616735265e-29
+std_Pi1 2.499999375000e-4
+tip_radius 4.999999133566e-1
+tip_whitened 2.000000153426e3
+rho_whitened 2.000946037974e3
+zone_left -2.364710779294e-4
+zone_right 1.000236297791e0
+dent_at_m_over_g 9.997635847865e-1
+bowl_at_tip_over_g 1.057961616929e3
+bowl_at_unit_sphere_over_g 4.228847932976e3
+sigma_over_g 1.389051155884e29
+min_mean_cost_over_g 9.997635847502e-1
+max_sd_over_sigma 4.248452779605e-35
+quad_v_trapezoid 2001 on [0,60]
+quad_t_trapezoid 2401 on [-12,12]
+quad_neglected_mass 8.756514268421e-27
+sd_zero_on_range_from_a 7.521206186173e1
+quad_max_rel_change_mean 1.087793698694e-14
+quad_max_rel_change_sd 1.083765963952e-9

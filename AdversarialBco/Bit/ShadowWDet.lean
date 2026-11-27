@@ -72,19 +72,6 @@ theorem mode_rr : ∀ t ≤ n, B.mode δ t ω = (B.rr δ ω).mode t
     rw [RunRec.mode_succ, ← mode_rr t (by omega), ← round_rr hKconv hq heps0 heps1 (show t < n by omega)]
     rfl
 
-theorem refPlay_rr {t : ℕ} (ht : t < n) : B.refPlay δ t ω = (B.rr δ ω).play t := by
-  show (cRoundA n δ K (B.pos ω) _ (B.lossR t ω) _ _ _ (B.mode δ t ω)).1 = ((B.rr δ ω).rnd t ((B.rr δ ω).mode t)).1
-  rw [round_rr hKconv hq heps0 heps1 ht, mode_rr hKconv hq heps0 heps1 t ht.le]
-
-theorem mean_rr {t : ℕ} (ht : t < n) : B.mean δ t ω = (B.rr δ ω).mean t := by
-  have hk : kTh n δ K (B.pos ω) = df2Kp K (B.pos ω) (df2oPar d n δ).R := kTh_good hq
-  unfold mean RunRec.mean
-  refine integral_congr_ae (Filter.Eventually.of_forall fun z => ?_)
-  show B.loss ω t (df2RoundGa (df2oPar d n δ) n K (B.pos ω) (gauge (kTh n δ K (B.pos ω))) apCall (B.lossR t ω) 0 z
-      0 (B.mode δ t ω)).1 = B.loss ω t (df2RoundGa (df2oPar d n δ) n K (B.pos ω)
-      (gauge (df2Kp K (B.pos ω) (df2oPar d n δ).R)) apCall (B.loss ω t) 0 z 0 ((B.rr δ ω).mode t)).1
-  rw [hk, mode_rr hKconv hq heps0 heps1 t ht.le, roundGa_fst _ _ _ _ _ _ (B.lossR t ω) (B.loss ω t) 0 0 z 0 0]
-
 end Case
 
 /-- On `Case`, the five events of the virtual epoch of P° started at `a` give `EpochOK` of the epoch of the record. -/
@@ -118,29 +105,6 @@ theorem epochOK_of_good (hAP : ∀ v : Adv d, ApSpec (apAdv v)) (hreg : Regime d
   show gTh n δ K (fun t => B.F.L t (lamAt n B.F.lam a s ω)) a s (B.pos ω) y =
     B.F.L (a + s) (B.F.lam (a + s) ω) (pgMu (B.pos ω) + pgOp (B.pos ω) y) / 2
   simp only [gTh, hq', ↓reduceIte, lamAt, has]
-
-/-- Proposition W-DET: on `Case ∩ Ω_ref`, P°'s regret over the `n` rounds is at most `B_n`. -/
-theorem wdet (hAP : ∀ v : Adv d, ApSpec (apAdv v)) (hreg : Regime d n δ) (hKc : IsClosed K)
-    (hKconv : Convex ℝ K) {ω : WΩ} (hq : B.Case δ ω) (hg : B.Good δ ω) :
-    regretPts K (B.loss ω) (fun t => B.refPlay δ t ω) n ≤ bReg d n δ := by
-  obtain ⟨hd, hn, hδ0, hδ1, heps⟩ := hreg
-  have H := rowHyp_of d n δ hd hn hδ0 hδ1 heps
-  have heps0 := eps_pos_of_rows H
-  have heps1 : (df2oPar d n δ).eps < 1 := by linarith
-  have hplay : ∑ t ∈ Finset.range n, B.loss ω t (B.refPlay δ t ω) =
-      ∑ t ∈ Finset.range n, (B.rr δ ω).f t ((B.rr δ ω).play t) :=
-    Finset.sum_congr rfl fun t ht => by
-      rw [refPlay_rr hKconv hq heps0 heps1 (Finset.mem_range.mp ht)]; rfl
-  have hmean : ∑ t ∈ Finset.range n, B.mean δ t ω = ∑ t ∈ Finset.range n, (B.rr δ ω).mean t :=
-    Finset.sum_congr rfl fun t ht => mean_rr hKconv hq heps0 heps1 (Finset.mem_range.mp ht)
-  have haz := hg.2
-  unfold Az at haz
-  rw [hplay, hmean] at haz
-  have h := (B.rr δ ω).det hd hn hδ0 hδ1 hKc hKconv (fun t ht => B.F.adm t ht _) hq heps
-    (fun a ha => epochOK_of_good hAP ⟨hd, hn, hδ0, hδ1, heps⟩ hKc hKconv hq ha (hg.1 a ha)) haz
-  unfold regretPts at h ⊢
-  rw [hplay]
-  exact h
 
 end Run
 

@@ -61,6 +61,25 @@ theorem lossAd_plays (σ : Strategy d) (ε : ℕ → ℝ) (p : Policy d) (t : �
   rw [transcript_fst, transcript_snd]
   rfl
 
+/-- The transcript of the rounds before `t` reads the strategy of the rounds before `t` only. -/
+theorem transcript_congr {σ σ' : Strategy d} (ε : ℕ → ℝ) (p : Policy d) :
+    ∀ t, (∀ u < t, σ u = σ' u) → transcript σ ε p t = transcript σ' ε p t
+  | 0, _ => rfl
+  | t + 1, h => by
+    have ih := transcript_congr ε p t fun u hu => h u (by omega)
+    simp only [transcript, ih, h t (by omega)]
+
+/-- Non-anticipation of the learner: the point of round `t` reads the strategy of the rounds before `t` only, that is
+the losses of the rounds before `t`. -/
+theorem plays_congr {σ σ' : Strategy d} (ε : ℕ → ℝ) (p : Policy d) (t : ℕ) (h : ∀ u < t, σ u = σ' u) :
+    plays σ ε p t = plays σ' ε p t := by
+  simp only [plays, transcript_congr ε p t h]
+
+/-- The points of the rounds `t < n` of a rule with values in `K` are in `K`. -/
+theorem plays_mem {K : Set (E d)} {n : ℕ} (σ : Strategy d) (ε : ℕ → ℝ) (p : Policy d)
+    (hp : ∀ t < n, ∀ x o, p t x o ∈ K) {t : ℕ} (ht : t < n) : plays σ ε p t ∈ K :=
+  hp t ht _ _
+
 /-! ## The bound -/
 
 theorem log_ge_one {d : ℕ} (hd : 4000000 ≤ d) : 1 ≤ Real.log d := by
@@ -95,7 +114,18 @@ theorem regretAd_zero {K : Set (E d)} (hK : K.Nonempty) (p : Policy d) (n : ℕ)
   rw [h, csInf_singleton]
   simp [lossAd, zeroStrat]
 
-/-! ## The Gaussian stream -/
+/-! ## Integrability over the class -/
+
+theorem measurable_snoc {α β : Type*} [MeasurableSpace α] [MeasurableSpace β] {t : ℕ} {f : α → Fin t → β}
+    {g : α → β} (hf : Measurable f) (hg : Measurable g) :
+    Measurable fun a => Fin.snoc (α := fun _ => β) (f a) (g a) := by
+  rw [measurable_pi_iff]
+  intro i
+  refine Fin.lastCases ?_ (fun j => ?_) i
+  · simp only [Fin.snoc_last]; exact hg
+  · simp only [Fin.snoc_castSucc]; exact (measurable_pi_apply j).comp hf
+
+/-! ## A learner that randomises at every round -/
 
 /-- The Gaussian stream is a probability measure. -/
 instance : IsProbabilityMeasure gaussStream := by

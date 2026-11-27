@@ -1,0 +1,13 @@
+# Figure U1: the certified question of Lemma cm (a) on a stated polygon with a weak membership oracle
+name value
+vertices (-1.6,-1);(1.4,-1.3);(2,0.6);(0.3,1.6);(-1.5,0.9)
+a (0,0)
+r0 1
+inradius_about_a 1.1542431406
+R0_outer 2.0880613018
+k 3
+eps 0.125
+push_factor 1.25
+accept_scale 0.700000000000
+band 0.375
+band_scale 0.625

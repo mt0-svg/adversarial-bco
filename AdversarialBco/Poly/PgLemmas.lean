@@ -31,6 +31,21 @@ open scoped RealInnerProductSpace NNReal Pointwise
 
 namespace AdversarialBco.Poly
 
+open Classical in
+/-- Bisection on `[lo, hi]` for an upward-closed question `P`: after `j` steps, the interval kept; each step asks `P`
+at the midpoint and keeps the half where the threshold lies. -/
+noncomputable def bisect (P : ℝ → Prop) (lo hi : ℝ) : ℕ → ℝ × ℝ
+  | 0 => (lo, hi)
+  | j + 1 =>
+    let I := bisect P lo hi j
+    if P ((I.1 + I.2) / 2) then (I.1, (I.1 + I.2) / 2) else ((I.1 + I.2) / 2, I.2)
+
+open Classical in
+/-- The gauge by bisection of Lemma B: `j` steps on `[|x|/ρ, |x|]` with the question `x/s ∈ K`, the upper end. -/
+noncomputable def piTilde {d : ℕ} (K : Set (EuclideanSpace ℝ (Fin d))) (ρ : ℝ) (j : ℕ)
+    (x : EuclideanSpace ℝ (Fin d)) : ℝ :=
+  if x = 0 then 0 else (bisect (fun s => 0 < s ∧ s⁻¹ • x ∈ K) (‖x‖ / ρ) ‖x‖ j).2
+
 /-- `(μ, T)` is in the domain `D`: `T` self-adjoint with `τ0 ≤ T ≤ τ1`, and `|μ| ≤ R`. -/
 def IsPgDom {d : ℕ} (τ0 τ1 R : ℝ) (μ : EuclideanSpace ℝ (Fin d))
     (T : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) : Prop :=
@@ -40,7 +55,33 @@ def IsPgDom {d : ℕ} (τ0 τ1 R : ℝ) (μ : EuclideanSpace ℝ (Fin d))
 def IsInvPair {d : ℕ} (T Ti : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) : Prop :=
   T.comp Ti = ContinuousLinearMap.id ℝ _ ∧ Ti.comp T = ContinuousLinearMap.id ℝ _
 
+/-- The entries of `g gᵀ - I`. -/
+noncomputable def gstat {d : ℕ} (g : EuclideanSpace ℝ (Fin d)) (i j : Fin d) : ℝ :=
+  g i * g j - if i = j then 1 else 0
+
+/-! ## Lemma B (the gauge by bisection) -/
+
+/-- Lemma B: `π ≤ π~ ≤ π + |x| 2^{-j}`, hence `π~ ≤ (1 + η) π` when `ρ 2^{-j} ≤ η`. -/
+def LemmaB : Prop :=
+  ∀ (d : ℕ) (K : Set (EuclideanSpace ℝ (Fin d))) (ρ : ℝ), 1 ≤ ρ → Convex ℝ K → IsClosed K →
+    Metric.closedBall 0 1 ⊆ K → K ⊆ Metric.closedBall 0 ρ → ∀ (j : ℕ) (η : ℝ), ρ / 2 ^ j ≤ η → ∀ x,
+      gauge K x ≤ piTilde K ρ j x ∧ piTilde K ρ j x ≤ gauge K x + ‖x‖ / 2 ^ j ∧
+        piTilde K ρ j x ≤ (1 + η) * gauge K x
+
+/-- `π~` is a Borel function. -/
+def PiTildeMeasurable : Prop :=
+  ∀ (d : ℕ) (K : Set (EuclideanSpace ℝ (Fin d))) (ρ : ℝ), IsClosed K → ∀ j : ℕ, Measurable (piTilde K ρ j)
+
 /-! ## The domain -/
+
+/-- (D4): on `D` with `B̄(0, 1) ⊆ K`, `F(y) = π(μ + T y)` is `τ1`-Lipschitz and `0 ≤ F(y) ≤ |μ| + τ1 |y|`, and
+`E F(g)^2 ≤ (R + τ1 d^{1/2})^2`. -/
+def D4Bounds : Prop :=
+  ∀ (d : ℕ) (K : Set (EuclideanSpace ℝ (Fin d))) (τ0 τ1 R : ℝ) (μ : EuclideanSpace ℝ (Fin d))
+    (T : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)), Convex ℝ K → Metric.closedBall 0 1 ⊆ K →
+    0 ≤ τ0 → IsPgDom τ0 τ1 R μ T →
+    LipschitzWith (Real.toNNReal τ1) (posF K μ T) ∧ (∀ y, 0 ≤ posF K μ T y ∧ posF K μ T y ≤ ‖μ‖ + τ1 * ‖y‖) ∧
+      ∫ g, posF K μ T g ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) ≤ (R + τ1 * Real.sqrt d) ^ 2
 
 /-- The minimiser of the Gaussian position lemma can be taken symmetric: for invertible `A` there is a symmetric
 positive definite `T`
@@ -92,6 +133,19 @@ def LogDetConcave : Prop :=
         LinearMap.trace ℝ _ ((Ti.comp (T' - T) : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) :
           EuclideanSpace ℝ (Fin d) →ₗ[ℝ] EuclideanSpace ℝ (Fin d))
 
+/-- (D5): the subgradient inequality of `h` on positive definite operators, with the gradient
+`(T⁻¹ b, sym(T⁻¹ Q) - (κ/d) T⁻¹)` written through its pairings. -/
+def D5Subgrad : Prop :=
+  ∀ (d : ℕ) (K : Set (EuclideanSpace ℝ (Fin d))) (r0 α κ : ℝ) (μ μ' : EuclideanSpace ℝ (Fin d))
+    (T T' Ti : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)), IsPosBody K r0 α →
+    IsSelfAdjoint T → IsSelfAdjoint T' → (∀ v, v ≠ 0 → 0 < ⟪T v, v⟫) → (∀ v, v ≠ 0 → 0 < ⟪T' v, v⟫) →
+    IsInvPair T Ti → 0 ≤ κ →
+    posObj K κ μ T + ⟪posB K μ T, Ti (μ' - μ)⟫ +
+        ∑ i, posQ K μ T (EuclideanSpace.single i 1) (Ti ((T' - T) (EuclideanSpace.single i 1))) -
+        κ / d * LinearMap.trace ℝ _ ((Ti.comp (T' - T) : EuclideanSpace ℝ (Fin d) →L[ℝ] EuclideanSpace ℝ (Fin d)) :
+          EuclideanSpace ℝ (Fin d) →ₗ[ℝ] EuclideanSpace ℝ (Fin d)) ≤
+      posObj K κ μ' T'
+
 /-! ## Proposition A (approximate minimisers pass the test) -/
 
 /-- Proposition A (i): if `h(μ, A) ≤ h* + e`, then `κ (x - 1 - log x) ≤ e` for `x = k/κ`. -/
@@ -131,10 +185,33 @@ def PropAiii : Prop :=
 
 /-! ## Lemma E and the Gaussian moments -/
 
+/-- Lemma E (a), vector part: `|E[ε(g) g]|^2 ≤ E ε(g)^2`. -/
+def VecCS : Prop :=
+  ∀ (d : ℕ) (ε : EuclideanSpace ℝ (Fin d) → ℝ), MemLp ε 2 (stdGaussian (EuclideanSpace ℝ (Fin d))) →
+    ‖∫ g, ε g • g ∂(stdGaussian (EuclideanSpace ℝ (Fin d)))‖ ^ 2 ≤
+      ∫ g, ε g ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d)))
+
+/-- Lemma E (a), matrix part: `|E[(g gᵀ - I) ε(g)]|_F^2 ≤ 2 E ε(g)^2`. -/
+def MatCS : Prop :=
+  ∀ (d : ℕ) (ε : EuclideanSpace ℝ (Fin d) → ℝ), MemLp ε 2 (stdGaussian (EuclideanSpace ℝ (Fin d))) →
+    ∑ i, ∑ j, (∫ g, gstat g i j * ε g ∂(stdGaussian (EuclideanSpace ℝ (Fin d)))) ^ 2 ≤
+      2 * ∫ g, ε g ^ 2 ∂(stdGaussian (EuclideanSpace ℝ (Fin d)))
+
+/-- `|g gᵀ - I|_F^2 = |g|^4 - 2 |g|^2 + d`. -/
+def FrobStat : Prop :=
+  ∀ (d : ℕ) (g : EuclideanSpace ℝ (Fin d)), ∑ i, ∑ j, gstat g i j ^ 2 = ‖g‖ ^ 4 - 2 * ‖g‖ ^ 2 + d
+
 /-- The chi-square moments `E|g|^4 = d (d + 2)` and `E|g|^6 = d (d + 2)(d + 4)`. -/
 def GaussMoments : Prop :=
   ∀ d : ℕ, ∫ g, ‖g‖ ^ 4 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) = (d : ℝ) * (d + 2) ∧
     ∫ g, ‖g‖ ^ 6 ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) = (d : ℝ) * (d + 2) * (d + 4)
+
+/-- The two moments of Lemma E (b): `E[|g|^2 (1 + |g|^2)] = d (d + 3)` and
+`E[(|g|^4 - 2 |g|^2 + d)(1 + |g|^2)] = d (d + 1)(d + 5)`. -/
+def MomentsE : Prop :=
+  ∀ d : ℕ, ∫ g, ‖g‖ ^ 2 * (1 + ‖g‖ ^ 2) ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) = (d : ℝ) * (d + 3) ∧
+    ∫ g, (‖g‖ ^ 4 - 2 * ‖g‖ ^ 2 + (d : ℝ)) * (1 + ‖g‖ ^ 2) ∂(stdGaussian (EuclideanSpace ℝ (Fin d))) =
+      (d : ℝ) * (d + 1) * (d + 5)
 
 /-- `E|g| ≥ d/(d + 1)^{1/2}` (item 1). -/
 def NormMeanLower : Prop :=

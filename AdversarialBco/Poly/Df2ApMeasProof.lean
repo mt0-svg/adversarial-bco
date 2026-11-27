@@ -215,6 +215,42 @@ theorem meas_df2Phi {P : X → Matrix (Fin d) (Fin d) ℝ} {b : X → Fin d → 
     (hy : Measurable y) : Measurable fun x => df2Phi (P x) (b x) (k x) (y x) :=
   df2Phi_continuous.measurable.comp (hP.prodMk (hb.prodMk (hk.prodMk hy)))
 
+/-- The round map after the observation is measurable for any family of regions `Keps` with a measurable graph. -/
+theorem df2NextAP_measurable (p : Df2OPar) (n : ℕ) (Keps : PgSp d → Set (Fin d → ℝ))
+    (hK : MeasurableSet {q : PgSp d × (Fin d → ℝ) | q.2 ∈ Keps q.1}) :
+    Measurable fun x : PgSp d × Df2St d × (Fin d → ℝ) × ℝ =>
+      df2NextAP apCall p n (Keps x.1) x.2.1 x.2.2.1 (x.2.1.A *ᵥ x.2.2.1) x.2.2.2 := by
+  simp only [nextE_eq]
+  unfold nextE
+  dsimp only
+  refine Measurable.ite ?_ measurable_const ?_
+  · refine mset_or (mset_le ?_ measurable_const) (mset_le ?_ measurable_const) <;> fun_prop
+  refine Measurable.ite ?_ measurable_const ?_
+  · refine mset_or (mset_lt measurable_const ?_) (mset_lt measurable_const ?_) <;> fun_prop
+  refine Measurable.ite ?_ measurable_const ?_
+  · refine mset_lt measurable_const ?_; fun_prop
+  refine meas_optElim ?_ measurable_const ?_
+  · refine meas_apCall _ ?_ _ _ _ _ _ _ ?_ ?_ ?_ ?_ ?_ ?_
+    · exact graphMeas_ite_bool (by fun_prop) (graphMeas_comp hK (by fun_prop))
+        (graphMeas_sub (graphMeas_comp hK (by fun_prop)) (by fun_prop) _)
+    all_goals fun_prop
+  refine Measurable.ite ?_ measurable_const ?_
+  · refine mset_le ?_ measurable_const; fun_prop
+  refine Measurable.ite ?_ measurable_const ?_
+  · refine mset_lt measurable_const ?_; fun_prop
+  refine meas_optElim ?_ measurable_const ?_
+  · refine meas_apCall _ ?_ _ _ _ _ _ _ ?_ ?_ ?_ ?_ ?_ ?_
+    · exact graphMeas_sub (graphMeas_comp hK (by fun_prop)) (by fun_prop) _
+    all_goals fun_prop
+  exact meas_run (meas_st_mk measurable_const (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) measurable_const)
+
 end
+
+/-- (L1) for `apCall`: `Df2ApCallMeas` of `Df2Layer2.lean`. -/
+theorem df2ApCallMeas : Df2ApCallMeas := by
+  intro d n δ K _ hK _
+  exact df2NextAP_measurable (df2oPar d n δ) n
+    (fun Ps => df2KepsOf (df2Kp K Ps (df2oPar d n δ).R) (df2oPar d n δ).eps) (keps_graph K hK _ _)
 
 end AdversarialBco.Poly.ApMeas

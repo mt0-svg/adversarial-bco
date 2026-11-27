@@ -52,9 +52,6 @@ noncomputable def R (d : ℕ) : ℝ := 134 * d * Real.sqrt (Real.log (2 * d + 2)
 /-- `κ_c = η λ/(4 (1 - λ)²)`. -/
 noncomputable def kc (d n : ℕ) : ℝ := eta d n * lam d n / (4 * (1 - lam d n) ^ 2)
 
-/-- `Lgb = ln 14 + 5 Le/144`. -/
-noncomputable def Lgb (d n : ℕ) : ℝ := Real.log 14 + 5 * Le d n / 144
-
 /-- `ℓe = size N`, the binary length of `N`. -/
 def le (d n : ℕ) : ℕ := (NeN d n).size
 
@@ -140,9 +137,6 @@ theorem bud_kc (d n : ℕ) (hd : 1 ≤ d) (hn : 1 ≤ n) : BLP.Bud.kc d n = kc d
   rw [BLP.Bud.kc, hk, hk0, ← BLP.Bud.eta, ← BLP.Bud.lam, bud_eta d n hd hn, bud_lam d n hd hn, kc,
     div_eq_mul_inv, div_eq_mul_inv, mul_inv]
   ring
-
-theorem bud_Lgb (d n : ℕ) (hd : 1 ≤ d) (hn : 1 ≤ n) : BLP.Bud.Lgb d n = Lgb d n := by
-  rw [BLP.Bud.Lgb, bud_Le d n hd hn, Lgb]
 
 /-- In `RunCase`, `ε ≤ 1/4`. -/
 theorem eps_le_of_runCase (d n : ℕ) (hd : 1 ≤ d) (hn : 1 ≤ n) (h : RunCase d n) : eps d n ≤ 1 / 4 := by

@@ -127,23 +127,6 @@ def EllOut {d : ℕ} (B : EllBlk) (r : Option (Fin d → ℤ)) (e : ℕ) (σ : E
   | none => σ.sc B.o = 0
   | some x => σ.sc B.o = 1 ∧ σ.sc (B.o + 1) = e ∧ ∀ j : Fin d, σ.arr B.aW j = x j
 
-/-- **Interface II, the projection routine.** One command `xell L B rowc` computes `ellRI I`, the point over
-`2^(ellExp I)`, for every `d ≥ 1`, every problem `I` and every row command `rowc` for `I`. Work term: within
-`C * (d + m + ellSz I + Kr + 1) ^ k` units, under `C * (d + m + ellSz I + 1) ^ k ≤ ℓ` (magnitudes) and
-`C * (d + m + ellSz I + 1) ^ k < 2 ^ ℓa` (registers). It reads no coin and changes only its block and the row
-command's own cells. -/
-def EllRule : Prop :=
-  ∃ (xell : Layout → EllBlk → XCmd → XCmd) (C k nS nN nA : ℕ),
-    ∀ (d : ℕ) (L : Layout) (X : XCtx d) (ℓa ℓ : ℕ) (B : EllBlk) (I : EllI d) (rowc : XCmd)
-      (Ctx : Env d → Prop) (SR NR AR : ℕ → Prop) (Kr : ℕ) (σ : Env d),
-      1 ≤ d → LayOK L d ℓa → B.OK L nS nN nA → B.Avoid SR NR AR →
-      RowProv L X ℓa ℓ I B rowc Ctx SR NR AR Kr → CtxOK B Ctx SR NR AR →
-      EllIn B I σ → Ctx σ →
-      C * (d + I.m + ellSz I + 1) ^ k ≤ ℓ → C * (d + I.m + ellSz I + 1) ^ k < 2 ^ ℓa →
-      XRunsB L X ℓa ℓ (xell L B rowc) σ (C * (d + I.m + ellSz I + Kr + 1) ^ k) (fun σ' =>
-        EllOut B (ellRI I) (ellExp I) σ' ∧ σ'.draws = σ.draws ∧
-        FrameA (fun y => B.o ≤ y ∨ SR y) (fun j => B.rE ≤ j ∨ NR j) (fun b _ => B.aW ≤ b ∨ AR b) σ σ')
-
 /-! ## The frame centre and the position -/
 
 /-- The block of a prologue routine: the input registers `rd` (`d`), `rm` (`m`); the input slot `sn` (`n`: a register
@@ -190,25 +173,5 @@ def FrameRule : Prop :=
       XRunsB L (ctxOf w n m A b) ℓa ℓ (xframe L B) σ (C * (d + m + (frMhat A b).size + 1) ^ k) (fun σ' =>
         PtIn σ' B.aW (C * (d + m + (frMhat A b).size + 1) ^ k) (frameQ d n m A b) ∧ σ'.draws = σ.draws ∧
         FrameA (fun y => B.o ≤ y) (fun j => B.rE ≤ j) (fun b _ => B.aW ≤ b) σ σ')
-
-/-- **Interface II, the position.** One command `xtri L B` computes `posQ d n m A b` on the coins `cs (draws + k)`,
-`k < K0Q d n`, from the input rows, `n` in the slot `sn` and the frame centre in the array `aC` (in the form of the
-play leaf, integers below `2^s`), into the slot `o` and the arrays `aW`, `aW + 1` (`PosIn`), its integers below
-`2^(C W^k)`, and reads exactly `K0Q d n` coins. Work term: `W = d + m + size n + size M̂ + s + 1`; within `C * W ^ k`
-units, under `C * W ^ k ≤ ℓ` and `C * W ^ k < 2 ^ ℓa`. It changes only its block and the count of draws. -/
-def TriRule : Prop :=
-  ∃ (xtri : Layout → PrBlk → XCmd) (C k nS nN nA : ℕ),
-    ∀ (d : ℕ) (L : Layout) (w : BitRAM.World d) (n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ)
-      (ℓa ℓ s : ℕ) (B : PrBlk) (σ : Env d),
-      1 ≤ d → 1 ≤ n → LayOK L d ℓa → B.OK L nS nN nA → σ.nat B.rd = d → σ.nat B.rm = m →
-      σ.sc B.sn = n → PtIn σ B.aC s (frameQ d n m A b) →
-      C * (d + m + n.size + (frMhat A b).size + s + 1) ^ k ≤ ℓ →
-      C * (d + m + n.size + (frMhat A b).size + s + 1) ^ k < 2 ^ ℓa →
-      XRunsB L (ctxOf w n m A b) ℓa ℓ (xtri L B) σ (C * (d + m + n.size + (frMhat A b).size + s + 1) ^ k)
-        (fun σ' =>
-          PosIn σ' B.o B.aW (C * (d + m + n.size + (frMhat A b).size + s + 1) ^ k)
-            (posQ d n m A b fun j => w.cs (σ.draws + j)) ∧
-          σ'.draws = σ.draws + K0Q d n ∧
-          FrameA (fun y => B.o ≤ y) (fun j => B.rE ≤ j) (fun b _ => B.aW ≤ b) σ σ')
 
 end AdversarialBco.Bit.Transfer

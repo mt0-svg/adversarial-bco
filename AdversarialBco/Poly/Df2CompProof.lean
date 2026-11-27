@@ -20,6 +20,7 @@ confidence of an epoch against the scale, `0 < log(1/δ_e) ≤ 25 log(2dn/δ)` (
 
 open MeasureTheory ProbabilityTheory
 open AdversarialBco.RealRAM
+open AdversarialBco.Conj1Arith (pgN clampNSRoutine)
 
 namespace AdversarialBco.Poly
 
@@ -165,6 +166,48 @@ theorem comp_thresh (p : Df2OPar) (d n : ℕ) (δ : ℝ) (H : RowHyp p d n) (hδ
       · norm_num
     _ = 10 ^ 22 * (d * s) * t * Λ ^ 5 := by ring
 
+theorem comp_trivial (TR : Df2Trivial) (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n)
+    (hδ0 : 0 < δ) (hδ1 : δ < 1) (h : 1 / 2 < (df2oPar d n δ).eps) :
+    (n : ℝ) ≤ 10 ^ 22 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n * Real.log (2 * d * n / δ) ^ 5 := by
+  have hd1 : (1 : ℝ) ≤ d := by exact_mod_cast hd
+  have hn1 : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  obtain ⟨hpos, hle⟩ := log_inv_de_le d n δ hd1 hn1 hδ0 hδ1
+  set Λ := Real.log (2 * d * n / δ) with hΛ
+  set L := (df2oPar d n δ).Le with hL
+  have hLdef : L = 36 * Real.log (1 / (4 * min (δ / 3) (Real.exp (-14) / ((d : ℝ) * n) ^ 3) / (5 * n))) := by
+    rw [hL]; simp only [df2oPar, df2C0]
+  have hL0 : 0 < L := by rw [hLdef]; positivity
+  have hLΛ : L ≤ 900 * Λ := by rw [hLdef]; linarith
+  have heps : (df2oPar d n δ).eps = 20 * 725 * (d * Real.sqrt d) * L ^ 5 / Real.sqrt n := by
+    rw [hL]; simp only [df2oPar, df2oClam]
+  have hsn : 0 < Real.sqrt n := Real.sqrt_pos.mpr (by linarith)
+  have hsd : 0 ≤ Real.sqrt d := Real.sqrt_nonneg _
+  -- `√n < 29000 d √d L⁵`, hence `n < 4 · 14500² d³ L¹⁰`
+  have h1 : Real.sqrt n < 29000 * (d * Real.sqrt d) * L ^ 5 := by
+    rw [heps, lt_div_iff₀ hsn] at h; linarith
+  have h2 : (n : ℝ) < 4 * 14500 ^ 2 * (d : ℝ) ^ 3 * L ^ 10 := by
+    have hsq : Real.sqrt n ^ 2 = n := Real.sq_sqrt (by linarith)
+    have hsqd : Real.sqrt d ^ 2 = d := Real.sq_sqrt (by linarith)
+    have := pow_lt_pow_left₀ h1 hsn.le (two_ne_zero)
+    rw [hsq] at this
+    calc (n : ℝ) < (29000 * (d * Real.sqrt d) * L ^ 5) ^ 2 := this
+      _ = 4 * 14500 ^ 2 * (d : ℝ) ^ 3 * L ^ 10 := by
+        rw [show (29000 * (d * Real.sqrt d) * L ^ 5) ^ 2 = 29000 ^ 2 * d ^ 2 * Real.sqrt d ^ 2 * L ^ 10 by ring,
+          hsqd]; ring
+  have h3 := TR d n 14500 L hd1 hn1 (by norm_num) hL0 h2
+  have hL5 : L ^ 5 ≤ (900 * Λ) ^ 5 := pow_le_pow_left₀ hL0.le hLΛ 5
+  have hΛ0 : 0 ≤ Λ := by
+    have : 0 < L := hL0
+    linarith
+  have hd32 : 0 ≤ (d : ℝ) ^ ((3 : ℝ) / 2) := by positivity
+  calc (n : ℝ) ≤ 2 * 14500 * (d : ℝ) ^ ((3 : ℝ) / 2) * L ^ 5 * Real.sqrt n := h3
+    _ ≤ 2 * 14500 * (d : ℝ) ^ ((3 : ℝ) / 2) * (900 * Λ) ^ 5 * Real.sqrt n := by gcongr
+    _ = 2 * 14500 * 900 ^ 5 * ((d : ℝ) ^ ((3 : ℝ) / 2) * Real.sqrt n * Λ ^ 5) := by ring
+    _ ≤ 10 ^ 22 * ((d : ℝ) ^ ((3 : ℝ) / 2) * Real.sqrt n * Λ ^ 5) := by
+      gcongr
+      norm_num
+    _ = 10 ^ 22 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n * Λ ^ 5 := by ring
+
 /-! ## The parameters -/
 
 theorem par_δ1_pos (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) : 0 < (df2oPar d n δ).δ1 := by
@@ -176,6 +219,55 @@ theorem par_δ1_pos (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 :
   exact lt_min (by positivity) (by positivity)
 
 theorem par_δ1_le (d n : ℕ) (δ : ℝ) : (df2oPar d n δ).δ1 ≤ δ / 3 := min_le_left _ _
+
+theorem comp_prob (d n : ℕ) (δ : ℝ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) :
+    2 * (df2oPar d n δ).δ1 + n * (149 / 168 * (df2oPar d n δ).δe) + (df2oPar d n δ).δe / 7 ≤ δ := by
+  have h0 := par_δ1_pos d n δ hd hn hδ0
+  have h1 := par_δ1_le d n δ
+  have hn1 : (1 : ℝ) ≤ n := by exact_mod_cast hn
+  have he : (df2oPar d n δ).δe = 4 * (df2oPar d n δ).δ1 / (5 * n) := rfl
+  rw [he]
+  have e1 : (n : ℝ) * (149 / 168 * (4 * (df2oPar d n δ).δ1 / (5 * n))) = 596 / 840 * (df2oPar d n δ).δ1 := by
+    field_simp
+    ring
+  have e2 : 4 * (df2oPar d n δ).δ1 / (5 * n) / 7 ≤ 4 * (df2oPar d n δ).δ1 / 35 := by
+    rw [div_div, div_le_div_iff₀ (by positivity) (by norm_num)]
+    nlinarith
+  rw [e1]
+  linarith
+
+/-! ## The plays of DJ and the trivial bound -/
+
+theorem df2oPlay_mem (n : ℕ) (r0 R0 δ : ℝ) (w : World d) (h0 : (0 : E d) ∈ w.K) (t : ℕ) :
+    df2oPlay d n r0 R0 δ w t ∈ w.K := by
+  unfold df2oPlay df2oRoundAt
+  rcases df2oMode d n r0 R0 δ w t with _ | _ | st
+  all_goals simp only [df2Round]
+  all_goals first
+    | exact h0
+    | (split_ifs with h
+       · exact h
+       · exact h0)
+
+theorem regret_le_n (K : Set (E d)) (n : ℕ) (f : ℕ → E d → ℝ) (hf : f ∈ Advs K n) (x : ℕ → E d)
+    (hx : ∀ t < n, x t ∈ K) (hK : K.Nonempty) : regretPts K f x n ≤ n := by
+  unfold regretPts
+  have h1 : ∑ t ∈ Finset.range n, f t (x t) ≤ ∑ t ∈ Finset.range n, (1 : ℝ) :=
+    Finset.sum_le_sum fun t ht => ((hf t (Finset.mem_range.mp ht)).2 _ (hx t (Finset.mem_range.mp ht))).2
+  have h2 : 0 ≤ sInf ((fun y => ∑ t ∈ Finset.range n, f t y) '' K) := by
+    apply le_csInf (hK.image _)
+    rintro _ ⟨y, hy, rfl⟩
+    exact Finset.sum_nonneg fun t ht => ((hf t (Finset.mem_range.mp ht)).2 _ hy).1
+  simp only [Finset.sum_const, Finset.card_range, nsmul_eq_mul, mul_one] at h1
+  linarith
+
+theorem df2oOmega_measurable (d n : ℕ) (r0 R0 δ1 : ℝ) : Measurable (df2oOmega d n r0 R0 δ1) := by
+  unfold df2oOmega
+  refine measurable_pi_iff.mpr fun i => measurable_pi_iff.mpr fun r => ?_
+  refine Measurable.prodMk (measurable_pi_iff.mpr fun k => ?_)
+    (measurable_pi_iff.mpr fun v => measurable_pi_iff.mpr fun k => ?_)
+  · exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_iff.mpr fun c => measurable_pi_apply _)
+  · exact (PiLp.continuous_toLp 2 _).measurable.comp (measurable_pi_iff.mpr fun c => measurable_pi_apply _)
 
 end Layer2
 

@@ -127,11 +127,6 @@ def offOf (d m : ℕ) : ℕ := 3 + 2 * (d + 1) * m
 def prologue : List Instr :=
   [.const T1 1, .add T2 0 T1, .mul T2 T2 2, .add T2 T2 T2, .const T1 3, .add TO T2 T1]
 
-/-- The program: the prologue, the code of `setup`, then forever: zero the scratch cells and run `round`. -/
-def prog (setup round : XCmd) : List Instr :=
-  prologue ++ (xtr setup 6 ++ (Instr.const T1 0 :: Instr.const T2 0 ::
-    (xtr round (6 + xtlen setup + 2) ++ [Instr.jmp (6 + xtlen setup)])))
-
 /-- The real state the run starts from: no register, no cell, no draw, no round. -/
 def zeroState : RealRAM.State d where
   pc := 0
@@ -151,35 +146,6 @@ theorem toE_zero : toE (fun _ : Fin d => (0 : ℚ)) = 0 := by
 section Prog
 
 variable {setup round : XCmd}
-
-theorem prog_code (setup round : XCmd) :
-    B.CodeAt (prog setup round) 0 prologue ∧ B.CodeAt (prog setup round) 6 (xtr setup 6) ∧
-      (prog setup round)[6 + xtlen setup]? = some (.const T1 0) ∧
-      (prog setup round)[6 + xtlen setup + 1]? = some (.const T2 0) ∧
-      B.CodeAt (prog setup round) (6 + xtlen setup + 2) (xtr round (6 + xtlen setup + 2)) ∧
-      (prog setup round)[6 + xtlen setup + 2 + xtlen round]? = some (.jmp (6 + xtlen setup)) := by
-  have hfull : B.CodeAt (prog setup round) 0 (prog setup round) := fun i _ => by rw [Nat.zero_add]
-  have r1 : B.CodeAt (prog setup round) 6 _ := hfull.append_right
-  have r2 := r1.append_right
-  rw [length_xtr] at r2
-  have r3 := r2.cons_tail.cons_tail
-  have r4 := r3.append_right
-  rw [length_xtr] at r4
-  exact ⟨hfull.append_left, r1.append_left, r2.cons_head, r2.cons_tail.cons_head, r3.append_left, r4.cons_head⟩
-
-/-- Zeroing the scratch cells keeps the simulation, in two steps of cost `5`. -/
-theorem zero_scratch {P : List Instr} {X : XCtx d} {s : RealRAM.State d} {t : State d} {o : ℕ}
-    (h1 : P[o]? = some (.const T1 0)) (h2 : P[o + 1]? = some (.const T2 0)) (hpc : t.pc = o) (hs : XSim X s t) :
-    ∃ t', run P X.wb t 2 = t' ∧ t'.pc = o + 2 ∧ XSim X s t' ∧ t'.mem T1 = 0 ∧ t'.mem T2 = 0 ∧
-      t'.cost = t.cost + 5 := by
-  obtain ⟨t1, e1, p1, m1, c1, s1⟩ := B.const_spec (w := X.wb) h1 hpc
-  obtain ⟨t2, e2, p2, m2, c2, s2⟩ := B.const_spec (w := X.wb) h2 p1
-  refine ⟨t2, by rw [show (2 : ℕ) = 1 + 1 from rfl, B.run_add, B.run_one, B.run_one, e1, e2], p2, ?_, ?_, ?_, ?_⟩
-  · refine hs.scratch (fun c hc1 hc2 => ?_) (s1.trans s2).1 (s1.trans s2).2.1 (s1.trans s2).2.2
-    rw [m2, update_of_ne hc2, m1, update_of_ne hc1]
-  · rw [m2, update_of_ne T1_ne_T2, m1, update_self]
-  · rw [m2, update_self]
-  · rw [c2, c1, len_T1, len_T2, show len (0 : ℤ) = 0 from rfl]
 
 /-- The prologue: from the initial state, six steps set `TO` to the offset and simulate the zero state, at cost at most
 `xstepCost ℓa ℓ`. -/
@@ -265,10 +231,6 @@ def costP (ℓa ℓ Ks : ℕ) : ℕ := xstepCost ℓa ℓ + Ks * xstepCost ℓa 
 /-- The cost of a round of at most `Kr` units, with the jump back and the zeroing. -/
 def costR (ℓa ℓ Kr : ℕ) : ℕ := Kr * xstepCost ℓa ℓ + 6
 
-/-- The space of a checkpoint. -/
-def ckSpace (d n m M ℓa ℓ : ℕ) : ℕ :=
-  (offOf d m + 2 * 2 ^ ℓa) * (2 * ℓa + ℓ + (len d + len n + len m + len M) + 3)
-
 theorem input_spaceLE {n m M : ℕ} {A : Matrix (Fin m) (Fin d) ℚ} {b : Fin m → ℚ} (hH : RealRAM.HeightLE A b M) :
     SpaceLE (initBit d n m A b) (inSpace d n m M : ℝ) := fun F hF => by
   have := Conj1BitSanity.input_space_nat hH F hF
@@ -279,15 +241,6 @@ theorem input_spaceLE {n m M : ℕ} {A : Matrix (Fin m) (Fin d) ℚ} {b : Fin m 
 noncomputable def gameWorld (P : List Instr) (g : GameBit d) (s0 : State d) : World d :=
   ⟨RealRAM.lossAd g.σ 0 (playedBit P g s0), g.cs⟩
 
-
-theorem costOKBit_mono {P : List Instr} {g : GameBit d} {s0 : State d} {n : ℕ} {B B' : ℝ}
-    (h : CostOKBit P g s0 n B) (hB : B ≤ B') : CostOKBit P g s0 n B' := fun k hk => by
-  obtain ⟨j, h1, h2⟩ := h k hk
-  exact ⟨j, h1, h2.trans (by linarith)⟩
-
-theorem spaceOKBit_mono {P : List Instr} {g : GameBit d} {s0 : State d} {n : ℕ} {B B' : ℝ}
-    (h : SpaceOKBit P g s0 n B) (hB : B ≤ B') : SpaceOKBit P g s0 n B' := fun k hk =>
-  spaceLE_mono (h k hk) hB
 
 end Prog
 

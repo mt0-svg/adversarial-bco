@@ -11,16 +11,9 @@ public import AdversarialBco.Bit.Assembly
 @[expose] public section
 
 /-!
-# The interfaces of the pure BL
+# The objective of BL's call
 
-* `BLLink P R`: the program `P` plays BL's pure plays (`BLP.play R`, Bit/BLPure.lean) on every input of the frozen
-  statement in the case `RunCase`, against every admissible deterministic strategy, on every coin sequence, in every
-  round `t < n`. It is proved for BL's program text in Bit/Transfer/.
-* `O3SpecQ R.ap`: (O3) for the projection routine on BL's call data (`CallQ`, BL's call class with the objective
-  `yᵀPy/2 - f·y`): the projection theorem, part (b).
-* `PosLocal R`: the prologue's position reads only the coins `0, ..., K0 d n - 1`.
-
-`RunOK` of Bit/Assembly.lean for the instance built on `R` is proved from these three.
+`CallQ.obj`: the objective `yᵀPy/2 - f·y` of a call of BL's class (`CallQ`, Bit/BLPure.lean).
 -/
 
 namespace AdversarialBco.Bit.BLP
@@ -50,18 +43,5 @@ def O3SpecQ (ap : ∀ {d : ℕ}, CallQ d → Option (Fin d → ℚ)) : Prop :=
     (D.P.map ((↑) : ℚ → ℝ)).PosDef → (D.H.map ((↑) : ℚ → ℝ)).PosSemidef → 0 < D.e →
       ∃ μ, ap D = some μ ∧ (fun j => (μ j : ℝ)) ∈ D.region ∧
         ∀ x ∈ D.region, D.obj (fun j => (μ j : ℝ)) ≤ D.obj x + D.e
-
-/-- The position of the prologue reads only the coins `0, ..., K0 d n - 1`. -/
-def PosLocal (R : Routines) : Prop :=
-  ∀ (d n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ) (cs cs' : ℕ → Bool),
-    (∀ j < R.K0 d n, cs j = cs' j) → R.pos d n m A b cs = R.pos d n m A b cs'
-
-/-- The program link: on every input of the frozen statement with `ε ≤ 1/4` at BL's
-confidence, against every admissible deterministic strategy and on every coin sequence, the point `P` plays in round
-`t < n` is BL's pure play `BLP.play R` of that round. -/
-def BLLink (P : List Instr) (R : Routines) : Prop :=
-  ∀ (d n m M : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ), InputOK d n m M A b → RunCase d n →
-    ∀ σ : Strategy d, AdmStrat (polytope A b) n σ → ∀ (cs : ℕ → Bool) (t : ℕ), t < n →
-      playedBit P ⟨σ, cs⟩ (initBit d n m A b) t = toE (play R d n m A b σ cs t)
 
 end AdversarialBco.Bit.BLP

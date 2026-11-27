@@ -96,14 +96,6 @@ theorem qn_eps_gen (d n q pF : ℕ) (hn : 1 ≤ n) (LhN : ℤ) :
   rw [hx, qn_up_div _ _ _ hV, epsI]
   congr 1 <;> ring
 
-theorem qn_eps_eq (d n : ℕ) (hn : 1 ≤ n) (LhN : ℤ)
-    (hLh : 36 * (PieceA.L0 d n + PieceA.ee d n) = (LhN : ℚ) / 2 ^ (par d n).q) :
-    qn (par d n).pF (par d n).eps =
-      epsI d (Nat.sqrt (d * 4 ^ (par d n).q)) (Nat.sqrt (n * 4 ^ (par d n).q)) LhN (2 ^ (par d n).pF)
-        (2 ^ (par d n).q) := by
-  rw [PieceA.par_eps, hLh]
-  exact qn_eps_gen d n _ _ hn LhN
-
 
 /-! ## The expression of `ε'` -/
 

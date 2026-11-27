@@ -1,0 +1,8 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeConj1",
+  "solution_module": "AdversarialBco.Conj1.Main",
+  "theorem_names": ["AdversarialBco.theoremConj1Upper", "AdversarialBco.RealRAM.Conj1Sanity.hyps_satisfiable_exists", "AdversarialBco.RealRAM.Conj1Sanity.isProbabilityMeasure_runs", "AdversarialBco.RealRAM.Conj1Sanity.nil_not_costOKAd"],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

@@ -265,4 +265,12 @@ theorem bmUnits_le {B : ℕ} (hB : 1 ≤ B) : bmUnits B ≤ 24 * gsm_prec B ^ 2 
   generalize r ^ 2 = s at h1 ⊢
   omega
 
+/-- At most `1176 B^2` units (`p ≤ 7 B`). -/
+theorem bmUnits_le_sq {B : ℕ} (hB : 1 ≤ B) : bmUnits B ≤ 1176 * B ^ 2 := by
+  have hlB : Nat.size B ≤ B := Nat.size_le.2 Nat.lt_two_pow_self
+  have hp : gsm_prec B ≤ 7 * B := by unfold gsm_prec; omega
+  calc bmUnits B ≤ 24 * gsm_prec B ^ 2 := bmUnits_le hB
+    _ ≤ 24 * (7 * B) ^ 2 := Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hp 2)
+    _ = 1176 * B ^ 2 := by ring
+
 end AdversarialBco.Bit.Transfer

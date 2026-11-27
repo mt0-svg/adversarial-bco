@@ -10,66 +10,16 @@ public import AdversarialBco.Bit.Transfer.XBLInv
 @[expose] public section
 
 /-!
-# BL's setup on the machine: facts of P3, P5 and the epoch start
+# BL's setup on the machine: facts of P5 and the epoch start
 
-The kept count `keptCnt` of the row loop, read on the integers of the rows (`kept_row_abs`, `beta_row_abs`); the test
-`1/2 < ε'` on the grid (`half_lt_up_iff`); the epoch start on the grid `2^{-p}` (`qn_smul_one`, `onG_smul_one`,
-`onG_rnd_s`, `onG_zero`).
+The test `1/2 < ε'` on the grid (`half_lt_up_iff`); the epoch start on the grid `2^{-p}` (`qn_smul_one`,
+`onG_smul_one`, `onG_rnd_s`, `onG_zero`) and the diagonal cells of a matrix (`diag_iff`); the height `M̂` of the
+input at most `M` (`frMhat_le_M`).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
 
 open AdversarialBco AdversarialBco.Bit AdversarialBco.Bit.BLP Matrix
-
-/-- The kept rows among the first `k`: the count of P3's loop. -/
-def keptCnt {d m : ℕ} (A : Matrix (Fin m) (Fin d) ℚ) : ℕ → ℕ
-  | 0 => 0
-  | k + 1 => keptCnt A k + if h : k < m then (if A ⟨k, h⟩ ≠ 0 then 1 else 0) else 0
-
-theorem bad_iff {d m : ℕ} (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ) (μ : Fin d → ℚ) :
-    (∃ i : Fin (keptIdx A).length, b ((keptIdx A).get i) - A ((keptIdx A).get i) ⬝ᵥ μ ≤ 0) ↔
-      ∃ i : Fin m, A i ≠ 0 ∧ b i - A i ⬝ᵥ μ ≤ 0 := by
-  constructor
-  · rintro ⟨i, hi⟩
-    have mem : (keptIdx A).get i ∈ keptIdx A := List.get_mem (keptIdx A) i
-    rcases (List.mem_filter.mp mem) with ⟨_mem_range, hA⟩
-    have hA' : A ((keptIdx A).get i) ≠ 0 := by simpa using hA
-    refine ⟨(keptIdx A).get i, hA', ?_⟩
-    exact hi
-  · rintro ⟨i, hA, hi⟩
-    have mem_kept : i ∈ keptIdx A := by
-      apply List.mem_filter.mpr
-      exact ⟨List.mem_finRange i, by simpa using hA⟩
-    rcases (List.mem_iff_get.mp mem_kept) with ⟨j, hj⟩
-    refine ⟨j, ?_⟩
-    rw [hj]
-    exact hi
-
-theorem beta_row_abs {d : ℕ} (a : Fin d → ℚ) (β : ℚ) (ra : Fin d → ℤ) (rb P DS : ℤ)
-    (x : Fin d → ℤ) (hP : 0 < P) (hDS : 0 < DS) (hA : ∀ k, (ra k : ℚ) / P = a k) (hb : (rb : ℚ) / P = β) :
-    β - a ⬝ᵥ (fun j => (x j : ℚ) / DS) ≤ 0 ↔ rb * DS - ra ⬝ᵥ x ≤ 0 := by
-  have ha : a = fun k => (ra k : ℚ) / P := by
-    ext k; exact (hA k).symm
-  have hβ : β = (rb : ℚ) / P := hb.symm
-  rw [ha, hβ]
-  have hdot : ((fun k : Fin d => (ra k : ℚ) / P) ⬝ᵥ (fun j : Fin d => (x j : ℚ) / DS)) =
-      ((ra ⬝ᵥ x : ℤ) : ℚ) / ((P : ℚ) * (DS : ℚ)) := by
-    calc
-      ((fun k : Fin d => (ra k : ℚ) / P) ⬝ᵥ (fun j : Fin d => (x j : ℚ) / DS))
-          = ∑ k : Fin d, ((ra k : ℚ) / P) * ((x k : ℚ) / DS) := rfl
-      _ = ∑ k : Fin d, ((ra k : ℚ) * (x k : ℚ)) / ((P : ℚ) * (DS : ℚ)) := by
-        refine Finset.sum_congr rfl (fun k _ => ?_)
-        ring
-      _ = (∑ k : Fin d, (ra k : ℚ) * (x k : ℚ)) / ((P : ℚ) * (DS : ℚ)) := by
-        rw [Finset.sum_div]
-      _ = ((ra ⬝ᵥ x : ℤ) : ℚ) / ((P : ℚ) * (DS : ℚ)) := by
-        simp [dotProduct]
-  rw [hdot]
-  have hP' : (P : ℚ) ≠ 0 := by exact_mod_cast hP.ne.symm
-  have hDS' : (DS : ℚ) ≠ 0 := by exact_mod_cast hDS.ne.symm
-  field_simp [hP', hDS']
-  simp
-  exact_mod_cast Iff.rfl
 
 theorem half_lt_up_iff (k : ℕ) (x : ℚ) :
     1 / 2 < up k x ↔ (2 : ℤ) ^ k < 2 * qn k (up k x) := by
@@ -119,56 +69,6 @@ theorem onG_rnd_s (k : ℕ) (x : ℚ) : OnG k (rnd k x) := by
 theorem onG_zero (k : ℕ) : OnG k 0 ∧ qn k 0 = 0 := by
   unfold OnG qn
   simp
-
-theorem kept_row_abs {d : ℕ} (a : Fin d → ℚ) (ra : Fin d → ℤ) (P : ℤ) (hP : 0 < P)
-    (h : ∀ k, (ra k : ℚ) / P = a k) : a ≠ 0 ↔ 0 < ra ⬝ᵥ ra := by
-  have hP_ne_zero : (P : ℚ) ≠ 0 := by exact_mod_cast hP.ne'
-  have h_zero_iff : ∀ k, a k = 0 ↔ ra k = 0 := by
-    intro k
-    have hk := h k
-    have hdiv : (ra k : ℚ) / (P : ℚ) = a k := hk
-    constructor
-    · intro hak
-      have hzero : (ra k : ℚ) / (P : ℚ) = 0 := by rw [hdiv, hak]
-      rw [div_eq_zero_iff] at hzero
-      rcases hzero with (h' | h')
-      · exact_mod_cast h'
-      · exact (hP_ne_zero h').elim
-    · intro hrak
-      have hrak' : (ra k : ℚ) = 0 := by exact_mod_cast hrak
-      rw [← hdiv, hrak', zero_div]
-  have h_dot_eq_sum : ra ⬝ᵥ ra = ∑ i : Fin d, ra i * ra i := rfl
-  have h_nonneg : ∀ i, 0 ≤ ra i * ra i := fun i => mul_self_nonneg (ra i)
-  constructor
-  · intro ha
-    have ha' : ¬∀ k, a k = 0 := by
-      intro h_all
-      apply ha
-      ext k
-      exact h_all k
-    push Not at ha'
-    rcases ha' with ⟨k, hk⟩
-    have hrak : ra k ≠ 0 := by
-      contrapose! hk
-      exact (h_zero_iff k).mpr hk
-    have hsq_pos : 0 < ra k * ra k := by
-      have hsq := sq_pos_iff.mpr hrak
-      simpa [sq] using hsq
-    have hsum_pos : 0 < ∑ i : Fin d, ra i * ra i :=
-      Finset.sum_pos' (fun i _ => h_nonneg i) ⟨k, Finset.mem_univ k, hsq_pos⟩
-    rw [h_dot_eq_sum]
-    exact hsum_pos
-  · intro hpos
-    rw [h_dot_eq_sum] at hpos
-    by_contra! hzero
-    have hra_zero : ra = 0 := by
-      ext k
-      have hak : a k = 0 := by simpa [hzero] using rfl
-      exact (h_zero_iff k).mp hak
-    have hsum_zero : ∑ i : Fin d, ra i * ra i = 0 := by
-      simp [hra_zero]
-    rw [hsum_zero] at hpos
-    exact lt_irrefl 0 hpos
 
 theorem diag_iff {d : ℕ} (i j : Fin d) :
     (∃ k < d, d * (i : ℕ) + j = 0 + (d + 1) * k) ↔ i = j := by

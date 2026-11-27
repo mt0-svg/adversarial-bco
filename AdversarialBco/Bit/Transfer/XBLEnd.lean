@@ -10,17 +10,16 @@ public import AdversarialBco.Bit.Transfer.XBLCall
 @[expose] public section
 
 /-!
-# The two ends of a round of BL in mode `run` (frozen statements)
+# The end of a round of BL in mode `run` (frozen statement)
 
-* `CommitBL` (R15 COMMIT): the new state `⟨false, μ', A', B', b', k', G', l'⟩` into BL's persistent cells: `μ' = x/2^e`
-  from the output of the projection routine (`EllOut`: `1` in the slot `768`, `e` in `769`, `x` in the array `32`),
-  `A'`, `B'`, `b'`, `G'` from the arrays `26`, `27`, `28`, `29` (numerators on the grid `2^{-p}`, matrices in the cells
-  `d i + j`), `k'`, `l'` from the slots `59`, `63`.
-* `FireBL` (R12 FIRE): the epoch start `init` into BL's persistent cells.
+`CommitBL` (R15 COMMIT): the new state `⟨false, μ', A', B', b', k', G', l'⟩` into BL's persistent cells: `μ' = x/2^e`
+from the output of the projection routine (`EllOut`: `1` in the slot `768`, `e` in `769`, `x` in the array `32`),
+`A'`, `B'`, `b'`, `G'` from the arrays `26`, `27`, `28`, `29` (numerators on the grid `2^{-p}`, matrices in the cells
+`d i + j`), `k'`, `l'` from the slots `59`, `63`.
 
-From `BLInv` in mode `run` with any state, both end in `BLInv` in mode `run` with the new state, at the same round.
+From `BLInv` in mode `run` with any state, it ends in `BLInv` in mode `run` with the new state, at the same round.
 Every value read at most `2^E` in absolute value, `e ≤ E`. Work term `W = d + E + 1`: within `C W^k` units, under
-`C W^k ≤ ℓ` and `C W^k < 2^ℓa`. The commands read no coin and change only the state's slots (`sFirst`, `sDmu`, `sK`,
+`C W^k ≤ ℓ` and `C W^k < 2^ℓa`. The command reads no coin and changes only the state's slots (`sFirst`, `sDmu`, `sK`,
 `sL`), the slots from `26` on, the registers from `8` on and the arrays from `3` on.
 -/
 
@@ -52,14 +51,5 @@ def CommitBL : Prop :=
       XRunsB L X ℓa ℓ (xcom L) σ (C * (d + E + 1) ^ k) (fun σ' =>
         BLInv L n m K0 E cfg (.run ⟨false, fun j => (x j : ℚ) / 2 ^ e, Ap, Bp, bp, kp, Gp, lp⟩) t σ' ∧
         σ'.draws = σ.draws ∧ FrameA SEnd NEnd AEnd σ σ')
-
-/-- **R12 FIRE (frozen).** -/
-def FireBL : Prop :=
-  ∃ (xfire : Layout → XCmd) (C k : ℕ),
-    ∀ (d : ℕ) (L : Layout) (X : XCtx d) (ℓa ℓ n m K0 E t : ℕ) (cfg : Cfg d) (st : St d) (σ : Env d),
-      1 ≤ d → 1 ≤ n → cfg.par = par d n → LayOK L d ℓa → BLLay L → BLInv L n m K0 E cfg (.run st) t σ →
-      C * (d + E + 1) ^ k ≤ ℓ → C * (d + E + 1) ^ k < 2 ^ ℓa →
-      XRunsB L X ℓa ℓ (xfire L) σ (C * (d + E + 1) ^ k) (fun σ' =>
-        BLInv L n m K0 E cfg (.run (init cfg.par d)) t σ' ∧ σ'.draws = σ.draws ∧ FrameA SEnd NEnd AEnd σ σ')
 
 end AdversarialBco.Bit.Transfer.BLM

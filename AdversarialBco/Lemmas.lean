@@ -561,6 +561,146 @@ theorem AdversarialBco.hasDerivAt_log_det {n : Type*} [Fintype n] [DecidableEq n
   -- Now rewrite back using h_log_input
   simpa [h_log_input] using h_log_deriv_simp
 
+open Filter Set in
+/-- Farm task b6/sg_exists. -/
+theorem AdversarialBco.sg_exists {d : ℕ} (F : EuclideanSpace ℝ (Fin d) → ℝ) (hF : ConvexOn ℝ Set.univ F) (L : NNReal)
+    (hL : LipschitzWith L F) (x : EuclideanSpace ℝ (Fin d)) :
+    ∃ s : EuclideanSpace ℝ (Fin d), ‖s‖ ≤ L ∧ ∀ z, F x + inner ℝ s (z - x) ≤ F z := by
+  let E := EuclideanSpace ℝ (Fin d)
+  -- The strict epigraph U = {(z, t) | F z < t}
+  let U : Set (E × ℝ) := {p | F p.1 < p.2}
+  have hU_open : IsOpen U := by
+    have h_cont : Continuous F := hL.continuous
+    exact isOpen_lt (h_cont.comp continuous_fst) continuous_snd
+  have hU_convex : Convex ℝ U := by
+    have := hF.convex_strict_epigraph
+    simpa [U, mem_univ] using this
+  have hx_notin_U : (x, F x) ∉ U := by
+    dsimp [U]
+    exact lt_irrefl (F x)
+  -- Apply geometric Hahn-Banach separation
+  obtain ⟨φ, hφ⟩ := geometric_hahn_banach_open_point hU_convex hU_open hx_notin_U
+  -- φ : StrongDual ℝ (E × ℝ), i.e., (E × ℝ) →L[ℝ] ℝ
+  -- hφ : ∀ a ∈ U, φ a < φ (x, F x)
+  -- Decompose φ: let ℓ = φ ∘ (inl ℝ E ℝ) and c = φ (0, 1)
+  let ℓ : E →L[ℝ] ℝ := φ ∘L (ContinuousLinearMap.inl ℝ E ℝ)
+  let c : ℝ := φ (0, 1)
+  have hφ_decomp : ∀ (z : E) (t : ℝ), φ (z, t) = ℓ z + c * t := by
+    intro z t
+    calc
+      φ (z, t) = φ ((z, 0) + (0, t)) := by simp
+      _ = φ (z, 0) + φ (0, t) := φ.map_add (z, 0) (0, t)
+      _ = φ ((ContinuousLinearMap.inl ℝ E ℝ) z) + φ (0, t) := by simp
+      _ = ℓ z + φ (0, t) := rfl
+      _ = ℓ z + φ (t • (0, 1)) := by simp
+      _ = ℓ z + (t • φ (0, 1)) := by rw [φ.map_smul t (0, 1)]
+      _ = ℓ z + t * c := by simp [c, smul_eq_mul]
+      _ = ℓ z + c * t := by ring
+  -- Show c < 0
+  have hc_neg : c < 0 := by
+    by_contra! hc_nonneg
+    -- hc_nonneg : c ≥ 0
+    have hmem : (x, F x + 1) ∈ U := by
+      dsimp [U]
+      exact lt_add_of_pos_right (F x) (by norm_num : (0 : ℝ) < 1)
+    have h := hφ (x, F x + 1) hmem
+    rw [hφ_decomp x (F x + 1), hφ_decomp x (F x)] at h
+    -- h : ℓ x + c * (F x + 1) < ℓ x + c * F x
+    -- i.e., ℓ x + c * F x + c < ℓ x + c * F x
+    -- so c < 0, contradiction with hc_nonneg : 0 ≤ c
+    have hc_lt : c < 0 := by
+      linarith
+    have : ¬ c < 0 := by linarith
+    exact this hc_lt
+  -- Taking t → F z⁺ gives ℓ z + c * F z ≤ ℓ x + c * F x
+  have h_ineq : ∀ (z : E), ℓ z + c * F z ≤ ℓ x + c * F x := by
+    intro z
+    have h_ineq' : ∀ᶠ t in nhdsWithin (F z) (Ioi (F z)), ℓ z + c * t ≤ ℓ x + c * F x := by
+      filter_upwards [self_mem_nhdsWithin] with t ht
+      have hmem : (z, t) ∈ U := by
+        dsimp [U]
+        -- ht : t ∈ Ioi (F z), which means F z < t
+        exact ht
+      have h := hφ (z, t) hmem
+      rw [hφ_decomp z t, hφ_decomp x (F x)] at h
+      linarith
+    have h_tendsto : Tendsto (fun t => ℓ z + c * t) (nhdsWithin (F z) (Ioi (F z))) (nhds (ℓ z + c * F z)) := by
+      refine ((continuous_const.add (continuous_const.mul continuous_id))).continuousWithinAt
+    exact le_of_tendsto h_tendsto h_ineq'
+  -- Rearrange: ℓ (z - x) ≤ c * (F x - F z)
+  -- Multiply by (-c⁻¹) > 0 to get: (-c⁻¹ • ℓ) (z - x) ≤ F z - F x
+  have h_sub_ineq : ∀ (z : E), ((-c⁻¹ : ℝ) • ℓ) (z - x) ≤ F z - F x := by
+    intro z
+    have h := h_ineq z
+    have h_sub : ℓ (z - x) ≤ c * (F x - F z) := by
+      calc
+        ℓ (z - x) = ℓ z - ℓ x := by simp
+        _ ≤ (ℓ x + c * F x) - c * F z - ℓ x := by linarith
+        _ = c * (F x - F z) := by ring
+    have hc_ne : c ≠ 0 := by linarith
+    have h_nonneg : 0 ≤ -c⁻¹ := by
+      have h_inv_neg : c⁻¹ < 0 := inv_lt_zero.mpr hc_neg
+      linarith
+    calc
+      ((-c⁻¹ : ℝ) • ℓ) (z - x) = (-c⁻¹ : ℝ) * ℓ (z - x) := by simp
+      _ ≤ (-c⁻¹ : ℝ) * (c * (F x - F z)) := mul_le_mul_of_nonneg_left h_sub h_nonneg
+      _ = ((-c⁻¹ : ℝ) * c) * (F x - F z) := by ring
+      _ = (-1) * (F x - F z) := by field_simp [hc_ne]
+      _ = F z - F x := by ring
+  -- Riesz representation: there exists s such that ((-c⁻¹) • ℓ) w = inner ℝ s w
+  let ψ : E →L[ℝ] ℝ := -c⁻¹ • ℓ
+  have h_riesz : ∃ s : E, ∀ w : E, ψ w = inner ℝ s w := by
+    let s := (InnerProductSpace.toDual ℝ E).symm ψ
+    refine ⟨s, λ w => ?_⟩
+    calc
+      ψ w = ((InnerProductSpace.toDual ℝ E) s) w := by
+        simp [s, ψ]
+      _ = inner ℝ s w := by rw [InnerProductSpace.toDual_apply_apply]
+  obtain ⟨s, hs⟩ := h_riesz
+  -- Now show ‖s‖ ≤ L
+  have h_norm : ‖s‖ ≤ (L : ℝ) := by
+    by_cases hs_zero : s = 0
+    · subst hs_zero; simp
+    · have h_pos : 0 < ‖s‖ := norm_pos_iff.mpr hs_zero
+      have h_ineq_s : ψ s ≤ (L : ℝ) * ‖s‖ := by
+        have h_sub := h_sub_ineq (x + s)
+        -- h_sub : ψ ((x + s) - x) ≤ F (x + s) - F x
+        -- (x + s) - x = s
+        have h_sub_simp : ((-c⁻¹ : ℝ) • ℓ) ((x + s) - x) = ψ s := by
+          dsimp [ψ]
+          simp
+        rw [h_sub_simp] at h_sub
+        -- h_sub : ψ s ≤ F (x + s) - F x
+        have h_lip : F (x + s) - F x ≤ (L : ℝ) * ‖s‖ := by
+          have hle := hL.le_add_mul (x + s) x
+          rw [dist_eq_norm] at hle
+          have : (x + s) - x = s := by abel
+          rw [this] at hle
+          linarith
+        have h_inner : ψ s = inner ℝ s s := hs s
+        rw [h_inner] at h_sub
+        have h_norm_sq : inner ℝ s s = ‖s‖ ^ 2 := real_inner_self_eq_norm_sq _
+        rw [h_norm_sq] at h_sub
+        -- h_sub : ‖s‖² ≤ F (x + s) - F x
+        -- h_lip : F (x + s) - F x ≤ (L : ℝ) * ‖s‖
+        linarith
+      -- Now h_ineq_s : ψ s ≤ (L : ℝ) * ‖s‖
+      -- And ψ s = inner ℝ s s = ‖s‖²
+      have h_inner : ψ s = inner ℝ s s := hs s
+      rw [h_inner] at h_ineq_s
+      have h_norm_sq : inner ℝ s s = ‖s‖ ^ 2 := real_inner_self_eq_norm_sq _
+      rw [h_norm_sq] at h_ineq_s
+      -- h_ineq_s : ‖s‖² ≤ (L : ℝ) * ‖s‖
+      -- Since ‖s‖ > 0, divide by ‖s‖ to get ‖s‖ ≤ L
+      nlinarith
+  -- Finally, combine everything
+  refine ⟨s, h_norm, λ z => ?_⟩
+  have h := h_sub_ineq z
+  -- h : ψ (z - x) ≤ F z - F x
+  rw [hs (z - x)] at h
+  -- h : inner ℝ s (z - x) ≤ F z - F x
+  linarith
+
 
 open MeasureTheory in
 theorem AdversarialBco.convexOn_convolution {d : ℕ} (F : EuclideanSpace ℝ (Fin d) → ℝ) (hF : ConvexOn ℝ Set.univ F)
