@@ -13,33 +13,15 @@ public import Mathlib.Probability.Distributions.Bernoulli
 @[expose] public section
 
 /-!
-# Sanity checks of the statement `TheoremConj1UpperBit` (StatementConj1Bit.lean, StatementBitRAM.lean)
-
-The witnesses stated in the challenge ChallengeConj1BitHP.lean (the hypotheses of `TheoremConj1UpperBitHP` are those of
-`TheoremConj1UpperBit`) are proved here under the same names.
+# Helper lemmas for the statement `TheoremConj1UpperBit` (StatementConj1Bit.lean, StatementBitRAM.lean)
 
 * The coins: `coinLaw` is a probability measure (`isProbabilityMeasure_coinLaw`), and so is the stream
   (`isProbabilityMeasure_coinStream`), so `Measure.infinitePi` is the true product and does not take its junk value
   `0`.
-* The input is in the memory as the docstring says: `d`, `n`, `m` in the cells `0`, `1`, `2` (`inputMem_small`), the
-  numerator and the denominator in lowest terms of the entry `(i, j)` of the rows `(A i, b i)` in the cells
-  `3 + 2 e` and `4 + 2 e`, `e = (d + 1) i + j` (`inputMem_cell`, `inputMem_num`, `inputMem_den`), `0` below `0` and
-  above the data (`inputMem_neg`, `inputMem_high`).
-* The hypotheses hold together in every dimension `d ≥ 1`: the cube `[-1, 1]^d` of
-  AdversarialBco/Conj1Poly/Sanity.lean with `m = 2 d` rows, `M = 1`, `n = 2 d`, the seed space `Bool` with the fair
-  coin law, and the adversary that plays the constant loss `1` or `0` according to its seed (`hyps_satisfiable`, and
-  `hyps_satisfiable_exists`, in the challenge, with a strategy that depends on the seed).
-* The adversary class: a deterministic strategy is a randomised adversary on the seed space `Unit` as soon as its
-  losses are admissible, with no measurability asked (`randAdv_unit`, in the challenge).
-* The existential is not witnessed for free: the empty program fails the cost clause on every input with `n ≥ 1`
-  (`nil_not_costOKBit`, in the challenge).
-* The feedback the program reads is the loss of the regret: the run against a strategy is the run of the machine in
-  the fixed world of the losses that the strategy chose on that run, `lossAd σ 0 (playedBit ...)`, the losses of
-  `regretPts` in the statement (`runBit_eq_run`). The loss of round `t` reads the points before `t` only
-  (`lossAd_prefix`), a step reads the world through the last feedback and the coins only (`step_congr`), and the point
-  of a round, once played, never changes (`runBit_mono`, `playedBit_eq`).
-* The space clause does not clash with the input: the input, which is in the memory and counted, has space at most
-  `(3 + 2 (d + 1) m) (len (3 + 2 (d + 1) m) + len d + len n + len m + len M)` (`input_space_nat`).
+* The loss of round `t` and the observations of the rounds before `t` read the points before `t` only (`lossAd_prefix`,
+  `obsAd_prefix`); a step never decreases the number of rounds and never changes the point of a round already played
+  (`step_rounds_pts`), so the point of a round, once played, never changes (`runBit_succ`, `runBit_mono`).
+* The bit length: `len_le_self`, `len_mono` and `len_mul_log_le`.
 -/
 
 open MeasureTheory ProbabilityTheory

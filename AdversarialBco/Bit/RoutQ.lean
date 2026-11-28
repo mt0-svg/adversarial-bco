@@ -36,10 +36,10 @@ Choices against the procedures of the paper, none of which changes the statement
   constraint is multiplied by the product `D_H` of the denominators of `H`, `g`, `ℓ`; the objective by the product
   `D_P` of the denominators of `P`, with `f̂ = D_f D_P f`, `D_f` the product of the denominators of `f`, and the
   accuracy `e` by `D_P`.
-* `triPosQ` mirrors `triU` (Bit/TriLeaves.lean) on every row: the quotient `α_k·z/β_k` with Lean's `x/0 = 0`, so a row
-  with `β_k = 0` never makes `u` nonzero (the rows lemma of BL (ii)), and the position agrees with
-  `triPos` on every coin sequence. Rows with `β_k < 0` (a stage position outside `K`, on a bad coin sequence) take
-  part as in `triU`: the program's search must keep them to compute `triPosQ`.
+* The staged TRI-OGD functions mirror `triU` (Bit/TriLeaves.lean) on every row: the quotient `α_k·z/β_k` with Lean's
+  `x/0 = 0`, so a row with `β_k = 0` never makes `u` nonzero (the rows lemma of BL (ii)). Rows with `β_k < 0` (a stage
+  position outside `K`, on a bad coin sequence) take part as in `triU`: the program's search must keep them to compute
+  the position.
 * ELL-R and ELL-F store each new state in arrays (`Arr`, equal to the functions by `Arr.get_ofFn'`), so that they
   evaluate in time linear in the iterations.
 * The prologue's confidence: `ℓ_pos = clog₂(3 · 2^{19} (d n)³ m_st)`, so `ℓ_pos ≥ log(m_st/δ₁)` at BL's

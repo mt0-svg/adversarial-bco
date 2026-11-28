@@ -6,8 +6,8 @@ authors:
   - name: mt0-svg
 repository-code: "https://github.com/mt0-svg/adversarial-bco"
 license: Apache-2.0
-version: v2.3.0
-date-released: 2026-11-27
+version: v2.4.0
+date-released: 2026-11-28
 doi: 10.5281/zenodo.24115413
 keywords:
   - Lean 4
@@ -17,6 +17,7 @@ keywords:
   - lower bound
   - weak membership oracle
   - high-probability regret
+  - minimax quantile
 preferred-citation:
   type: article
   title: "Optimal regret for adversarial bandit convex optimisation in polynomial time"

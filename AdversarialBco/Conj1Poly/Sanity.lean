@@ -16,7 +16,6 @@ public import AdversarialBco.StatementConj1Poly
   has height `1` (`cube_height`), contains the closed unit ball (`cube_ball`) and has diameter at most `2 d`
   (`cube_diam`): the hypotheses on a polytope are satisfiable together, in every dimension.
 * The noiseless game satisfies the noise hypothesis (`noiseOK_dirac`).
-* A polytope is convex (`convex_polytope`).
 -/
 
 open MeasureTheory ProbabilityTheory

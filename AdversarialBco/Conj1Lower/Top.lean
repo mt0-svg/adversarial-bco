@@ -19,11 +19,10 @@ public import AdversarialBco.Conj1Lower.BalanceK
 
 The paper's lower bound on a body between two balls (the proof of the lower bound on a polytope), composed from the
 other modules, on a convex body
-`K` with `B(0, 1/2) ⊆ K ⊆ B(0, R0)`, `1 ≤ R0 ≤ d`: `lowerBody_of_inputs` from the hypotheses `Inputs`, the statements
-used from Moments.lean, Ledger.lean and Info.lean, each a copy of its statement there; Main.lean discharges every field
-of `Inputs` with those theorems (`lowerTopInputs`). `TheoremConj1LowerPoly` (StatementConj1LowerPoly.lean) is the
-instance of the cube (AdversarialBco/Conj1LowerPoly/Main.lean). The other modules (Bayes, BayesRound, Cells, CellMeas,
-CellsRound, Dent, Frame, Geom, Balance, BalanceK, RuleS, Sanity) are used directly.
+`K` with `B(0, 1/2) ⊆ K ⊆ B(0, R0)`, `1 ≤ R0 ≤ d`, from the hypotheses `Inputs`: the statements used from Moments.lean,
+Ledger.lean and Info.lean, each a copy of its statement there; Main.lean discharges every field of `Inputs` with those
+theorems (`lowerTopInputs`). The other modules (Bayes, BayesRound, Cells, CellMeas, CellsRound, Dent, Frame, Geom,
+Balance, BalanceK, RuleS, Sanity) are used directly.
 
 * Parameters (`pK`): the strategy `S'(g, k, L_K, σ)` with `σ = sigB n`, `L_K = σ/R0`, `k = kRipe d`,
   `g = gRipe d n σ` and the offset `b = 1/4`; the prior `prior d (1/2)`; the clamp `clampZ ℓ` at
@@ -34,11 +33,9 @@ CellsRound, Dent, Frame, Geom, Balance, BalanceK, RuleS, Sanity) are used direct
 * The regret identity (`regretAd_stratOf`): against it, the regret over `K` is the sum of the dents at the tip
   (`regG`), the tip in `B(0, 1/2) ⊆ K`.
 * The coupling (S6) (`coupling`): clamping the noise costs at most `1/n` in mean.
-* The game (`gameFacts`): `GameFacts` (Balance.lean) at the parameters of the lower bound on a body between two balls,
-  from the per-round facts
-  (`roundFacts_at`) integrated over the live event of each round, the payment and the count.
-* The derandomisation (`exists_good_point`), the integrability of the regret from the identity
-  (`integrable_regretAd_stratOf`), and the composition (`lowerBody_of_inputs`).
+* The per-round facts (`roundFacts_at`) at a live sample of each round, at the parameters of the lower bound on a body
+  between two balls.
+* The derandomisation (`exists_good_point`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -114,11 +111,6 @@ structure Inputs : Prop where
 
 /-! ## Parameters -/
 
-/-- The parameters of the lower bound on a body between two balls on a body inside `B(0, R0)`: `g = gRipe d n σ`,
-`k = kRipe d`,
-`L = σ/R0`, `σ = sigB n`, `b = 1/4`. -/
-noncomputable def pK (d n : ℕ) (R0 : ℝ) : SParams := ⟨gRipe d n (sigB n), kRipe d, sigB n / R0, sigB n, 1 / 4⟩
-
 /-- The clamp level `ℓ = (6 ln n)^{1/2}`. -/
 noncomputable def ellB (n : ℕ) : ℝ := Real.sqrt (6 * Real.log n)
 
@@ -136,12 +128,6 @@ structure Good (P : SParams) (d : ℕ) (R0 : ℝ) : Prop where
   dim : 2048 * P.k ≤ d
   rng : P.L * (R0 + 1 / 2) + P.g ≤ 1 / 2
   b_eq : P.b = 1 / 4
-
-theorem good_pK {d n : ℕ} {R0 : ℝ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) (hR : 1 ≤ R0) (hRd : R0 ≤ d) :
-    Good (pK d n R0) d R0 := by
-  obtain ⟨h1, -, h3, -, -, h6, h7, -⟩ := ripeB_params hd hn
-  obtain ⟨k1, k2, k3, -⟩ := ripeK_params hd hn hR hRd
-  exact ⟨h3, h6, k1, h1, k2, h7, k3, rfl⟩
 
 theorem Good.d_pos {P : SParams} {d : ℕ} {R0 : ℝ} (hP : Good P d R0) : 0 < d := by
   have h1 := hP.dim
@@ -539,71 +525,6 @@ theorem gameLaw_bad_le (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Me
     _ = n * (2 * Real.exp (-ℓ ^ 2 / 2)) := by
       rw [ENNReal.toReal_mul, ENNReal.toReal_natCast, ENNReal.toReal_ofReal he]
 
-/-- The coupling (S6): the game with the clamped noise loses at most `1/n` of mean regret. -/
-theorem coupling (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {pol : Learner Ω d} {n : ℕ} (hn : 1 < n) (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) :
-    ∫ s, regG (prior d (1 / 2)) P pol n s ∂gameLaw (prior d (1 / 2)) μ - 1 / n ≤
-      ∫ s, regG (prior d (1 / 2)) P pol n (s.1, clampZ (ellB n) s.2.1, s.2.2) ∂gameLaw (prior d (1 / 2)) μ := by
-  have hG := isProbabilityMeasure_gameLaw (prior d (1 / 2)) μ
-  have hℓ : 0 ≤ ellB n := Real.sqrt_nonneg _
-  have hnR : (1 : ℝ) < n := by exact_mod_cast hn
-  have hn0 : (0 : ℝ) < n := by linarith
-  have hm := measurable_regG hP hpol
-  have hmc : Measurable fun s : Sample d Ω => (s.1, clampZ (ellB n) s.2.1, s.2.2) :=
-    measurable_fst.prodMk (((measurable_clampZ _).comp (measurable_fst.comp measurable_snd)).prodMk
-      (measurable_snd.comp measurable_snd))
-  have hbd : ∀ s, ‖regG (prior d (1 / 2)) P pol n s‖ ≤ n / 2 := fun s => by
-    rw [Real.norm_eq_abs, abs_of_nonneg (regG_nonneg hP _ pol n s)]
-    exact regG_le I hP hpol s
-  have hi : Integrable (regG (prior d (1 / 2)) P pol n) (gameLaw (prior d (1 / 2)) μ) :=
-    (integrable_const ((n : ℝ) / 2)).mono' hm.aestronglyMeasurable (ae_of_all _ hbd)
-  have hic : Integrable (fun s => regG (prior d (1 / 2)) P pol n (s.1, clampZ (ellB n) s.2.1, s.2.2))
-      (gameLaw (prior d (1 / 2)) μ) :=
-    (integrable_const ((n : ℝ) / 2)).mono' (hm.comp hmc).aestronglyMeasurable (ae_of_all _ fun s => hbd _)
-  have hBad : MeasurableSet {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|} := by
-    have : {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|} =
-        ⋃ i ∈ Finset.range n, {s : Sample d Ω | ellB n < |s.2.1 i|} := by
-      ext s
-      simp
-    rw [this]
-    exact Finset.measurableSet_biUnion _ fun i _ => measurableSet_lt measurable_const
-      (continuous_abs.measurable.comp ((measurable_pi_apply i).comp (measurable_fst.comp measurable_snd)))
-  have hpt : ∀ s, regG (prior d (1 / 2)) P pol n s - regG (prior d (1 / 2)) P pol n (s.1, clampZ (ellB n) s.2.1, s.2.2)
-      ≤ {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|}.indicator (fun _ => (n : ℝ) / 2) s := by
-    intro s
-    by_cases hs : s ∈ {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|}
-    · rw [Set.indicator_of_mem hs]
-      linarith [regG_le I hP hpol s, regG_nonneg hP (prior d (1 / 2)) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2)]
-    · rw [Set.indicator_of_notMem hs]
-      have hc : ∀ i < n, s.2.1 i = clampZ (ellB n) s.2.1 i := fun i hi => by
-        refine (clampZ_of_abs_le ?_).symm
-        by_contra h
-        exact hs ⟨i, hi, lt_of_not_ge h⟩
-      have := regG_congr (prior d (1 / 2)) P pol n s.1 hc s.2.2
-      linarith
-  have hbad := gameLaw_bad_le (prior d (1 / 2)) μ n hℓ
-  have h3 : Real.exp (3 * Real.log n) = (n : ℝ) ^ 3 := by
-    rw [← Real.exp_log (pow_pos hn0 3), Real.log_pow]
-    norm_num
-  have hexp : (n : ℝ) / 2 * (n * (2 * Real.exp (-ellB n ^ 2 / 2))) = 1 / n := by
-    have hsq : ellB n ^ 2 = 6 * Real.log n :=
-      Real.sq_sqrt (by have := Real.log_nonneg hnR.le; linarith)
-    rw [hsq, show -(6 * Real.log n) / 2 = -(3 * Real.log n) by ring, Real.exp_neg, h3]
-    field_simp
-  have hint : ∫ s, regG (prior d (1 / 2)) P pol n s ∂gameLaw (prior d (1 / 2)) μ -
-      ∫ s, regG (prior d (1 / 2)) P pol n (s.1, clampZ (ellB n) s.2.1, s.2.2) ∂gameLaw (prior d (1 / 2)) μ ≤
-      (n : ℝ) / 2 * (gameLaw (prior d (1 / 2)) μ).real {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|} := by
-    rw [← integral_sub hi hic]
-    calc _ ≤ ∫ s, {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|}.indicator (fun _ => (n : ℝ) / 2) s
-            ∂gameLaw (prior d (1 / 2)) μ :=
-          integral_mono (hi.sub hic) ((integrable_const _).indicator hBad) hpt
-      _ = _ := by rw [integral_indicator_const _ hBad, smul_eq_mul, mul_comm]
-  have : (n : ℝ) / 2 * (gameLaw (prior d (1 / 2)) μ).real {s : Sample d Ω | ∃ i < n, ellB n < |s.2.1 i|} ≤
-      1 / n := by
-    rw [← hexp]
-    exact mul_le_mul_of_nonneg_left hbad (by positivity)
-  linarith
-
 end Coupling
 
 /-! ## The derandomisation -/
@@ -955,7 +876,7 @@ theorem roundFacts_one (I : Inputs) {P : SParams} (hP : Good P d R0) {π : Measu
 
 end OneRound
 
-/-! ## The game: `GameFacts` at the parameters of the game proposition -/
+/-! ## The game: the per-round facts at the parameters of the game proposition -/
 
 section Game
 
@@ -989,16 +910,6 @@ noncomputable def af (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d 
 noncomputable def Df (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) : ℝ :=
   ∫ θ, ((ruleS d P).sig (postT P pol t s) (playT P pol t s) θ - P.b) ∂postT P pol t s
 
-theorem measurableSet_liveSet {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t ≤ n) :
-    MeasurableSet (liveSet P pol t) := by
-  have hR := ruleS_meas_prior hP
-  have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
-    fun t ht => (hpol t ht).1
-  have hD := dens_props (prior d (1 / 2)) (ruleS d P) hR P.sc t
-  exact (measurable_hist (prior d (1 / 2)) (ruleS d P) hR P.sc hpol' ht)
-    (measurableSet_liveS_dens P (prior d (1 / 2)) hD.1 hD.2.1)
-
 omit [MeasurableSpace Ω] in
 /-- A dead round stays dead: its answer and its signal are constants, so the posterior does not move. -/
 theorem live_of_live_succ {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (t : ℕ)
@@ -1017,47 +928,6 @@ theorem live_of_live_succ {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) 
     simp only [lik, hans, ruleS_sig, hd', ↓reduceIte, Set.preimage_const_of_mem (Set.mem_singleton none),
       Set.indicator_univ]
   exact hd' (hpost ▸ hs)
-
-omit [MeasurableSpace Ω] in
-theorem liveSet_anti {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) {t u : ℕ} (htu : t ≤ u) :
-    liveSet P pol u ⊆ liveSet P pol t := by
-  induction u, htu using Nat.le_induction with
-  | base => exact le_rfl
-  | succ u _ ih => exact fun s hs => ih (live_of_live_succ hP pol u hs)
-
-omit [MeasurableSpace Ω] in
-theorem Pf_dead (I : Inputs) {P : SParams} (pol : Learner Ω d) (t : ℕ) {s : Sample d Ω}
-    (hs : s ∉ liveSet P pol t) : Pf P pol t s = 0 := by
-  have hd' : ¬ liveS P d (postT P pol t s) := hs
-  have hans : (ruleS d P).ans (postT P pol t s) (playT P pol t s) = fun _ => none :=
-    funext fun θ => by simp only [ruleS_ans, hd', ↓reduceIte]
-  unfold Pf payAnn
-  rw [hans]
-  refine Finset.sum_eq_zero fun c _ => ?_
-  have he : (fun _ : E d => (none : Option Cell)) ⁻¹' {some c} = ∅ :=
-    Set.preimage_const_of_notMem (by simp)
-  rw [he, I.cellPay_empty]
-
-omit [MeasurableSpace Ω] in
-theorem Jf_dead (I : Inputs) {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (t : ℕ) {s : Sample d Ω}
-    (hs : s ∉ liveSet P pol t) : Jf P pol t s = 0 := by
-  have hd' : ¬ liveS P d (postT P pol t s) := hs
-  have := post_isProb hP P.sc t (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s)
-  have hans : (ruleS d P).ans (postT P pol t s) (playT P pol t s) = fun _ => none :=
-    funext fun θ => by simp only [ruleS_ans, hd', ↓reduceIte]
-  have hsig : (ruleS d P).sig (postT P pol t s) (playT P pol t s) = fun _ => P.b + 0 :=
-    funext fun θ => by simp only [ruleS_sig, hd', ↓reduceIte]
-  show infoJ (postT P pol t s) ((ruleS d P).ans (postT P pol t s) (playT P pol t s))
-    ((ruleS d P).sig (postT P pol t s) (playT P pol t s)) P.sc = 0
-  rw [hans, hsig]
-  exact I.infoJ_const _ none (P.b + 0) hP.sc_pos.ne'
-
-omit [MeasurableSpace Ω] in
-theorem Df_dead {P : SParams} (pol : Learner Ω d) (t : ℕ) {s : Sample d Ω} (hs : s ∉ liveSet P pol t) :
-    Df P pol t s = 0 := by
-  have h0 : ∀ θ, (ruleS d P).sig (postT P pol t s) (playT P pol t s) θ - P.b = 0 := fun θ => by
-    simp [ruleS_sig, show ¬ liveS P d (postT P pol t s) from hs]
-  simp only [Df, h0, integral_zero]
 
 theorem measurable_af {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
     (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) {t : ℕ} (ht : t < n) : Measurable (af P pol t) := by
@@ -1159,203 +1029,6 @@ theorem roundFacts_at (I : Inputs) {P : SParams} (hP : Good P d R0) {pol : Learn
   rw [← haf] at h1
   exact ⟨_, _, _, _, _, _, h1⟩
 
-/-- The mean regret of the Gaussian game is the sum of the round means over the live events (the posterior lemma). -/
-theorem sum_Df_eq (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {pol : Learner Ω d} {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) :
-    ∑ t ∈ Finset.range n, ∫ s in liveSet P pol t, Df P pol t s ∂gameLaw (prior d (1 / 2)) μ =
-      ∫ s, regG (prior d (1 / 2)) P pol n s ∂gameLaw (prior d (1 / 2)) μ := by
-  have hG := isProbabilityMeasure_gameLaw (prior d (1 / 2)) μ
-  have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
-    fun t ht => (hpol t ht).1
-  have hR := ruleS_meas_prior hP
-  let F : ℕ → E d × Hist d (Option Cell) × Ω → ℝ := fun t p =>
-    (ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t p.2.1) (play pol t p.2.2 p.2.1) p.1 - P.b
-  have hFm : ∀ t < n, Measurable (F t) := fun t ht =>
-    ((measurable_rule_post _ _ hR P.sc t).2.comp ((measurable_fst.comp measurable_snd).prodMk
-      (((measurable_play (α := Option Cell) (hpol' t ht)).comp
-        ((measurable_snd.comp measurable_snd).prodMk (measurable_fst.comp measurable_snd))).prodMk
-          measurable_fst))).sub measurable_const
-  have hFb : ∀ t < n, ∀ p, |F t p| ≤ 1 / 2 := fun t ht p => by
-    have hx : play pol t p.2.2 p.2.1 ∈ Metric.closedBall (0 : E d) R0 := (hpol t ht).2 _ _ _
-    obtain ⟨h0, h1⟩ := sig_post_bounds I hP t p.2.1 hx p.1
-    have := hP.rng
-    simp only [F]
-    rw [abs_le]
-    constructor <;> linarith
-  have hFi : ∀ t < n, Integrable (fun s : Sample d Ω => F t (s.1, hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s,
-      s.2.2)) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
-    (integrable_const (1 / 2 : ℝ)).mono' ((hFm t ht).comp (measurable_fst.prodMk
-      ((measurable_hist _ _ hR P.sc hpol' ht.le).prodMk (measurable_snd.comp measurable_snd)))).aestronglyMeasurable
-      (ae_of_all _ fun s => by rw [Real.norm_eq_abs]; exact hFb t ht _)
-  have hround : ∀ t ∈ Finset.range n, ∫ s in liveSet P pol t, Df P pol t s ∂gameLaw (prior d (1 / 2)) μ =
-      ∫ s, F t (s.1, hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s, s.2.2) ∂gameLaw (prior d (1 / 2)) μ := by
-    intro t ht
-    have ht' := Finset.mem_range.1 ht
-    rw [setIntegral_eq_integral_of_forall_compl_eq_zero fun s hs => Df_dead pol t hs,
-      post_disintegrates_integral (prior d (1 / 2)) μ (ruleS d P) hR hP.sc_pos.ne' hpol' ht'.le (hFm t ht')
-        (hFb t ht')]
-    rfl
-  rw [Finset.sum_congr rfl hround, ← integral_finsetSum _ fun t ht => hFi t (Finset.mem_range.1 ht)]
-  rfl
-
-/-- `GameFacts` at the parameters of the lower bound on a body between two balls, for plays in `B(0, R0)`. -/
-theorem gameFacts (I : Inputs) {n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) (hR1 : 1 ≤ R0) (hRd : R0 ≤ d)
-    (μ : Measure Ω) [IsProbabilityMeasure μ] {pol : Learner Ω d} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) :
-    GameFacts d (kRipe d) (gRipe d n (sigB n)) (sigB n) (chanBK (sigB n / R0) R0 (gRipe d n (sigB n)) (sigB n))
-      (wStar d (kRipe d) (sigB n / R0) (gRipe d n (sigB n))) n
-      ((gameLaw (prior d (1 / 2)) μ).real (liveSet (pK d n R0) pol n)ᶜ)
-      (fun t => ∫ s in liveSet (pK d n R0) pol t, Jf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => ∫ s in liveSet (pK d n R0) pol t, Pf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => ∫ s in liveSet (pK d n R0) pol t, af (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => ∫ s in liveSet (pK d n R0) pol t, Df (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ)
-      (fun t => (gameLaw (prior d (1 / 2)) μ).real (liveSet (pK d n R0) pol t)) := by
-  have hP := good_pK hd hn hR1 hRd
-  have hG : IsProbabilityMeasure (gameLaw (prior d (1 / 2)) μ) := isProbabilityMeasure_gameLaw _ μ
-  have hpol' : ∀ t < n, Measurable fun p : Ω × (Fin t → E d) × (Fin t → ℝ) => pol t p.1 p.2.1 p.2.2 :=
-    fun t ht => (hpol t ht).1
-  have hR := ruleS_meas_prior hP
-  have hsc : (pK d n R0).sc ≠ 0 := hP.sc_pos.ne'
-  have hS₀ : ∀ t < n, ∀ h θ ω, |(ruleS d (pK d n R0)).sig (post (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc t h)
-      (play pol t ω h) θ| ≤ 1 := fun t ht h θ ω => abs_sig_post_le I hP t h ((hpol t ht).2 _ _ _) θ
-  have hk : 0 < (pK d n R0).k := by linarith [hP.k_ge]
-  have hB : 0 ≤ chanBK (pK d n R0).L R0 (pK d n R0).g (pK d n R0).sc := by unfold chanBK; positivity
-  have hLedger := I.ledger_game hP.d_pos (show (0 : ℝ) < 1 / 2 by norm_num) μ (ruleS d (pK d n R0)) hR hsc hpol'
-    hP.w_pos.ne'
-  have hJi : ∀ t < n, Integrable (Jf (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
-    I.integrable_infoRound (prior d (1 / 2)) μ (ruleS d (pK d n R0)) hR hsc hpol' hS₀ ht
-  have hPi : ∀ t < n, Integrable (Pf (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
-    hLedger.1 t ht
-  have hai : ∀ t < n, Integrable (af (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
-    (integrable_const (1 : ℝ)).mono' (measurable_af hP hpol ht).aestronglyMeasurable
-      (ae_of_all _ fun s => by
-        obtain ⟨h0, h1⟩ := af_mem hP pol t s
-        rw [Real.norm_eq_abs, abs_le]
-        constructor <;> linarith)
-  have hDi : ∀ t < n, Integrable (Df (pK d n R0) pol t) (gameLaw (prior d (1 / 2)) μ) := fun t ht =>
-    (integrable_const (1 : ℝ)).mono' (measurable_Df hP hpol ht).aestronglyMeasurable
-      (ae_of_all _ fun s => by
-        obtain ⟨h0, h1⟩ := Df_mem I hP hpol ht s
-        rw [Real.norm_eq_abs, abs_le]
-        constructor <;> linarith)
-  have hround : ∀ t < n, _ := fun t ht =>
-    round_integral (gameLaw (prior d (1 / 2)) μ) (liveSet (pK d n R0) pol t) (measurableSet_liveSet hP hpol ht.le)
-      ((4 * (3 * Real.log d + 1) + 8 * chanBK (pK d n R0).L R0 (pK d n R0).g (pK d n R0).sc) / (pK d n R0).k)
-      ((pK d n R0).g / ((pK d n R0).sc ^ 2 * priceR d (pK d n R0).k)) (pK d n R0).g (pK d n R0).k
-      (Jf (pK d n R0) pol t) (Pf (pK d n R0) pol t) (af (pK d n R0) pol t) (Df (pK d n R0) pol t)
-      (hJi t ht) (hPi t ht) (hai t ht) (hDi t ht) fun s hs => by
-        obtain ⟨pr, H, Iann, Irest, Drest, preg, hRF⟩ := roundFacts_at I hP hpol ht hs
-        exact round_bound hk hP.dim hP.g_pos.le hB hRF
-  have hlive := measurableSet_liveSet hP hpol (le_refl n)
-  have hX : Real.exp 1 / 2 ≤ xCount d ((pK d n R0).w d) := by
-    have h16 := (ripeK_params hd hn hR1 hRd).2.2.2
-    have := Real.exp_one_lt_three
-    exact le_trans (by linarith) h16
-  refine
-    { round_J := fun t ht => (hround t ht).1
-      round_floor := fun t ht => (hround t ht).2.1
-      round_mass := fun t ht => (hround t ht).2.2
-      live := fun t ht => ?_
-      payment := ?_
-      count := ?_ }
-  · rw [probReal_compl_eq_one_sub hlive, sub_sub_cancel]
-    exact measureReal_mono (liveSet_anti hP pol ht.le)
-  · have he : ∀ t ∈ Finset.range n, ∫ s in liveSet (pK d n R0) pol t, Pf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ =
-        ∫ s, Pf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ := fun t _ =>
-      setIntegral_eq_integral_of_forall_compl_eq_zero fun s hs => Pf_dead I pol t hs
-    rw [Finset.sum_congr rfl he]
-    exact hLedger.2
-  · have hset : {s : Sample d Ω | dLive ((pK d n R0).w d) (covM (post (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc n
-        (hist (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc pol n s))) < d / 2} = (liveSet (pK d n R0) pol n)ᶜ := by
-      ext s
-      exact (not_le (α := ℝ)).symm
-    have hJ : ∀ t ∈ Finset.range n, ∫ s in liveSet (pK d n R0) pol t, Jf (pK d n R0) pol t s ∂gameLaw (prior d (1 / 2)) μ =
-        ∫ s, infoRound (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc pol t s ∂gameLaw (prior d (1 / 2)) μ :=
-      fun t _ => setIntegral_eq_integral_of_forall_compl_eq_zero fun s hs => Jf_dead I hP pol t hs
-    rw [Finset.sum_congr rfl hJ, ← hset]
-    exact I.count_game (by have := hP.d_pos; omega) μ (ruleS d (pK d n R0)) hR hsc hpol' hS₀ hP.w_pos hX
-
 end Game
-
-/-! ## The composition -/
-
-section Compose
-
-variable {d : ℕ} {R0 : ℝ} {Ω : Type} [MeasurableSpace Ω]
-
-/-- Against the strategy of a tip `xo ∈ K` and a clamped noise sequence, the regret over `K` is integrable in the
-learner's seed: it is `regG` at `(xo, z, ω)` (`regretAd_stratOf`), measurable in `ω` and with values in `[0, n/2]`. -/
-theorem integrable_regretAd_stratOf (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω)
-    [IsProbabilityMeasure μ] {pol : Learner Ω d} {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol)
-    {K : Set (E d)} {xo : E d} (hxo : xo ∈ K) (z : ℕ → ℝ) :
-    Integrable (fun ω => regretAd K (stratOf (prior d (1 / 2)) (ruleS d P) P.sc xo z) (fun t => pol t ω) n) μ := by
-  have he : (fun ω => regretAd K (stratOf (prior d (1 / 2)) (ruleS d P) P.sc xo z) (fun t => pol t ω) n) =
-      fun ω => regG (prior d (1 / 2)) P pol n (xo, z, ω) :=
-    funext fun ω => regretAd_stratOf hP (prior d (1 / 2)) pol n hxo z ω
-  rw [he]
-  have hm : Measurable fun ω : Ω => regG (prior d (1 / 2)) P pol n (xo, z, ω) :=
-    (measurable_regG hP hpol).comp (measurable_const.prodMk (measurable_const.prodMk measurable_id))
-  refine (integrable_const ((n : ℝ) / 2)).mono' hm.aestronglyMeasurable (ae_of_all _ fun ω => ?_)
-  rw [Real.norm_eq_abs, abs_of_nonneg (regG_nonneg hP _ pol n _)]
-  exact regG_le I hP hpol _
-
-/-- The lower bound on a body (the lower bound on a body between two balls, deterministic form): on a convex `K` with
-`B(0, 1/2) ⊆ K ⊆ B(0, R0)`, `1 ≤ R0 ≤ d`, for `d ≥ 4·10^6` and `n ≥ d^10`, every learner of `IsLearnerAd K n` meets a
-strategy of `StratsLip K n` against which its regret is integrable with mean at least `7·10^-9 d^{3/2} n^{1/2}/log d`;
-from the statements `Inputs`, which Main.lean discharges (`lowerTopInputs`). -/
-theorem lowerBody_of_inputs (I : Inputs) {n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) {K : Set (E d)}
-    (hK : Convex ℝ K) (hK1 : Metric.closedBall (0 : E d) (1 / 2) ⊆ K) (hK2 : K ⊆ Metric.closedBall 0 R0)
-    (hR1 : 1 ≤ R0) (hRd : R0 ≤ d) (μ : Measure Ω) [IsProbabilityMeasure μ] {pol : Learner Ω d}
-    (hpol : IsLearnerAd K n pol) :
-    ∃ σ ∈ StratsLip K n, Integrable (fun ω => regretAd K σ (fun t => pol t ω) n) μ ∧
-      7 / 10 ^ 9 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n / Real.log d ≤
-        ∫ ω, regretAd K σ (fun t => pol t ω) n ∂μ := by
-  have hP := good_pK hd hn hR1 hRd
-  have hpolB : IsLearnerAd (Metric.closedBall 0 R0) n pol := fun t ht =>
-    ⟨(hpol t ht).1, fun ω x o => hK2 ((hpol t ht).2 ω x o)⟩
-  have hn1 : 1 < n := by
-    have h1 : 1 < d ^ 10 := Nat.one_lt_pow (by norm_num) (by omega)
-    omega
-  have hbal := ripeK_balance hd hn hR1 hRd (gameFacts I hd hn hR1 hRd μ hpolB)
-    (ER := ∫ s, regG (prior d (1 / 2)) (pK d n R0) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2)
-      ∂gameLaw (prior d (1 / 2)) μ)
-    (by rw [sum_Df_eq I hP μ hpolB]; exact coupling I hP μ hn1 hpolB)
-  rw [integral_gameLaw_assoc (prior d (1 / 2)) μ
-    (fun s => regG (prior d (1 / 2)) (pK d n R0) pol n (s.1, clampZ (ellB n) s.2.1, s.2.2))] at hbal
-  have hm : Measurable fun p : (E d × (ℕ → ℝ)) × Ω =>
-      regG (prior d (1 / 2)) (pK d n R0) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2) :=
-    (measurable_regG hP hpolB).comp ((measurable_fst.comp measurable_fst).prodMk
-      (((measurable_clampZ _).comp (measurable_snd.comp measurable_fst)).prodMk measurable_snd))
-  have hb : ∀ p : (E d × (ℕ → ℝ)) × Ω,
-      |regG (prior d (1 / 2)) (pK d n R0) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2)| ≤ n / 2 := fun p =>
-    abs_le.2 ⟨by linarith [regG_nonneg hP (prior d (1 / 2)) pol n (p.1.1, clampZ (ellB n) p.1.2, p.2),
-      (by positivity : (0 : ℝ) ≤ n / 2)], regG_le I hP hpolB _⟩
-  have hN : ((prior d (1 / 2)).prod gaussStream)
-      {a : E d × (ℕ → ℝ) | a.1 ∉ Metric.closedBall (0 : E d) (1 / 2)} = 0 := by
-    have h0 := ae_iff.1 (prior_ae_mem d (1 / 2))
-    have hs : {a : E d × (ℕ → ℝ) | a.1 ∉ Metric.closedBall (0 : E d) (1 / 2)} =
-        {θ | θ ∉ Metric.closedBall (0 : E d) (1 / 2)} ×ˢ Set.univ := by
-      ext a
-      simp
-    rw [hs, Measure.prod_prod, h0, zero_mul]
-  obtain ⟨a, haN, ha⟩ := exists_good_point ((prior d (1 / 2)).prod gaussStream) μ hm hb hN
-  have ha1 : a.1 ∈ Metric.closedBall (0 : E d) (1 / 2) := by
-    by_contra h
-    exact haN h
-  have hxo : a.1 ∈ K := hK1 ha1
-  have hℓ : 0 ≤ ellB n := Real.sqrt_nonneg _
-  have hz : ∀ i, |(pK d n R0).sc * clampZ (ellB n) a.2 i| ≤ 1 / 8 := fun i => by
-    rw [abs_mul, abs_of_pos hP.sc_pos, ← sigB_mul_ellB hn1]
-    exact mul_le_mul_of_nonneg_left (abs_clampZ_le hℓ a.2 i) hP.sc_pos.le
-  have hσ := stratOf_mem I hP hK hK2 n a.1 (clampZ (ellB n) a.2) hz
-  refine ⟨_, hσ, integrable_regretAd_stratOf I hP μ hpolB hxo _, ?_⟩
-  have he : (fun ω => regretAd K
-      (stratOf (prior d (1 / 2)) (ruleS d (pK d n R0)) (pK d n R0).sc a.1 (clampZ (ellB n) a.2))
-        (fun t => pol t ω) n) =
-      fun ω => regG (prior d (1 / 2)) (pK d n R0) pol n (a.1, clampZ (ellB n) a.2, ω) :=
-    funext fun ω => regretAd_stratOf hP (prior d (1 / 2)) pol n hxo _ ω
-  rw [he]
-  exact hbal.trans ha
-
-end Compose
 
 end AdversarialBco.Lower.Top

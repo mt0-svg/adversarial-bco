@@ -473,12 +473,6 @@ end Record
 
 /-! ## The contracts of the program text (UNI-PROG, UNI-MACH) -/
 
-/-- **The program link**: on every input of `TheoremUnified` and every world of the oracle machine (any losses,
-noises, coins and oracle), the point `P` plays in round `t < n` is BL-O's pure play. -/
-def BLOLink (P : List BitRAMO.InstrO) : Prop :=
-  ∀ (d n : ℕ) (δ r0 R0 : ℚ) (a : Fin d → ℚ), 1 ≤ d → 1 ≤ n → 0 < δ → δ < 1 → 0 < r0 → r0 ≤ R0 →
-    ∀ (w : BitRAMO.WorldO d) (t : ℕ), t < n → playedO P w (initU d n δ r0 R0 a) t = toE (playO d n δ r0 R0 a w t)
-
 /-- **The machine clauses** of `TheoremUnified` for `P` with the windows of BL-O, on every input and every world:
 cost and space within `C' (d log(2dn/δ) S)^k`, and the coin windows `DO`, `DO'`. -/
 def BLOMachOK (P : List BitRAMO.InstrO) (C' : ℝ) (k : ℕ) : Prop :=

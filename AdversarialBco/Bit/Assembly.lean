@@ -20,40 +20,17 @@ public import AdversarialBco.Poly.Df2DetProof
 @[expose] public section
 
 /-!
-# The assembly of the bit-model upper bound: the bricks and the bad event
+# The assembly of the bit-model upper bound: BL as data and its confidence
 
-`AsmHyp D C' k`, for a bit learner `D` (`BLInst`: its program, its prologue length `K0` and block length `B`, its run
-record on the coupled world; its digit map is `Sched.beta` of Bit/CoinSched.lean, `BLInst.β`), is the conjunction of
-the bricks, one named `Prop` each; `theoremConj1UpperBitHP_of_roundBL` (Conj1BitHP/Assembly.lean) gives them for BL:
+`BLInst` is a bit learner `D` as the assembly reads it: its program, its prologue length `K0` and block length `B`, its
+run record on the coupled world; its digit map is `Sched.beta` of Bit/CoinSched.lean, `BLInst.β`. `W0Law (D.β d n)`
+(`w0Law_blInst`) follows from `Sched.w0Law_beta` of Bit/CoinSchedLaw.lean, the digit-map lemma.
 
-* `MachOK` (the machine clauses, `CostOKBit`, `SpaceOKBit` and the plays in `K`, for every admissible deterministic
-  strategy and every coin sequence): the proposition of the bounds of BL with the compiler of the compilation
-  proposition
-  (`prog_ok_frozenR` of Bit/Transfer/XDrvReach.lean turns the program texts into the two
-  clauses).
-* `RunOK` (BL's run record: the coupling `coupMax`, `BLMeas`, `BitsHyp` with `bits = E_bits ∩ Z_n` at the noise law
-  `dirac 0`, `EngineHyp`, and the record's losses and plays equal to BL's on the coins `β gs`): the proposition of the
-  run of BL (with (O3), (O6), (W0) and (P1) to (P5) inside its proof), cut into pieces A to D in
-  Bit/BLRun.lean.
-* `PosInst` (BL's position is the output `triPos` of TRI-OGD staged on a frame `B̄(c, 1/2) ⊆ K`, its `m_st L` coins
-  within the `K0` coins of the prologue): the position theorem and the frame theorem; `PosTri` of Bit/BLRun.lean.
-  `PosHyp` at BL's record follows by `triPos_posHyp` (Bit/TriStage.lean): `posOK_of_inst`.
-
-Proved here: `W0Law (D.β d n)` (`w0Law_blInst`, from `Sched.w0Law_beta` of Bit/CoinSchedLaw.lean, the digit-map lemma),
-and the prologue coins read odd terms of the stream only
-(`Sched.grp_odd`); `RegMeasOK P` for every program `P` (`regMeasOK`, from `RegMeas.measurable_regret` of
-Bit/RegMeas.lean: the regret is measurable in the seed and the coins under `RandAdv` when `P` plays in `K`).
-
-The glue: BL runs at `δ = deltaBL d n = 2^{-19}/(d n)^3` (Algorithm BL). If
-`ε > 1/4` at `df2oPar d n δ`, the regret is at most `n` on every run and `n ≤ thrBL d n` (`n_le_thr`, from
-`Df2Trivial`). If `ε ≤ 1/4` (`RunCase`), at each seed `θ` the proposition of the coupling of a run (`shadowProp_holds`)
-bounds the
-probability of `{B_n + 1 < Reg}` on the coupled world at `ν = dirac 0` by `δpos + δ_ref + δbits + n (κ0 + κ1) ≤ 1/n`,
-and the digit map moves it to the coins (`coins_eq`); `B_n + 1 ≤ thrBL d n` (`comp_thresh`). So every section of the
-bad event `{thrBL d n < Reg}` of `ρ ⊗ coinStream` has measure at most `1/n` (`section_le`), and the bad event too
-(`prod_le_of_sections`, in `bad_le` of Conj1BitHP/Assembly.lean); there `exists_majorant_of_bad` gives a majorant
-of `max (Reg, 0)` with mean at most `thrBL d n + 1`, which is at most `10^29 d^{3/2} n^{1/2} log^5 (2 d n)`
-(`thr_add_one_le`).
+BL runs at `δ = deltaBL d n = 2^{-19}/(d n)^3` (Algorithm BL), with `deltaBL_pos` and `deltaBL_lt_one` for `d, n ≥ 1`.
+`RunCase` is the case `ε ≤ 1/4` at `df2oPar d n δ`, in which BL is in its mode `run`. If `ε > 1/4`, the regret is at
+most `n` on every run, and `quarter_bound` is the arithmetic of that trivial bound (from `Df2Trivial`). `AdmStrat` is an
+admissible deterministic strategy, and `regretPts_congr` says that the regret reads the losses and the points of the
+rounds `t < n` only.
 -/
 
 open MeasureTheory ProbabilityTheory

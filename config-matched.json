@@ -1,0 +1,21 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeMatched",
+  "solution_module": "AdversarialBco.Matched.Main",
+  "theorem_names": [
+    "AdversarialBco.UW.theoremUW",
+    "AdversarialBco.Grow.theoremGrowG",
+    "AdversarialBco.Grow.theoremGrowGProg",
+    "AdversarialBco.Matched.theoremMinimaxMatched",
+    "AdversarialBco.Matched.theoremMinimaxMatched_of",
+    "AdversarialBco.Matched.MatchedSanity.growG_hyps_satisfiable",
+    "AdversarialBco.Matched.MatchedSanity.matched_hyps_satisfiable",
+    "AdversarialBco.Matched.MatchedSanity.matched_exceeds_flat",
+    "AdversarialBco.Matched.MatchedSanity.growGProg_matched_hyps_satisfiable",
+    "AdversarialBco.LowerDeltaQ.Sanity.minimaxQ_high_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.lowerU_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.progU_hyps_satisfiable"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

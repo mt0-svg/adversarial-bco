@@ -12,15 +12,13 @@ public import AdversarialBco.Bit.ApQ.Ell
 /-!
 # Piece (B) of (PROG-CUT): the frame bounds of `frameQ`
 
-`frameQ_ball`: on `InputOK`, the frame centre `c = frameQ d n m A b` of Bit/RoutQ.lean has
-`B̄(c, 1/2) ⊆ K ⊆ B̄(c, n)`, `K = polytope A b` (the frame theorem (i)).
+The frame centre `c = frameQ d n m A b` of Bit/RoutQ.lean has `B̄(c, 1/2) ⊆ K ⊆ B̄(c, n)`, `K = polytope A b` (the frame
+theorem (i)); this file holds the case `d ≥ 2` of its proof.
 
-* `d ≥ 2`: Theorem ELL-F (b). `frLoop_main` carries the claim `I_k` (`FInv`) with `ellUpd_step` of Bit/ApQ/Step.lean
-  at `ρ = 1/2` (`j = 1`) and ends on the volume count `pb_ell_det_contra`; the start ball `B(0, R)`, `R = 2^{e_R}`,
-  contains `B' = B̄(z, 1/2)` by the localisation lemma (`polytope_sub_ball`); a returned point lies in the margin region
-  `Q` of the
-  cleared rows, and `B̄(c, 1/2) ⊆ K` is the margin (`fr_margin_iff`, `fr_cleared_row`).
-* `d = 1`: the read-off `frame1` (`fr_d1_signs`, `fr_d1_readoff`, `fr_d1_centre` of Bit/Frame.lean).
+* Theorem ELL-F (b) (`frEll_spec`): `frLoop_main` carries the claim `I_k` (`FInv`) with `ellUpd_step` of
+  Bit/ApQ/Step.lean at `ρ = 1/2` (`j = 1`) and ends on the volume count `pb_ell_det_contra`; if the ball
+  `B' = B̄(z, 1/2)` lies in the margin region `Q` (`QF`) of the cleared rows and in the start ball `B(0, R)`,
+  `R = 2^{e_R}`, ELL-F returns a point of `Q`.
 -/
 
 namespace AdversarialBco.Bit.ApQ

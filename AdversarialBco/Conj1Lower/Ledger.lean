@@ -1652,7 +1652,7 @@ theorem measurable_payAnn (π0 : Measure (E d)) [IsProbabilityMeasure π0] (R : 
       (measurableSet_singleton (some c))
   exact measurable_cellPay_dens π0 hg (fun p θ => hdp.2.1 p.1 θ) hS w
 
-/-- (L6), the payment of `GameFacts`: over the game, the announced cells pay at most the ledger's budget. -/
+/-- (L6), the payment: over the game, the announced cells pay at most the ledger's budget. -/
 theorem ledger_game {Ω : Type} [MeasurableSpace Ω] (hd : 0 < d) {r₀ : ℝ} (hr : 0 < r₀) (μ : Measure Ω)
     [IsProbabilityMeasure μ] (R : Rule d (Option Cell)) (hR : R.Meas (prior d r₀)) {sc : ℝ} (hsc : sc ≠ 0)
     {pol : Learner Ω d} {n : ℕ}

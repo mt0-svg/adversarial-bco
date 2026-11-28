@@ -12,9 +12,8 @@ public import AdversarialBco.Poly.Df2DetMain
 /-!
 # DET, the states up to the stopping time
 
-`StInv s`: what holds of the state of round `s ≤ τ` by the conditions before `τ` alone (conditions (a),
-(b), (d) of the epoch, with the rank-one round lemma), and the forms of `P`, `b`, `Φ`, `Ĝ`, `l` as sums over the rounds.
-`SIat s`:
+`StInv s`: what holds of the state of round `s ≤ τ` by the conditions before `τ` alone (conditions (a), (b), (d) of
+the epoch, with Lemma R1), and the forms of `P`, `b`, `Φ`, `Ĝ`, `l` as sums over the rounds. `SIat s`:
 the facts of `Df2SIFacts` at the state of round `s`.
 -/
 
@@ -84,12 +83,9 @@ namespace DetBase
 
 variable {d : ℕ} {c : Df2Ctx d} {δ : ℝ} {π : Df2Path d} {m : ℕ}
 
-/-- `Df2SIFacts` at the state of a round before the horizon. -/
+/-- The facts of SI at the state of a round before the horizon. -/
 theorem si (H : DetBase c δ π m) {s : ℕ} (hs : s < m) (hok : c.StOK π s) : c.SIat π s := by
-  have h := H.SI d c.n δ c.Kt (π.g s) H.hd H.hn H.hδ0 H.hδ1 (by rw [← H.hp]; exact H.heps)
-    (by rw [← H.hp]; exact H.body) (H.adm s hs)
-  rw [← H.hp] at h
-  obtain ⟨⟨e1, e2, e3, e4⟩, h2⟩ := h
+  obtain ⟨⟨e1, e2, e3, e4⟩, h2⟩ := H.SI (π.g s) (H.adm s hs)
   obtain ⟨⟨s1, s2, s3⟩, s4, s5, s6, s7, s8, s9⟩ := h2 (c.st π s).mu (c.st π s).A hok
   exact ⟨e1, e2, e3, e4, s1, s2, s3, s4, s5, s6, s7, s8, s9⟩
 

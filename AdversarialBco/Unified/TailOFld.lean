@@ -13,9 +13,9 @@ public import AdversarialBco.Unified.MagField
 /-!
 # PARAM facts for BL-O's tail
 
-At `parK d n k` (BL-O's PARAM, `parO d n δ = parK d n (kDel δ)`): `ε' > 0` (`eps_posK`, which R5 reads), and the
-radius `W` of R13's guard below `2^{2K+10}`, `K = Ku d n k` the unit of MagField.lean (`W_bndK`), which bounds R14's
-linear term. `head_wmuO`: the point `w_μ` that the round computes is `wmuOf` at any PARAM.
+At `parK d n k` (BL-O's PARAM, `parO d n δ = parK d n (kDel δ)`): the radius `W` of R13's guard below `2^{2K+10}`,
+`K = Ku d n k` the unit of MagField.lean (`W_bndK`), which bounds R14's linear term. `head_wmuO`: the point `w_μ` that
+the round computes is `wmuOf` at any PARAM.
 -/
 
 namespace AdversarialBco.Unified.ProgO
@@ -23,21 +23,6 @@ namespace AdversarialBco.Unified.ProgO
 open AdversarialBco AdversarialBco.Unified.BLO
 open AdversarialBco.Unified.BudK (parK parK_eps parK_W parK_Le L0 ee)
 open AdversarialBco.Bit.BLP (Par sqrtDn sqrtUp up)
-
-theorem eps_posK (d n k : ℕ) (hd : 1 ≤ d) (hn : 1 ≤ n) : 0 < (parK d n k).eps := by
-  obtain ⟨hL1, -, -⟩ := MagO.LeQ_bnd d n k hd hn
-  obtain ⟨hr0, -⟩ := MagO.rd_bnd d n k hd
-  have hn1 := MagO.rn_ge d n k hn
-  have hee : 0 ≤ ee d n k := by unfold ee Bit.BLP.lnErr; positivity
-  rw [parK_Le] at hL1
-  rw [parK_eps]
-  refine lt_of_lt_of_le ?_ (Bit.BLP.le_up _ _)
-  have h36 : (0 : ℚ) < 36 * (L0 d n k + ee d n k) := by linarith
-  have hd' : (0 : ℚ) < d := by exact_mod_cast hd
-  have hs : (0 : ℚ) < sqrtDn (parK d n k).q d + 1 / 2 ^ (parK d n k).q := by
-    have : (0 : ℚ) < 1 / 2 ^ (parK d n k).q := by positivity
-    linarith
-  exact div_pos (mul_pos (mul_pos (mul_pos (by norm_num) hd') hs) (pow_pos h36 5)) (by linarith)
 
 theorem sqrtUp_pos (q : ℕ) (y : ℚ) : 0 < sqrtUp q y := by unfold sqrtUp; positivity
 

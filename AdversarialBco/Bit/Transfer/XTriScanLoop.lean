@@ -14,10 +14,10 @@ public import AdversarialBco.Bit.Transfer.XFrameLem
 @[expose] public section
 
 /-!
-# TRI-M, the rows of a stage on the machine: the input rows and `A = T̂ᵀ row`
+# TRI-M, the rows of a stage on the machine: `A = T̂ᵀ row`
 
-The input rows of a stage read from their cells (`frAl_inp`, `frBe_inp`) and bounded against `M̂` (`entry_le`), and the
-product `A = T̂ᵀ row` on the machine (`xmatvecT`, `XV.matvecT`).
+The product `A = T̂ᵀ row` on the machine (`xmatvecT`, `XV.matvecT`), with the bound `dot_abs_le` on the dot products of
+vectors with entries below `2^E`.
 -/
 
 open AdversarialBco.Bit AdversarialBco.Bit.RQ AdversarialBco.Bit.Transfer AdversarialBco.Bit.TriM Matrix

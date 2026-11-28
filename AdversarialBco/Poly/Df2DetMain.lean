@@ -8,24 +8,24 @@ module
 public import AdversarialBco.Poly.Df2DetRun
 public import AdversarialBco.Poly.Df2DetProof
 public import AdversarialBco.Poly.Df2DetTools
+public import AdversarialBco.Poly.Df2SIAt
 
 @[expose] public section
 
 /-!
 # DET, the proof
 
-DET: under the hypotheses `DetHyp` the epoch meets (a) and (b5') (`DetHyp.epoch_ok`, in `Df2DetW.lean`). The hypotheses
-of DET are bundled in `DetHyp`, which extends `DetBase` (the same without the five events, all that the state
-invariants up to `τ` read); `τ = c.tau π m`. The proof is the induction on the rounds:
+`df2DetOf_holds : Df2DetOf`. The hypotheses of DET are bundled in `DetHyp`, which extends `DetBase` (the same
+without the five events, all that the state invariants up to `τ` read); `τ = c.tau π m`. The proof is the induction on
+the rounds:
 
-* the states up to `τ` (`StInv`): the conditions before `τ`, the rank-one round lemma, the bonus, the sums `Ĝ` and `l`;
-* the closure at `τ`: conditions 2 and 3 at `τ` from the events Gauss and S-DF and from X8;
-* the region (`inc2_at`, `mon_at`): the region proposition and the monotonicity lemma on the run;
-* the three calls: the test call is accurate (its ball is that of the round before), the online Newton
+* the states up to `τ` (`StInv`): the conditions before `τ`, Lemma R1, the bonus, the sums `Ĝ` and `l`;
+* the closure at `τ` (`closure_tau`): conditions 2 and 3 at `τ` from the events Gauss and S-DF and from X8;
+* the region (`inc2_at`, `mon_at`): Proposition INC2 and Lemma MON on the run;
+* the three calls (`acc_all`): the test call is accurate (its ball is that of the round before), the online Newton
   inequality with the defects of line μ holds, and a round without a fire has its ball in the next lower region
-  (the inner-ball lemma, with the lemma of the centre of the test for the centre), so line μ is accurate;
-* The restart-wrapper lemma at `τ` (`epoch_ok`), with the dichotomy lemma for (W4s), (W4c) and the log-determinant lemma
-  for (W1).
+  (Lemma IB2, with Lemma Z for the centre), so line μ is accurate;
+* Lemma W at `τ` (`epoch_ok`), with Lemma D2 for (W4s), (W4c) and Lemma LD for (W1).
 
 Sums over the rounds: `OmH t`, `Lin t`, ... sum over `u < t`, so the quantities of round `t` (DF2's index `t + 1`)
 carry `t + 1`.
@@ -85,17 +85,20 @@ end Df2Ctx
 
 /-! ## The hypotheses of DET -/
 
-/-- The hypotheses of DET for the context `c` (at the parameters `df2oPar d c.n δ`), the path `π` and the horizon
-`m`, without the five events: what the state invariants up to the stopping time read. -/
+/-- The hypotheses of DET for the context `c`, the path `π` and the horizon `m`, without the five events: what the
+state invariants up to the stopping time read. The parameters enter through the record `c.p` alone: its closed forms
+(`hpar`), the facts of SI at it (`SI`) and the rows at it (`rows`), so DET holds at the table of Theorem U
+(`c.p = df2oPar d c.n δ`, `DetBase.ofOPar`) and at the table T4U of Theorem UW alike; `δ ∈ (0, 1)` is read by no
+lemma of DET. -/
 structure DetBase {d : ℕ} (c : Df2Ctx d) (δ : ℝ) (π : Df2Path d) (m : ℕ) : Prop where
   L1 : Df2LayerOne
   W : LemmaW
-  SI : Df2SIFacts
+  SI : ∀ g, AdmLoss c.Kt g → Df2SIAt c.p c.Kt g
   hd : 1 ≤ d
   hn : 1 ≤ c.n
   hδ0 : 0 < δ
   hδ1 : δ < 1
-  hp : c.p = df2oPar d c.n δ
+  hpar : Df2ParFix c.p
   heps : c.p.eps ≤ 1 / 2
   rows : Df2Rows c.p d c.n
   hm1 : 1 ≤ m
@@ -115,6 +118,30 @@ structure DetHyp {d : ℕ} (c : Df2Ctx d) (δ : ℝ) (π : Df2Path d) (m : ℕ) 
 namespace DetBase
 
 variable {d : ℕ} {c : Df2Ctx d} {δ : ℝ} {π : Df2Path d} {m : ℕ}
+
+/-- `DetBase` at the table of Theorem U, `c.p = df2oPar d c.n δ`, from `Df2SIFacts`: the arguments of the
+constructor before the parameters were lifted, in the same order. -/
+theorem ofOPar (L1 : Df2LayerOne) (W : LemmaW) (SI : Df2SIFacts) (hd : 1 ≤ d) (hn : 1 ≤ c.n) (hδ0 : 0 < δ)
+    (hδ1 : δ < 1) (hp : c.p = df2oPar d c.n δ) (heps : c.p.eps ≤ 1 / 2) (rows : Df2Rows c.p d c.n) (hm1 : 1 ≤ m)
+    (hmn : m ≤ c.n) (body : Df2Body d c.p.R c.Kt) (hap : ∀ s, ApSpec (c.ap s))
+    (adm : ∀ s < m, AdmLoss c.Kt (π.g s)) : DetBase c δ π m where
+  L1 := L1
+  W := W
+  SI g hg := by
+    rw [hp] at heps body ⊢
+    exact SI d c.n δ c.Kt g hd hn hδ0 hδ1 heps body hg
+  hd := hd
+  hn := hn
+  hδ0 := hδ0
+  hδ1 := hδ1
+  hpar := hp ▸ df2ParFix_oPar d c.n δ
+  heps := heps
+  rows := rows
+  hm1 := hm1
+  hmn := hmn
+  body := body
+  hap := hap
+  adm := adm
 
 /-! ### The stopping time -/
 
@@ -147,15 +174,15 @@ theorem tau_cases (_H : DetBase c δ π m) :
 
 /-! ### The parameters -/
 
-theorem kap (H : DetBase c δ π m) : c.p.kap = 1 / 4 := by rw [H.hp]; rfl
-theorem theta (H : DetBase c δ π m) : c.p.theta = 1 := by rw [H.hp]; rfl
-theorem alpha (H : DetBase c δ π m) : c.p.alpha = 1 / 4 := by rw [H.hp]; rfl
-theorem c1 (H : DetBase c δ π m) : c.p.c1 = 8 := by rw [H.hp]; rfl
-theorem gam (H : DetBase c δ π m) : c.p.gam = 1 / 100 := by rw [H.hp]; rfl
-theorem k0 (H : DetBase c δ π m) : c.p.k0 = ((1 - c.p.lam) ^ 2)⁻¹ := by rw [H.hp]; rfl
-theorem sb (H : DetBase c δ π m) : c.p.sb = c.p.δe ^ 2 / (c.p.R * (c.p.R + 1)) := by rw [H.hp]; rfl
-theorem Le (H : DetBase c δ π m) : c.p.Le = df2C0 * Real.log (1 / c.p.δe) := by rw [H.hp]; rfl
-theorem sig2 (H : DetBase c δ π m) : c.p.sig2 = 1 / (8 * c.p.Le) := by rw [H.hp]; rfl
+theorem kap (H : DetBase c δ π m) : c.p.kap = 1 / 4 := H.hpar.kap
+theorem theta (H : DetBase c δ π m) : c.p.theta = 1 := H.hpar.theta
+theorem alpha (H : DetBase c δ π m) : c.p.alpha = 1 / 4 := H.hpar.alpha
+theorem c1 (H : DetBase c δ π m) : c.p.c1 = 8 := H.hpar.c1
+theorem gam (H : DetBase c δ π m) : c.p.gam = 1 / 100 := H.hpar.gam
+theorem k0 (H : DetBase c δ π m) : c.p.k0 = ((1 - c.p.lam) ^ 2)⁻¹ := H.hpar.k0
+theorem sb (H : DetBase c δ π m) : c.p.sb = c.p.δe ^ 2 / (c.p.R * (c.p.R + 1)) := H.hpar.sb
+theorem Le (H : DetBase c δ π m) : c.p.Le = df2C0 * Real.log (1 / c.p.δe) := H.hpar.Le
+theorem sig2 (H : DetBase c δ π m) : c.p.sig2 = 1 / (8 * c.p.Le) := H.hpar.sig2
 
 /-! ### The layer-1 statements -/
 

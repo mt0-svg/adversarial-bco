@@ -104,6 +104,10 @@ noncomputable def ruleS (d : ℕ) (P : SParams) : Rule d (Option Cell) where
   ans π x θ := if liveS P d π then ansS P d π x θ else none
   sig π x θ := P.b + if liveS P d π then dentS P d π x θ else 0
 
+theorem ruleS_sig_sub (P : SParams) (π : Measure (E d)) (x θ : E d) :
+    (ruleS d P).sig π x θ - P.b = if liveS P d π then dentS P d π x θ else 0 := by
+  simp [ruleS]
+
 end Rule
 
 /-! ## Measurability of the frame and of the dent in the matrix -/
@@ -703,6 +707,40 @@ theorem transcript_stratOf (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) {Ω 
       · rw [Fin.snoc_castSucc, hist_succ]
         simp only [Hist.push, Fin.val_castSucc]
         rw [Function.update_of_ne j.isLt.ne]
+
+/-- The point of round `t` against `stratOf` is the play of the history. -/
+theorem plays_stratOf (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) {Ω : Type} (pol : Learner Ω d) (xo : E d)
+    (z : ℕ → ℝ) (ω : Ω) (t : ℕ) :
+    plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω) t =
+      play pol t ω (hist π0 R sc pol t (xo, z, ω)) := by
+  unfold plays
+  rw [transcript_stratOf π0 R sc pol xo z ω t]
+  rfl
+
+/-- The loss of round `t` against `stratOf`, on the run of the learner. -/
+theorem lossAd_stratOf (π0 : Measure (E d)) (R : Rule d α) (sc : ℝ) {Ω : Type} (pol : Learner Ω d) (xo : E d)
+    (z : ℕ → ℝ) (ω : Ω) (t : ℕ) :
+    lossAd (stratOf π0 R sc xo z) (fun _ => 0) (plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω)) t =
+      fun y => R.sig (post π0 R sc t (hist π0 R sc pol t (xo, z, ω))) y xo + sc * z t := by
+  let _ : MeasurableSpace Ω := ⊤
+  funext y
+  unfold lossAd
+  simp [stratOf]
+  have h_plays_eq : (fun i : Fin t => (plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω)) i) =
+      (fun i : Fin t => (hist π0 R sc pol t (xo, z, ω)).1 i) := by
+    funext i
+    have hi : (i : ℕ) < t := i.2
+    calc
+      (plays (stratOf π0 R sc xo z) (fun _ => 0) (fun s => pol s ω)) (i : ℕ)
+          = play pol (i : ℕ) ω (hist π0 R sc pol (i : ℕ) (xo, z, ω)) := by
+        simpa using plays_stratOf π0 R sc pol xo z ω (i : ℕ)
+      _ = (hist π0 R sc pol ((i : ℕ) + 1) (xo, z, ω)).1 (i : ℕ) := by
+        simpa using ((hist_succ_self π0 R sc pol (xo, z, ω) (i : ℕ)).1).symm
+      _ = (hist π0 R sc pol t (xo, z, ω)).1 (i : ℕ) := by
+        simpa using ((hist_stable π0 R sc pol (xo, z, ω) hi).1).symm
+      _ = (hist π0 R sc pol t (xo, z, ω)).1 i := rfl
+  rw [h_plays_eq]
+  rw [replay_hist π0 R sc pol xo z ω t]
 
 /-- The loss of `stratOf` at a point is measurable in the history. -/
 theorem measurable_stratOf [Fintype α] [MeasurableSingletonClass α] (π0 : Measure (E d)) [IsProbabilityMeasure π0]

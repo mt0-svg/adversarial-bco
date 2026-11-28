@@ -10,12 +10,10 @@ public import AdversarialBco.Poly.Df2EvVSum
 @[expose] public section
 
 /-!
-# The second moments of `v = pip - 1` under the plays, with a routine per round
+# Df2EvVSum with a routine per round
 
-At the context `df2CtxAtF d n δ Kt ap` with a routine `ap s` in round `s` (`ap : ℕ → ApFun d`): the hypotheses of DET
-without the events from the budgets (`detBaseV`); at a round `s ≤ τ`, the spread of the play `‖(1 - λ) A_s‖ ≤ 1/(2 √L)`
-(`playT_norm_leV`) and the crude and fine bounds on `E v²` (`vmom_crudeV`, `vmom_fineV`); and the sum of the second
-moments up to `t ≤ τ`, at most `n ε²/4` (`vsum_le_quarterV`), so at most `(3/10) n ε²`, the paper's bound (`vsum_leV`).
+`detBaseV` and the section `Concrete` of Df2EvVSum.lean at the context `df2CtxAtF d n δ Kt ap` with a routine
+`ap s` in round `s` (`ap : ℕ → ApFun d`), the proofs unchanged. The fixed-routine statements are the constant family.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -33,9 +31,8 @@ theorem detBaseV (hSI : Df2SIFacts) {n : ℕ} {δ : ℝ} {Kt : Set (E d)} {ap : 
     (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) (hδ1 : δ < 1) (heps : (df2oPar d n δ).eps ≤ 1 / 2) (hm1 : 1 ≤ m)
     (hmn : m ≤ n) (hbody : Df2Body d (df2oPar d n δ).R Kt) (hap : ∀ s, ApSpec (ap s)) (hadm : ∀ s < m, AdmLoss Kt (π.g s)) :
     DetBase (df2CtxAtF d n δ Kt ap) δ π m :=
-  ⟨layerOne, lemmaW, hSI, hd, hn, hδ0, hδ1, rfl, heps, df2RowsHold d n δ hd hn hδ0 hδ1 heps, hm1, hmn, hbody,
-    hap,
-    hadm⟩
+  DetBase.ofOPar layerOne lemmaW hSI hd hn hδ0 hδ1 rfl heps (df2RowsHold d n δ hd hn hδ0 hδ1 heps) hm1 hmn hbody
+    hap hadm
 
 
 section Concrete
@@ -122,13 +119,14 @@ theorem vmom_fineV (H : DetBase (df2CtxAtF d n δ Kt ap) δ π m) {s : ℕ}
   calc _ ≤ _ := h1
     _ ≤ _ := by gcongr; exact h4
 
-/-- The sum of the second moments up to `t ≤ τ` is at most `n ε²/4`. -/
-theorem vsum_le_quarterV (hSI : Df2SIFacts) (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ℕ → ApFun d) (π : Df2Path d)
-    (m : ℕ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) (hδ1 : δ < 1) (heps : (df2oPar d n δ).eps ≤ 1 / 2)
-    (hm1 : 1 ≤ m) (hmn : m ≤ n) (hbody : Df2Body d (df2oPar d n δ).R Kt) (hap : ∀ s, ApSpec (ap s))
-    (hadm : ∀ s < m, AdmLoss Kt (π.g s)) (t : ℕ) (ht : t ≤ (df2CtxAtF d n δ Kt ap).tau π m) :
+/-- The sum of the second moments up to `t ≤ τ` is at most `n ε²/4`, on the hypotheses of DET without the events. -/
+theorem vsum_le_quarterV_of (H : DetBase (df2CtxAtF d n δ Kt ap) δ π m) (t : ℕ)
+    (ht : t ≤ (df2CtxAtF d n δ Kt ap).tau π m) :
     ∑ s ∈ Finset.range (t + 1), vmom (df2CtxAtF d n δ Kt ap) π s ≤ 1 / 4 * n * (df2oPar d n δ).eps ^ 2 := by
-  have H := detBaseV (π := π) hSI hd hn hδ0 hδ1 heps hm1 hmn hbody hap hadm
+  have hd : 1 ≤ d := H.hd
+  have hn : 1 ≤ n := H.hn
+  have hδ0 : 0 < δ := H.hδ0
+  have hmn : m ≤ n := H.hmn
   set c := df2CtxAtF d n δ Kt ap with hc
   set τ := c.tau π m with hτ
   have hP := evGPar d n δ hd hn hδ0
@@ -172,17 +170,23 @@ theorem vsum_le_quarterV (hSI : Df2SIFacts) (d n : ℕ) (δ : ℝ) (Kt : Set (E 
     hε0 H.rows.eps_le hl0 H.rows.pos_eta hde hr5p H.rows.r7 H.rows.r8 H.rows.c2dl (par_exp H).2
   linarith
 
-/-- The sum of the second moments of `pip - 1` under the plays, up to `t ≤ τ`. -/
-theorem vsum_leV (hSI : Df2SIFacts) (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ℕ → ApFun d) (π : Df2Path d) (m : ℕ)
-    (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) (hδ1 : δ < 1) (heps : (df2oPar d n δ).eps ≤ 1 / 2) (hm1 : 1 ≤ m)
-    (hmn : m ≤ n) (hbody : Df2Body d (df2oPar d n δ).R Kt) (hap : ∀ s, ApSpec (ap s)) (hadm : ∀ s < m, AdmLoss Kt (π.g s))
-    (t : ℕ) (ht : t ≤ (df2CtxAtF d n δ Kt ap).tau π m) :
+/-- The sum of the second moments up to `t ≤ τ` is at most `n ε²/4`. -/
+theorem vsum_le_quarterV (hSI : Df2SIFacts) (d n : ℕ) (δ : ℝ) (Kt : Set (E d)) (ap : ℕ → ApFun d) (π : Df2Path d)
+    (m : ℕ) (hd : 1 ≤ d) (hn : 1 ≤ n) (hδ0 : 0 < δ) (hδ1 : δ < 1) (heps : (df2oPar d n δ).eps ≤ 1 / 2)
+    (hm1 : 1 ≤ m) (hmn : m ≤ n) (hbody : Df2Body d (df2oPar d n δ).R Kt) (hap : ∀ s, ApSpec (ap s))
+    (hadm : ∀ s < m, AdmLoss Kt (π.g s)) (t : ℕ) (ht : t ≤ (df2CtxAtF d n δ Kt ap).tau π m) :
+    ∑ s ∈ Finset.range (t + 1), vmom (df2CtxAtF d n δ Kt ap) π s ≤ 1 / 4 * n * (df2oPar d n δ).eps ^ 2 :=
+  vsum_le_quarterV_of (detBaseV (π := π) hSI hd hn hδ0 hδ1 heps hm1 hmn hbody hap hadm) t ht
+
+/-- The sum of the second moments of `pip - 1` under the plays, up to `t ≤ τ`, on the hypotheses of DET without the
+events. -/
+theorem vsum_leV_of (H : DetBase (df2CtxAtF d n δ Kt ap) δ π m) (t : ℕ) (ht : t ≤ (df2CtxAtF d n δ Kt ap).tau π m) :
     ∑ s ∈ Finset.range (t + 1),
         ∫ z, (df2Pip (df2oPar d n δ) Kt (WithLp.toLp 2 (((df2CtxAtF d n δ Kt ap).st π s).mu +
           (1 - (df2oPar d n δ).lam) • (((df2CtxAtF d n δ Kt ap).st π s).A *ᵥ z))) - 1) ^ 2
           ∂(Measure.pi fun _ : Fin d => gaussianReal 0 1) ≤
       3 / 10 * n * (df2oPar d n δ).eps ^ 2 := by
-  have h := vsum_le_quarterV hSI d n δ Kt ap π m hd hn hδ0 hδ1 heps hm1 hmn hbody hap hadm t ht
+  have h := vsum_le_quarterV_of H t ht
   have h0 : (0 : ℝ) ≤ n * (df2oPar d n δ).eps ^ 2 := by positivity
   exact h.trans (by nlinarith)
 

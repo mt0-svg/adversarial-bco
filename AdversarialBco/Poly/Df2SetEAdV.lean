@@ -6,6 +6,7 @@ Authors: mt0-svg
 module
 
 public import AdversarialBco.Poly.Df2Layer2
+public import AdversarialBco.Poly.Df2SetEAd
 
 @[expose] public section
 

@@ -11,16 +11,12 @@ public import Mathlib.Analysis.Complex.ExponentialBounds
 @[expose] public section
 
 /-!
-# Sanity checks of the lower bound on a polytope (`TheoremConj1LowerPoly`, AdversarialBco/StatementConj1LowerPoly.lean)
+# Helper lemmas for the lower bound on a polytope
 
 * The run: the transcript's points are the points played (`transcript_fst`), its observations are those of `obsAd`
   (`transcript_snd`), and the losses of the regret are the losses the learner faced (`lossAd_plays`).
-* The bound is positive (`bound_pos`).
-* The learners exist: on every body with a point `c`, the constant learner that plays `c` is a learner of the class,
-  for every `n` (`constLearner_mem_of_mem`).
-* The existential is not witnessed for free: the regret against the zero strategy is `0` for every play rule
-  (`regretAd_zero`), so on every nonempty body the zero strategy fails the bound against every learner
-  (`zeroStrat_fails_of_nonempty`).
+* The regret against the zero strategy is `0` for every play rule (`regretAd_zero`), and the zero strategy is in
+  `StratsLip K n` (`zeroStrat_mem`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -88,20 +84,16 @@ theorem log_ge_one {d : ℕ} (hd : 4000000 ≤ d) : 1 ≤ Real.log d := by
   have := Real.exp_one_lt_d9
   linarith
 
-/-- The bound of `TheoremConj1LowerPoly` is positive. -/
-theorem bound_pos {d n : ℕ} (hd : 4000000 ≤ d) (hn : 1 ≤ n) :
-    0 < 7 / 10 ^ 9 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n / Real.log d := by
-  have hd' : (4000000 : ℝ) ≤ d := by exact_mod_cast hd
-  have hlog := log_ge_one hd
-  have h1 : 0 < (d : ℝ) ^ (3 / 2 : ℝ) := Real.rpow_pos_of_pos (by linarith) _
-  have h2 : 0 < Real.sqrt n := Real.sqrt_pos.2 (by exact_mod_cast hn)
-  have h3 : 0 < Real.log d := by linarith
-  positivity
-
 /-! ## The zero strategy does not witness the claim -/
 
 /-- The zero strategy: the loss `0` at every round. -/
 def zeroStrat (d : ℕ) : Strategy d := fun _ _ _ _ => 0
+
+theorem zeroStrat_mem {K : Set (E d)} (hK : Convex ℝ K) (n : ℕ) : zeroStrat d ∈ StratsLip K n := by
+  refine ⟨fun t _ => ⟨fun x o => ⟨convexOn_const 0 hK, fun _ _ => ⟨le_rfl, zero_le_one⟩⟩,
+    fun _ _ => measurable_const⟩, fun t _ x o o' => ⟨rfl, fun y _ z _ => ?_⟩⟩
+  simp only [zeroStrat, sub_self, abs_zero]
+  positivity
 
 /-- The regret against the zero strategy is `0`, for every play rule. -/
 theorem regretAd_zero {K : Set (E d)} (hK : K.Nonempty) (p : Policy d) (n : ℕ) :
@@ -130,26 +122,5 @@ theorem measurable_snoc {α β : Type*} [MeasurableSpace α] [MeasurableSpace β
 /-- The Gaussian stream is a probability measure. -/
 instance : IsProbabilityMeasure gaussStream := by
   unfold gaussStream; infer_instance
-
-/-! ## The learners exist, and the zero strategy fails the bound -/
-
-/-- On every body `K` with a point `c`, the constant learner that plays `c` is a learner of the class, for every `n`:
-on the polytope that `TheoremConj1LowerPoly` provides, which contains a ball, the learners it quantifies over exist. -/
-theorem constLearner_mem_of_mem {d : ℕ} {K : Set (E d)} {c : E d} (hc : c ∈ K) (n : ℕ) :
-    IsLearnerAd (Ω := Unit) K n (fun _ _ _ _ => c) :=
-  fun _ _ => ⟨measurable_const, fun _ _ _ => hc⟩
-
-/-- On every nonempty body, the zero strategy fails the bound of `TheoremConj1LowerPoly` against every learner: the
-strategy that the theorem provides is not the trivial one. -/
-theorem zeroStrat_fails_of_nonempty {d n : ℕ} (hd : 4000000 ≤ d) (hn : d ^ 10 ≤ n) {K : Set (E d)}
-    (hK : K.Nonempty) {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) (pol : Learner Ω d) :
-    ¬ 7 / 10 ^ 9 * (d : ℝ) ^ (3 / 2 : ℝ) * Real.sqrt n / Real.log d ≤
-        ∫ ω, regretAd K (fun _ _ _ _ => 0) (fun t => pol t ω) n ∂μ := by
-  have hn1 : 1 ≤ n := le_trans (Nat.one_le_pow _ _ (by omega)) hn
-  have hpos := bound_pos hd hn1
-  have h0 : (fun ω => regretAd K (fun _ _ _ _ => 0) (fun t => pol t ω) n) = fun _ => 0 :=
-    funext fun ω => regretAd_zero hK _ n
-  rw [h0, integral_zero]
-  linarith
 
 end AdversarialBco.Lower.Sanity

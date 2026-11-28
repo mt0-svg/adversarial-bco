@@ -7,7 +7,7 @@ module
 
 public import AdversarialBco.Conj1Lower.Main
 public import AdversarialBco.Conj1Lower.StopNoise
-public import AdversarialBco.Conj1Lower.StopBalance
+public import AdversarialBco.Conj1Lower.BalanceK
 
 @[expose] public section
 
@@ -18,16 +18,12 @@ The paper's stopped balance, on the Gaussian game of Top.lean at the strategy `r
 for a body inside `B(0, R0)`. The analysis stops at the first round where the posterior is dead or the observed
 cumulative `C_u = Σ_{i < u} (o_i - b)` exceeds the threshold `x`; the game itself runs its `n` rounds.
 
-* `stopH`, `stopSet`: the stopped live event `S'_t` of round `t`, a set of histories (the posterior before round `t`
-  is live and `C_u ≤ x` for every `u ≤ t`) and its preimage under the history after `t` rounds. Decreasing in `t`
-  (`stopSet_succ`), inside the live event (`stopSet_sub_live`), unchanged by later rounds (`stopH_push`).
-* (F1) `stop_round`: the three inequalities of `round_bound` integrated over `S'_t`.
-* (F2) `stop_payment`: the ledger telescoped with the weight `1_{S'_t}`.
-* (F3) `stop_count`: (S2) with the weight `1_{S'_t}` (`stop_kl_step`) and a summation by parts to the divergence at
-  the stopping time, then Lemma COUNT (b).
-* (F4) `stop_live`: `P(S'_t) ≥ 1 - p - q`.
-* (F5) `stop_regret`: `Σ_t E[D_t; S'_t] ≤ x + 1/2 + σ √n`.
-* `stopFacts`: `StopFacts` (StopBalance.lean) at the parameters of Corollary RIPE-K-B.
+This file holds the two facts of the analysis that hold for any measurable rule, weighted by a decreasing family of
+measurable sets of histories that the later rounds do not change:
+
+* (F2) `stopped_ledger`: the payments of the announced cells sum to at most the ledger's budget.
+* (F3) `stopped_count`: the information of the rounds, on which the posterior is live, is at least `N*` times the
+  probability of leaving the family through a dead posterior.
 -/
 
 open MeasureTheory ProbabilityTheory Finset
@@ -43,133 +39,13 @@ section Events
 
 variable {d : ℕ} {R0 : ℝ} {Ω : Type} [MeasurableSpace Ω]
 
-/-- The observed cumulative over the rounds before `u`, read on a history: `Σ_{i < u} (o_i - b)`. -/
-noncomputable def cumH (b : ℝ) (h : Hist d (Option Cell)) (u : ℕ) : ℝ := ∑ i ∈ range u, (h.2.1 i - b)
-
-/-- The stopped live event of round `t`, on histories: the posterior before round `t` is live and the observed
-cumulative stayed at most `x` up to round `t`. -/
-def stopH (P : SParams) (x : ℝ) (t : ℕ) : Set (Hist d (Option Cell)) :=
-  {h | liveS P d (post (prior d (1 / 2)) (ruleS d P) P.sc t h) ∧ ∀ u ≤ t, cumH P.b h u ≤ x}
-
-/-- The stopped live event `S'_t` of round `t`, on the sample. -/
-def stopSet (P : SParams) (pol : Learner Ω d) (x : ℝ) (t : ℕ) : Set (Sample d Ω) :=
-  hist (prior d (1 / 2)) (ruleS d P) P.sc pol t ⁻¹' stopH P x t
-
-/-- The observation of round `t` minus `b`: `o_t - b = D_t + σ Z_t`. -/
-noncomputable def obsB (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) : ℝ :=
-  (ruleS d P).sig (postT P pol t s) (playT P pol t s) s.1 + P.sc * s.2.1 t - P.b
-
-/-- The observed cumulative `C_u = Σ_{i < u} (o_i - b)` on the sample. -/
-noncomputable def cumO (P : SParams) (pol : Learner Ω d) (u : ℕ) (s : Sample d Ω) : ℝ :=
-  ∑ i ∈ range u, obsB P pol i s
-
 /-- The dent of round `t` at the tip: `D_t = s_t(x_t; x°) - b`. -/
 noncomputable def dentT (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) : ℝ :=
   (ruleS d P).sig (postT P pol t s) (playT P pol t s) s.1 - P.b
 
 omit [MeasurableSpace Ω] in
-theorem obsB_eq (P : SParams) (pol : Learner Ω d) (t : ℕ) (s : Sample d Ω) :
-    obsB P pol t s = dentT P pol t s + P.sc * s.2.1 t := by
-  unfold obsB dentT
-  ring
-
-omit [MeasurableSpace Ω] in
 theorem regG_eq (P : SParams) (pol : Learner Ω d) (n : ℕ) (s : Sample d Ω) :
     regG (prior d (1 / 2)) P pol n s = ∑ t ∈ range n, dentT P pol t s := rfl
-
-omit [MeasurableSpace Ω] in
-theorem hist_obs (P : SParams) (pol : Learner Ω d) {i t : ℕ} (hi : i < t) (s : Sample d Ω) :
-    (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s).2.1 i = obsB P pol i s + P.b := by
-  let _ : MeasurableSpace Ω := ⊤
-  rw [(hist_stable _ _ _ pol s hi).2.1, (hist_succ_self _ _ _ pol s i).2.1]
-  unfold obsB
-  ring
-
-omit [MeasurableSpace Ω] in
-theorem cumH_hist (P : SParams) (pol : Learner Ω d) {u t : ℕ} (hu : u ≤ t) (s : Sample d Ω) :
-    cumH P.b (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) u = cumO P pol u s := by
-  unfold cumH cumO
-  refine sum_congr rfl fun i hi => ?_
-  rw [hist_obs P pol (lt_of_lt_of_le (mem_range.1 hi) hu)]
-  ring
-
-omit [MeasurableSpace Ω] in
-theorem mem_stopSet {P : SParams} {pol : Learner Ω d} {x : ℝ} {t : ℕ} {s : Sample d Ω} :
-    s ∈ stopSet P pol x t ↔ s ∈ liveSet P pol t ∧ ∀ u ≤ t, cumO P pol u s ≤ x := by
-  unfold stopSet stopH
-  simp only [Set.mem_preimage, Set.mem_ofPred_eq]
-  constructor
-  · rintro ⟨h1, h2⟩
-    exact ⟨h1, fun u hu => (cumH_hist P pol hu s) ▸ h2 u hu⟩
-  · rintro ⟨h1, h2⟩
-    exact ⟨h1, fun u hu => (cumH_hist P pol hu s).symm ▸ h2 u hu⟩
-
-omit [MeasurableSpace Ω] in
-theorem stopSet_sub_live (P : SParams) (pol : Learner Ω d) (x : ℝ) (t : ℕ) :
-    stopSet P pol x t ⊆ liveSet P pol t := fun _ hs => (mem_stopSet.1 hs).1
-
-omit [MeasurableSpace Ω] in
-theorem stopSet_succ {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (x : ℝ) (t : ℕ) :
-    stopSet P pol x (t + 1) ⊆ stopSet P pol x t := fun s hs => by
-  obtain ⟨h1, h2⟩ := mem_stopSet.1 hs
-  exact mem_stopSet.2 ⟨live_of_live_succ hP pol t h1, fun u hu => h2 u (by omega)⟩
-
-theorem measurableSet_stopH {P : SParams} (hP : Good P d R0) (x : ℝ) (t : ℕ) :
-    MeasurableSet (stopH (d := d) P x t) := by
-  have hR := ruleS_meas_prior hP
-  have hD := dens_props (prior d (1 / 2)) (ruleS d P) hR P.sc t
-  have hL := measurableSet_liveS_dens P (prior d (1 / 2)) hD.1 hD.2.1
-  have hC : MeasurableSet {h : Hist d (Option Cell) | ∀ u ≤ t, cumH P.b h u ≤ x} := by
-    have : {h : Hist d (Option Cell) | ∀ u ≤ t, cumH P.b h u ≤ x} =
-        ⋂ u ∈ Finset.range (t + 1), {h | cumH P.b h u ≤ x} := by
-      ext h
-      simp
-    rw [this]
-    refine Finset.measurableSet_biInter _ fun u _ => measurableSet_le ?_ measurable_const
-    exact Finset.measurable_sum _ fun i _ =>
-      ((measurable_pi_apply i).comp (measurable_fst.comp measurable_snd)).sub measurable_const
-  exact hL.inter hC
-
-theorem measurableSet_stopSet {P : SParams} (hP : Good P d R0) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) (x : ℝ) {t : ℕ} (ht : t ≤ n) :
-    MeasurableSet (stopSet P pol x t) :=
-  (measurable_hist (prior d (1 / 2)) (ruleS d P) (ruleS_meas_prior hP) P.sc (fun t ht => (hpol t ht).1) ht)
-    (measurableSet_stopH hP x t)
-
-/-- The stopped live event of round `t` does not read the rounds from `t` on. -/
-theorem stopH_push (P : SParams) (x : ℝ) {t u : ℕ} (htu : t ≤ u) (h : Hist d (Option Cell)) (y : E d) (o : ℝ)
-    (a : Option Cell) : Hist.push h u y o a ∈ stopH P x t ↔ h ∈ stopH P x t := by
-  have hpost : post (prior d (1 / 2)) (ruleS d P) P.sc t (Hist.push h u y o a) =
-      post (prior d (1 / 2)) (ruleS d P) P.sc t h := by
-    unfold post
-    rw [dens_congr (prior d (1 / 2)) (ruleS d P) P.sc t (Hist.push h u y o a) h fun i hi => by
-      simp [Hist.push, Function.update_of_ne (by omega : i ≠ u)]]
-  have hcum : ∀ v ≤ t, cumH P.b (Hist.push h u y o a) v = cumH P.b h v := fun v hv => by
-    unfold cumH
-    refine sum_congr rfl fun i hi => ?_
-    have : i ≠ u := by have := mem_range.1 hi; omega
-    simp [Hist.push, Function.update_of_ne this]
-  unfold stopH
-  simp only [Set.mem_ofPred_eq, hpost]
-  constructor
-  · rintro ⟨h1, h2⟩
-    exact ⟨h1, fun v hv => (hcum v hv) ▸ h2 v hv⟩
-  · rintro ⟨h1, h2⟩
-    exact ⟨h1, fun v hv => (hcum v hv).symm ▸ h2 v hv⟩
-
-omit [MeasurableSpace Ω] in
-theorem hist_succ_mem_stopH (P : SParams) (pol : Learner Ω d) (x : ℝ) (t : ℕ) (s : Sample d Ω) :
-    hist (prior d (1 / 2)) (ruleS d P) P.sc pol (t + 1) s ∈ stopH P x t ↔ s ∈ stopSet P pol x t := by
-  rw [hist_succ]
-  exact stopH_push P x le_rfl _ _ _ _
-
-omit [MeasurableSpace Ω] in
-/-- The stopped live event of round `t` reads the noise before round `t` only. -/
-theorem stopSet_congr (P : SParams) (pol : Learner Ω d) (x : ℝ) (t : ℕ) {s s' : Sample d Ω} (h1 : s.1 = s'.1)
-    (h2 : ∀ i < t, s.2.1 i = s'.2.1 i) (h3 : s.2.2 = s'.2.2) : s ∈ stopSet P pol x t ↔ s' ∈ stopSet P pol x t := by
-  let _ : MeasurableSpace Ω := ⊤
-  unfold stopSet
-  rw [Set.mem_preimage, Set.mem_preimage, hist_congr _ _ _ pol t s s' h1 h2 h3]
 
 end Events
 
@@ -607,87 +483,5 @@ theorem stopped_count {d : ℕ} (hd : 1 ≤ d) (μ : Measure Ω) [IsProbabilityM
   exact hsum
 
 end Generic
-
-/-! ## (F2) at the parameters of the game -/
-
-section Ledger
-
-variable {d : ℕ} {Ω : Type} [MeasurableSpace Ω] {R0 : ℝ}
-
-omit [MeasurableSpace Ω] in
-theorem stopH_anti {P : SParams} (hP : Good P d R0) (pol : Learner Ω d) (x : ℝ) (t : ℕ) (s : Sample d Ω)
-    (hs : hist (prior d (1 / 2)) (ruleS d P) P.sc pol (t + 1) s ∈ stopH P x (t + 1)) :
-    hist (prior d (1 / 2)) (ruleS d P) P.sc pol (t + 1) s ∈ stopH P x t :=
-  (hist_succ_mem_stopH P pol x t s).2 (stopSet_succ hP pol x t hs)
-
-/-- The payment on the stopped live event is the weighted payment of the generic ledger. -/
-theorem setIntegral_stop_Pf {P : SParams} (hP : Good P d R0) (μ : Measure Ω) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) (x : ℝ) {t : ℕ} (ht : t ≤ n) :
-    ∫ s in stopSet P pol x t, Pf P pol t s ∂gameLaw (prior d (1 / 2)) μ =
-      ∫ s, payW (prior d (1 / 2)) (ruleS d P) P.sc (P.w d) (stopH P x t) t (play pol t s.2.2)
-        (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) ∂gameLaw (prior d (1 / 2)) μ := by
-  rw [← integral_indicator (measurableSet_stopSet hP hpol x ht)]
-  refine integral_congr_ae (ae_of_all _ fun s => ?_)
-  unfold payW
-  beta_reduce
-  by_cases hs : s ∈ stopSet P pol x t
-  · rw [Set.indicator_of_mem hs, Set.indicator_of_mem (show hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s ∈
-      stopH P x t from hs)]
-    rfl
-  · rw [Set.indicator_of_notMem hs, Set.indicator_of_notMem (show hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s ∉
-      stopH P x t from hs)]
-
-/-- (F2): `Σ_t E[P'_t; S'_t] ≤ R_L`. -/
-theorem stop_payment {P : SParams} (hP : Good P d R0) (μ : Measure Ω) [IsProbabilityMeasure μ] {pol : Learner Ω d}
-    {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) (x : ℝ) :
-    ∑ t ∈ range n, ∫ s in stopSet P pol x t, Pf P pol t s ∂gameLaw (prior d (1 / 2)) μ ≤ ledgerR d (P.w d) := by
-  have hR := ruleS_meas_prior hP
-  have hL := stopped_ledger hP.d_pos (show (0 : ℝ) < 1 / 2 by norm_num) μ (ruleS d P) hR hP.sc_pos.ne'
-    (fun t ht => (hpol t ht).1) hP.w_pos.ne' (stopH P x) (measurableSet_stopH hP x) (fun t => stopH_push P x le_rfl)
-    (stopH_anti hP pol x)
-  rw [sum_congr rfl fun t ht => setIntegral_stop_Pf hP μ hpol x (mem_range.1 ht).le]
-  have hb : ledgerBudget d (1 / 2) (P.w d) = ledgerR d (P.w d) := rfl
-  rw [← hb]
-  exact hL
-
-/-- The information on the stopped live event is the weighted information of the generic count. -/
-theorem setIntegral_stop_Jf {P : SParams} (hP : Good P d R0) (μ : Measure Ω) {pol : Learner Ω d} {n : ℕ}
-    (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) (x : ℝ) {t : ℕ} (ht : t ≤ n) :
-    ∫ s in stopSet P pol x t, Jf P pol t s ∂gameLaw (prior d (1 / 2)) μ =
-      ∫ s, infoW (prior d (1 / 2)) (ruleS d P) P.sc (stopH P x t) t (play pol t s.2.2)
-        (hist (prior d (1 / 2)) (ruleS d P) P.sc pol t s) ∂gameLaw (prior d (1 / 2)) μ := by
-  rw [← integral_indicator (measurableSet_stopSet hP hpol x ht)]
-  refine integral_congr_ae (ae_of_all _ fun s => ?_)
-  beta_reduce
-  rw [infoW_hist]
-  rfl
-
-omit [MeasurableSpace Ω] in
-theorem stop_dead_eq (P : SParams) (pol : Learner Ω d) (x : ℝ) (t : ℕ) :
-    {s : Sample d Ω | hist (prior d (1 / 2)) (ruleS d P) P.sc pol (t + 1) s ∈ stopH P x t ∧
-      dLive (P.w d) (covM (post (prior d (1 / 2)) (ruleS d P) P.sc (t + 1)
-        (hist (prior d (1 / 2)) (ruleS d P) P.sc pol (t + 1) s))) < d / 2} =
-      stopSet P pol x t ∩ (liveSet P pol (t + 1))ᶜ := by
-  ext s
-  rw [Set.mem_ofPred_eq, hist_succ_mem_stopH, Set.mem_inter_iff, Set.mem_compl_iff]
-  exact and_congr Iff.rfl (not_le (α := ℝ)).symm
-
-/-- (F3): `N* p' ≤ Σ_t J'_t`, with `p' = Σ_{t < n} P(S'_t, round t + 1 dead)`. -/
-theorem stop_count (I : Inputs) {P : SParams} (hP : Good P d R0) (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {pol : Learner Ω d} {n : ℕ} (hpol : IsLearnerAd (Metric.closedBall 0 R0) n pol) (x : ℝ)
-    (hX : Real.exp 1 / 2 ≤ xCount d (P.w d)) :
-    nStar d (P.w d) * ∑ t ∈ range n, (gameLaw (prior d (1 / 2)) μ).real (stopSet P pol x t ∩ (liveSet P pol (t + 1))ᶜ) ≤
-      ∑ t ∈ range n, ∫ s in stopSet P pol x t, Jf P pol t s ∂gameLaw (prior d (1 / 2)) μ := by
-  have hR := ruleS_meas_prior hP
-  have hS₀ : ∀ t < n, ∀ h θ ω, |(ruleS d P).sig (post (prior d (1 / 2)) (ruleS d P) P.sc t h)
-      (play pol t ω h) θ| ≤ 1 := fun t ht h θ ω => abs_sig_post_le I hP t h ((hpol t ht).2 _ _ _) θ
-  have hc := stopped_count (by have := hP.d_pos; omega) μ (ruleS d P) hR hP.sc_pos.ne' (fun t ht => (hpol t ht).1)
-    hS₀ hP.w_pos hX (stopH P x) (measurableSet_stopH hP x) (fun t => stopH_push P x le_rfl) (stopH_anti hP pol x)
-    (fun t s hs => hs.1)
-  simp only [stop_dead_eq] at hc
-  rw [sum_congr rfl fun t ht => setIntegral_stop_Jf hP μ hpol x (mem_range.1 ht).le]
-  exact hc
-
-end Ledger
 
 end AdversarialBco.Lower.Stop

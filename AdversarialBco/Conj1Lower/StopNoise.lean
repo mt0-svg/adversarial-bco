@@ -20,9 +20,8 @@ law of the sample `gameLaw π0 μ = π0 ⊗ gaussStream ⊗ μ` of Bayes.lean.
   through its first argument.
 * `integral_mul_noise`, `integral_mul_noise_sq`: `E[G Z_t] = 0` and `E[G Z_t²] = E[G]` for `G` that does not read
   `Z_t`.
-* `noiseSum_sq_le`, `integral_noiseSum`: a noise sum with predictable weights in `[0, 1]`,
-  `M_n = Σ_{t < n} V_t Z_t` with `V_t` reading the tip, the seed and `Z_0, ..., Z_{t-1}` only, has mean `0` and
-  `E M_n² ≤ n`.
+* `noiseSum`: a noise sum with predictable weights in `[0, 1]`, `M_n = Σ_{t < n} V_t Z_t` with `V_t` reading the tip,
+  the seed and `Z_0, ..., Z_{t-1}` only (`noiseSum_readsBefore`, `measurable_noiseSum`).
 -/
 
 open MeasureTheory ProbabilityTheory Finset
@@ -119,10 +118,6 @@ theorem memLp_noise (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measu
     (measurable_noise (d := d) (Ω := Ω) t).aemeasurable).1 (by rw [map_noise π0 μ t]; exact memLp_id_gaussianReal 2)
   exact h
 
-theorem integrable_noise_sq (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω)
-    [IsProbabilityMeasure μ] (t : ℕ) : Integrable (fun s : Sample d Ω => s.2.1 t ^ 2) (gameLaw π0 μ) :=
-  (memLp_noise π0 μ t).integrable_sq
-
 /-- The Bochner form of `lintegral_gameLaw_coord`: for `F` that reads the noise of round `t` only through its first
 argument, `E F(Z_t, s) = E ∫ F(z, s) dN(0, 1)(z)`. -/
 theorem integral_gameLaw_noise (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω)
@@ -182,14 +177,6 @@ theorem integral_mul_noise_sq (π0 : Measure (E d)) [IsProbabilityMeasure π0] (
     rw [integral_const_mul (G s) (fun z => z ^ 2), integral_sq_gaussianReal, mul_one]
   simp [h0]
 
-/-- `E Z_t² = 1`. -/
-theorem integral_noise_sq (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [IsProbabilityMeasure μ]
-    (t : ℕ) : ∫ s, s.2.1 t ^ 2 ∂gameLaw π0 μ = 1 := by
-  have hG := isProbabilityMeasure_gameLaw π0 μ
-  have h := integral_mul_noise_sq π0 μ t (G := fun _ => (1 : ℝ)) measurable_const (fun _ => rfl)
-    (by simpa using integrable_noise_sq π0 μ t)
-  simpa using h
-
 /-- The noise sum with weights `V`: `M_n = Σ_{t < n} V_t Z_t`. -/
 noncomputable def noiseSum (V : ℕ → Sample d Ω → ℝ) (n : ℕ) (s : Sample d Ω) : ℝ :=
   ∑ t ∈ range n, V t s * s.2.1 t
@@ -205,85 +192,5 @@ theorem noiseSum_readsBefore {V : ℕ → Sample d Ω → ℝ} {n : ℕ} (hVr : 
 theorem measurable_noiseSum {V : ℕ → Sample d Ω → ℝ} {n : ℕ} (hVm : ∀ t < n, Measurable (V t)) :
     Measurable (noiseSum V n) :=
   Finset.measurable_sum _ fun t ht => (hVm t (Finset.mem_range.1 ht)).mul (measurable_noise t)
-
-theorem memLp_weight_noise (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {V : Sample d Ω → ℝ} (hVm : Measurable V) (hV : ∀ s, |V s| ≤ 1) (t : ℕ) :
-    MemLp (fun s => V s * s.2.1 t) 2 (gameLaw π0 μ) :=
-  (memLp_noise π0 μ t).of_le (hVm.mul (measurable_noise t)).aestronglyMeasurable (ae_of_all _ fun s => by
-    rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_mul]
-    exact mul_le_of_le_one_left (abs_nonneg _) (hV s))
-
-theorem memLp_noiseSum (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {V : ℕ → Sample d Ω → ℝ} {n : ℕ} (hVm : ∀ t < n, Measurable (V t)) (hV : ∀ t < n, ∀ s, |V t s| ≤ 1) :
-    MemLp (noiseSum V n) 2 (gameLaw π0 μ) :=
-  memLp_finsetSum _ fun t ht =>
-    memLp_weight_noise π0 μ (hVm t (Finset.mem_range.1 ht)) (hV t (Finset.mem_range.1 ht)) t
-
-/-- A noise sum with predictable weights has mean `0`. -/
-theorem integral_noiseSum (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {V : ℕ → Sample d Ω → ℝ} {n : ℕ} (hVm : ∀ t < n, Measurable (V t)) (hV : ∀ t < n, ∀ s, |V t s| ≤ 1)
-    (hVr : ∀ t < n, ReadsBefore t (V t)) : ∫ s, noiseSum V n s ∂gameLaw π0 μ = 0 := by
-  have hG := isProbabilityMeasure_gameLaw π0 μ
-  unfold noiseSum
-  rw [integral_finsetSum _ fun t ht => (memLp_weight_noise π0 μ (hVm t (Finset.mem_range.1 ht))
-    (hV t (Finset.mem_range.1 ht)) t).integrable one_le_two]
-  exact Finset.sum_eq_zero fun t ht => integral_mul_noise π0 μ t (hVm t (Finset.mem_range.1 ht))
-    ((hVr t (Finset.mem_range.1 ht)).resetZ le_rfl)
-    ((memLp_weight_noise π0 μ (hVm t (Finset.mem_range.1 ht)) (hV t (Finset.mem_range.1 ht)) t).integrable one_le_two)
-
-/-- A noise sum with predictable weights in `[-1, 1]` has `E M_n² ≤ n`. -/
-theorem noiseSum_sq_le (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Measure Ω) [IsProbabilityMeasure μ]
-    {V : ℕ → Sample d Ω → ℝ} {n : ℕ} (hVm : ∀ t < n, Measurable (V t)) (hV : ∀ t < n, ∀ s, |V t s| ≤ 1)
-    (hVr : ∀ t < n, ReadsBefore t (V t)) : ∫ s, noiseSum V n s ^ 2 ∂gameLaw π0 μ ≤ n := by
-  have hG := isProbabilityMeasure_gameLaw π0 μ
-  induction n with
-  | zero => simp [noiseSum]
-  | succ n ih =>
-    have hVm' : ∀ t < n, Measurable (V t) := fun t ht => hVm t (by omega)
-    have hV' : ∀ t < n, ∀ s, |V t s| ≤ 1 := fun t ht => hV t (by omega)
-    have hVr' : ∀ t < n, ReadsBefore t (V t) := fun t ht => hVr t (by omega)
-    have ih' := ih hVm' hV' hVr'
-    have hVn := hVm n (by omega)
-    have hVb := hV n (by omega)
-    have hVrn := hVr n (by omega)
-    have hM := memLp_noiseSum π0 μ hVm' hV'
-    have hVZ := memLp_weight_noise π0 μ hVn hVb n
-    have hMV : MemLp (fun s => noiseSum V n s * V n s) 2 (gameLaw π0 μ) :=
-      hM.of_le ((measurable_noiseSum hVm').mul hVn).aestronglyMeasurable (ae_of_all _ fun s => by
-        rw [Real.norm_eq_abs, Real.norm_eq_abs, abs_mul]
-        exact mul_le_of_le_one_right (abs_nonneg _) (hVb s))
-    have hcross : Integrable (fun s => noiseSum V n s * V n s * s.2.1 n) (gameLaw π0 μ) :=
-      hMV.integrable_mul (memLp_noise π0 μ n)
-    have hsq : Integrable (fun s => V n s ^ 2 * s.2.1 n ^ 2) (gameLaw π0 μ) := by
-      have := hVZ.integrable_sq
-      refine this.congr (ae_of_all _ fun s => ?_)
-      ring
-    have hV2 : ∀ s, V n s ^ 2 ≤ 1 := fun s => by
-      have := hVb s
-      rw [← sq_abs]
-      nlinarith [abs_nonneg (V n s)]
-    have hexp : ∀ s, noiseSum V (n + 1) s ^ 2 =
-        noiseSum V n s ^ 2 + 2 * (noiseSum V n s * V n s * s.2.1 n) + V n s ^ 2 * s.2.1 n ^ 2 := fun s => by
-      simp only [noiseSum, Finset.sum_range_succ]
-      ring
-    simp only [hexp]
-    have hA : Integrable (fun s => noiseSum V n s ^ 2) (gameLaw π0 μ) := hM.integrable_sq
-    have hB : Integrable (fun s => 2 * (noiseSum V n s * V n s * s.2.1 n)) (gameLaw π0 μ) := hcross.const_mul 2
-    have hAB : Integrable (fun s => noiseSum V n s ^ 2 + 2 * (noiseSum V n s * V n s * s.2.1 n)) (gameLaw π0 μ) :=
-      hA.add hB
-    rw [integral_add hAB hsq, integral_add hA hB,
-      integral_const_mul 2 (fun s => noiseSum V n s * V n s * s.2.1 n)]
-    have h0 : ∫ s, noiseSum V n s * V n s * s.2.1 n ∂gameLaw π0 μ = 0 :=
-      integral_mul_noise π0 μ n ((measurable_noiseSum hVm').mul hVn)
-        (((noiseSum_readsBefore hVr').mul hVrn).resetZ le_rfl) hcross
-    have h1 : ∫ s, V n s ^ 2 * s.2.1 n ^ 2 ∂gameLaw π0 μ = ∫ s, V n s ^ 2 ∂gameLaw π0 μ :=
-      integral_mul_noise_sq π0 μ n (hVn.pow_const 2) (fun s => by rw [hVrn.resetZ le_rfl s]) hsq
-    have h2 : ∫ s, V n s ^ 2 ∂gameLaw π0 μ ≤ 1 := by
-      have := integral_mono_of_nonneg (μ := gameLaw π0 μ) (f := fun s => V n s ^ 2) (g := fun _ => (1 : ℝ))
-        (ae_of_all _ fun s => sq_nonneg _) (integrable_const 1) (ae_of_all _ hV2)
-      simpa using this
-    rw [h0, h1]
-    push_cast
-    linarith
 
 end AdversarialBco.Lower.Stop

@@ -102,7 +102,7 @@ theorem detHyp_of_good (hAP : ∀ v : Adv d, ApSpec (apAdv v)) (hreg : Regime d 
   have hR := row_one_le_R _ d n H
   have hmw : 1 / (df2oPar d n δ).R ≤ df2Mw d := by rw [H.R]; exact inv_R_le_df2Mw d hd
   obtain ⟨evG, evY, evLQ, evSDF, evDQ⟩ := hev
-  exact DetHyp.mk (DetBase.mk (c := B.ctx δ a ω) df2LayerOne_holds lemmaW SIF.df2SIFacts_holds hd hn hδ0 hδ1 rfl
+  exact DetHyp.mk (DetBase.ofOPar (c := B.ctx δ a ω) df2LayerOne_holds lemmaW SIF.df2SIFacts_holds hd hn hδ0 hδ1 rfl
     heps (df2RowsHold d n δ hd hn hδ0 hδ1 heps) (by omega) (Nat.sub_le n a) (body_kTh hKc hKconv hR hmw _)
     (fun s => hAP _) (fun s hs => adm_gTh (f := fun t => B.F.L t (lamAtW n B.F.lam a s ω)) (a := a) (s := s)
       hKconv hKc hR hmw (B.F.adm (a + s) (by omega) _) _)) evG evY evLQ evSDF evDQ
@@ -132,35 +132,6 @@ theorem refPlay_run (hKconv : Convex ℝ K) {ω : Ω} (hq : B.Case δ ω) (heps0
     · exact absurd (by rw [WithLp.toLp_smul]; exact interior_subset hint) h
   rw [hpt]
   exact ⟨hval, hval ▸ hint⟩
-
-/-- On `Case`, the loss of round `s` of the epoch started before `a` is half the round's loss at the position. -/
-theorem path_g {ω : Ω} (hq : B.Case δ ω) {a s : ℕ} (h : a + s < n) :
-    (B.path δ a ω).g s = fun y => B.loss ω (a + s) (pgMu (B.pos ω) + pgOp (B.pos ω) y) / 2 := by
-  funext y
-  have hq' : PgGood d K (df2oPar d n δ).R (some (B.pos ω)) := hq
-  show gTh n δ K (fun t => B.F.L t (lamAtW n B.F.lam a s ω)) a s (B.pos ω) y = _
-  simp only [gTh, hq', ↓reduceIte, lamAtW, h]
-  rfl
-
-/-- On `Case`, P°'s observation in round `s` of the epoch started before `a`: `pt° (f(x°)/2 + (ε + ζ*)/2) +
-2 (pt° - 1)/ε` at P°'s point `X° = μ° + (1 - λ) A° ξ` of the epoch's state. -/
-theorem ctx_Y {ω : Ω} (hq : B.Case δ ω) {a s : ℕ} (h : a + s < n) {so : Df2St d}
-    (hso : (B.ctx δ a ω).st (B.path δ a ω) s = so) :
-    (B.ctx δ a ω).Y (B.path δ a ω) s =
-      Bit.BLP.EngL.ptE (kTh n δ K (B.pos ω)) (df2oPar d n δ).eps
-          (WithLp.toLp 2 (so.mu + (1 - (df2oPar d n δ).lam) • (so.A *ᵥ W.xi (a + s) ω))) *
-        (B.loss ω (a + s) (pgMu (B.pos ω) + pgOp (B.pos ω)
-            ((Bit.BLP.EngL.ptE (kTh n δ K (B.pos ω)) (df2oPar d n δ).eps
-              (WithLp.toLp 2 (so.mu + (1 - (df2oPar d n δ).lam) • (so.A *ᵥ W.xi (a + s) ω))))⁻¹ •
-              WithLp.toLp 2 (so.mu + (1 - (df2oPar d n δ).lam) • (so.A *ᵥ W.xi (a + s) ω)))) / 2 +
-          (W.nz (a + s) ω + B.zeta (a + s) ω (B.mode δ (a + s) ω)) / 2) +
-      2 * (Bit.BLP.EngL.ptE (kTh n δ K (B.pos ω)) (df2oPar d n δ).eps
-          (WithLp.toLp 2 (so.mu + (1 - (df2oPar d n δ).lam) • (so.A *ᵥ W.xi (a + s) ω))) - 1) /
-        (df2oPar d n δ).eps := by
-  subst hso
-  unfold Df2Ctx.Y Df2Ctx.play
-  rw [B.path_g hq h, WithLp.toLp_smul]
-  rfl
 
 /-- In `IND(t)` at `t = a + s < n` on `Case ∩ Ω_ref`: P°'s mode before round `t` is the epoch's state, DET holds at
 the horizon `s + 1` and the stopping time there is `s` (Lemma HOR (c)). -/

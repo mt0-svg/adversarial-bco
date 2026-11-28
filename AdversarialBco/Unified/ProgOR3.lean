@@ -18,7 +18,7 @@ After the play of round `t`, R3 reads `clip qO ⌊2^p (f_t(x'_t) + noise_t)⌋` 
 precision `p` in the register `rP` and the range
 `qO = p + clog₂(9 + 4 ⌊√(size(14 n N_e))⌋ + ⌊√(2B)⌋)` (`CfgO.qO`) computed in the round from the persistent cells
 (`n` in `sN`, `N_e` in `sNe`, `B` in `rB`): `size m = clog₂(m + 1)` by `xclogS`, the roots by `xisqrt`, in the slots
-`256, ..., 271` and the registers `8, 9, 10`. `progR3 : ProgR3`, the contract `SpecR3` of ProgOSplit.lean.
+`256, ..., 271` and the registers `8, 9, 10`.
 -/
 
 namespace AdversarialBco.Unified.ProgO
@@ -347,78 +347,5 @@ def xR3 (L : Layout) : XCmdO := .seq (.base (xqO L)) (xobsRO L sObs rP rQO)
 
 /-- The constants of R3. -/
 def kR3 : BlkK := ⟨400, 1, 0, 0, 272, 11, 0⟩
-
-theorem specR3 : SpecR3 xR3 kR3 := by
-  intro d R σ0 σ hH hI hP hr hpt
-  have hNS : 272 ≤ R.L.NS := hH.room.1
-  have hNN : 11 ≤ R.L.NN := hH.room.2.1
-  obtain ⟨-, -, -, r3, r4, -, -, r7⟩ := hI.regs
-  obtain ⟨-, c1, c2, -, c4, -, c6, -⟩ := hI.consts
-  have eN : ∀ j < 8, σ.nat j = σ0.nat j := hP.1
-  have eS : ∀ y < nSP, σ.sc y = σ0.sc y := hP.2.1
-  have hnE : R.n ≤ 2 ^ R.E := by
-    have h := hI.sc_abs (y := sN) (by decide) (z := (R.n : ℤ)) (by rw [c1]; push_cast; rfl)
-    rw [abs_of_nonneg (by positivity)] at h
-    exact_mod_cast h
-  have hNeE : R.c.par.Ne ≤ 2 ^ R.E := by
-    have h := hI.sc_abs (y := sNe) (by decide) (z := (R.c.par.Ne : ℤ)) (by rw [c6]; push_cast; rfl)
-    rw [abs_of_nonneg (by positivity)] at h
-    exact_mod_cast h
-  have hBE : R.c.par.B ≤ R.E := by
-    have h : 2 * gsm_prec R.c.par.B ≤ R.E := pow_two_le (hI.sc_abs (y := s2g) (by decide) (by rw [c4]; push_cast; rfl))
-    have : R.c.par.B ≤ gsm_prec R.c.par.B := by unfold gsm_prec; omega
-    omega
-  have hpE : R.c.par.p ≤ R.E := pow_two_le (hI.sc_abs (y := s2p) (by decide) (by rw [c2]; push_cast; rfl))
-  have hb : R.bud kR3 = 400 * (R.W + R.E + 1) := by simp [RdO.bud, kR3]
-  have hℓ := hH.hℓ
-  have hℓa := hH.hℓa
-  rw [hb] at hℓ hℓa
-  refine XVO.mono (K := 300 * (R.E + 1) + 1) (XVO.seq (XVO.ofX (XV.qO hH.lay (E := R.E) hNS hNN (by rw [eS _ (by decide), c1]) (by rw [eS _ (by decide), c6]; rfl)
-    (by rw [eN _ (by decide), r7]; rfl) (by rw [eN _ (by decide), r4]; rfl) (by rw [eN _ (by decide), r3]) hnE hNeE
-    hBE hpE (by omega) (by omega))) fun σ1 h1 => ?_) (by rw [hb]; omega) fun _ h => h
-  obtain ⟨q1, T1⟩ := h1
-  have p1 : σ1.nat rP = R.c.par.p := by rw [T1.1 _ (by decide), eN _ (by decide), r4]; rfl
-  set S := 9 + 4 * Nat.sqrt (14 * R.n * R.c.par.Ne).size + Nat.sqrt (2 * R.c.par.B) with hS
-  have hSle : S ≤ 9 + 4 * (2 * R.E + 5) + 2 * R.E := by
-    have hsz : (14 * R.n * R.c.par.Ne).size ≤ 2 * R.E + 5 := by
-      have hnNe : R.n * R.c.par.Ne ≤ 2 ^ (2 * R.E) := by
-        calc R.n * R.c.par.Ne ≤ 2 ^ R.E * 2 ^ R.E := Nat.mul_le_mul hnE hNeE
-          _ = 2 ^ (2 * R.E) := by rw [← pow_add]; ring_nf
-      rw [Nat.size_le]
-      have : 2 ^ (2 * R.E + 5) = 32 * 2 ^ (2 * R.E) := by rw [pow_add]; ring
-      have : 14 * R.n * R.c.par.Ne = 14 * (R.n * R.c.par.Ne) := by ring
-      have := Nat.mul_le_mul_left 14 hnNe
-      have := Nat.one_le_two_pow (n := 2 * R.E)
-      omega
-    have := (Nat.sqrt_le_self (14 * R.n * R.c.par.Ne).size).trans hsz
-    have := (Nat.sqrt_le_self (2 * R.c.par.B)).trans (le_refl _)
-    omega
-  have hcl : Nat.clog 2 S ≤ S := Nat.clog_le_of_le_pow Nat.lt_two_pow_self.le
-  have hq : σ1.nat rQO = R.c.qO := q1
-  have hqℓ : σ1.nat rQO < R.ℓ := by rw [q1]; omega
-  have hW : 1 ≤ R.W + R.E + 1 := by omega
-  refine XVO.mono (XVO.obsR hH.lay (x := sObs) (p := rP) (q := rQO) (by simp only [sObs]; omega)
-    (by simp only [rP]; omega) (by simp only [rQO]; omega) (by rw [p1]; omega) hqℓ (by rw [p1]; omega)
-    (by omega)) (by omega) fun σ2 e2 => ?_
-  subst e2
-  have r1 : σ1.rounds = R.t + 1 := by rw [T1.2.2.2.2.1, hr]
-  have hfb : fbE R.ctx.X σ1 = R.w.f R.t (toE R.play) + R.w.noise R.t := by
-    unfold fbE
-    rw [ite_eq_right (by omega), r1, Nat.add_sub_cancel, T1.2.2.2.2.2, hpt]
-    rfl
-  refine ⟨?_, by simp [T1.2.2.2.2.1], by simp [T1.2.2.2.1], ?_, ?_, ?_⟩
-  · simp only [Env.setSc_sc, ite_true, hq, p1, hfb]
-    rfl
-  · intro j hj
-    simp only [Env.setSc_nat]
-    exact T1.1 j (by simp only [NScr] at hj; omega)
-  · intro y hy
-    simp only [SR3, not_or] at hy
-    rw [Env.setSc_sc, ite_eq_right hy.1]
-    exact T1.2.1 y (by simp only [tR] at hy; omega)
-  · intro b k _
-    simp only [Env.setSc_arr, T1.2.2.1]
-
-theorem progR3 : ProgR3 := ⟨_, _, specR3⟩
 
 end AdversarialBco.Unified.ProgO

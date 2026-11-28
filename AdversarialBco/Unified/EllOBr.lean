@@ -13,8 +13,8 @@ public import AdversarialBco.Unified.EllOBrLoop
 # UNI-ELL (c): the ELL-O branch on the oracle machine
 
 `d ≥ 2`, after the constants up to `λ` of ELL-R's inner block (`XV.ellJ`): ELL-R's start state (`xellPre`, the first
-four parts of `xellBr`, Bit/Transfer/XEllRule.lean), the constants of step 2 (`xconstO`), the loop of ELL-O
-(`xloopT` with the test command `xtestOB`, `XVO.ellLoopBrO`) and ELL-R's output (`xellOut`) into the inner block.
+four parts of ELL-R's branch, Unified/EllOBrPre.lean), the constants of step 2 (`xconstO`), the loop of ELL-O (`xloopT`
+with the test command `xtestOB`, `XVO.ellLoopBrO`) and ELL-R's output (`xellOut`) into the inner block.
 -/
 
 namespace AdversarialBco.Uni.EllO

@@ -3,8 +3,8 @@ Copyright (c) 2026 mt0-svg. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: mt0-svg
 -/
--- Comparator challenges, fifth module: AdversarialBco/StatementConj1Bit.lean verbatim over the third and fourth
--- modules (code/formal-proof/challenges.sh).
+-- Comparator challenges, thirteenth module: AdversarialBco/StatementConj1Bit.lean verbatim over the third and
+-- fourth modules (code/formal-proof/challenges.sh).
 module
 
 public import AdversarialBco.ChallengeBase.StatementConj1Poly
@@ -125,8 +125,8 @@ product `ρ ⊗ coinStream`, the seed independent of the coins, which are fair a
 StatementBitRAM.lean). The statement bounds the upper expectation of the positive part of the regret: a
 measurable `R ≥ 0` above the regret on every run, with `∫ R` at most the bound,
 asks nothing of the regret itself, and gives `E R_T ≤` the bound whenever `R_T` is measurable and integrable. Under
-`RandAdv` the regret is measurable in the seed and the coins (proved in Lean for every program, `regMeasOK` of
-Bit/Assembly.lean, a clause of `TheoremConj1UpperBitHP`): the points played take countably many values, each on an
+`RandAdv` the regret is measurable in the seed and the coins (proved in Lean for every program, `measurable_regret` of
+Bit/RegMeas.lean): the points played take countably many values, each on an
 event measurable in the seed and the coins, and a convex function on `K` has the
 same infimum over `K` as over a countable dense subset of the interior of `K` (it is continuous on the interior, and at
 a boundary point `y`, `g ((1 - s) y + s z) ≤ (1 - s) g y + s g z` for `z` interior); so `max (Reg, 0)` is a measurable
@@ -150,8 +150,7 @@ machine that simulates a round by a polynomial in `d`, `m`, `log n` and `log M` 
 bit-cost model"). Without it, a program could keep a cell for each past round and reach any of them at cost
 `O(log n)`, while on a Turing machine these cells fill a tape of length of order `t` in round `t`. The input is in the
 memory and is counted: its cells in use, addresses and contents, have total bit length at most
-`N (len N + len d + len n + len m + len M)` with `N = 3 + 2 (d + 1) m` (`input_space_nat`,
-AdversarialBco/Conj1Bit/Sanity.lean). The points played are output and are
+`N (len N + len d + len n + len m + len M)` with `N = 3 + 2 (d + 1) m`. The points played are output and are
 not counted; the machine stores nothing for the program outside its cells.
 
 ## What is not claimed

@@ -44,6 +44,8 @@ def parK (d n k : ℕ) : Par := parN (NeO d n k) d n
 /-- The case of the analysis at `k`: `ε ≤ 1/4`. -/
 def RunCaseK (d n k : ℕ) : Prop := (poK d n k).eps ≤ 1 / 4
 
+theorem parO_eq (d n : ℕ) (δ : ℚ) : parO d n δ = parK d n (kDel δ) := rfl
+
 
 /-- `N_e = 1/δe`. -/
 noncomputable def Ne (d n k : ℕ) : ℝ := (NeO d n k : ℝ)
@@ -266,9 +268,9 @@ structure BudOK (d n k : ℕ) : Prop where
   gA : 11 / 10 ^ 35 + Dc d n k * (1 + Xi1 d n k ^ 2) ≤ 1 / 2
   /-- The coins: `n (⌈d/2⌉ + 1) 2^{-B/2} ≤ 2^{-p-2}`. -/
   coins : n * ((d + 1) / 2 + 1 : ℕ) * (1 / 2 ^ ((parK d n k).B / 2) : ℝ) ≤ dbits d n k
-  /-- The budget of `RunSpec.engine` with `δbits = 2^{-p-2}`, `κ0`, `κ1 = 0`. -/
+  /-- The budget of the engine hypothesis with `δbits = 2^{-p-2}`, `κ0`, `κ1 = 0`. -/
   budget : n * (dbits d n k + n * kap0 d n k) ≤ 1 / 4
-  /-- `κ0 ≥ 0` (asked by piece D: `RunSpec.engine`). -/
+  /-- `κ0 ≥ 0` (asked by piece D). -/
   kap0_nonneg : 0 ≤ kap0 d n k
 
   /-- BL-O: the regret transfer with the band. -/

@@ -1,0 +1,16 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeUW",
+  "solution_module": "AdversarialBco.UW.TheoremU",
+  "theorem_names": [
+    "AdversarialBco.UW.theoremUW",
+    "AdversarialBco.UW.theoremUnified_of_UW",
+    "AdversarialBco.Unified.UnifiedSanity.weakMemOracle_exact",
+    "AdversarialBco.Unified.UnifiedSanity.histσ_le",
+    "AdversarialBco.Unified.UnifiedSanity.hyps_satisfiable",
+    "AdversarialBco.Unified.UnifiedSanity.noisyAdv_signNoise",
+    "AdversarialBco.Unified.UnifiedSanity.nil_not_costOKO"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

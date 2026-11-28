@@ -3,7 +3,7 @@ Copyright (c) 2026 mt0-svg. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: mt0-svg
 -/
--- Comparator challenge of config-unified.json: AdversarialBco/StatementUnified.lean verbatim over the first and seventh
+-- Comparator challenge of config-unified.json: AdversarialBco/StatementUnified.lean verbatim over the first and sixth
 -- modules, its theorem and five non-vacuity witnesses, each proved by `sorry` (code/formal-proof/challenges.sh).
 -- Nothing imports this module; the warnings `declaration uses sorry` are expected.
 module
@@ -225,9 +225,9 @@ solution module `AdversarialBco.Unified.Main`.
 
 An oracle whose ambiguous answers change from run to run (a random or adversarial oracle): the oracle is a fixed
 function, for every such function. Plays in the interior of `K` (the program of the route plays interior points; the
-statement asks `K`). A body without a known centre and radii: Conjecture 1 of Bubeck, Eldan and Lee on their
-polytopes, where the program finds a centre itself, is `TheoremConj1UpperBitHP` (StatementConj1BitHP.lean), and its
-derivation from `TheoremUnified` is left to the proof lanes as an implication between the two frozen statements. A
+statement asks `K`). A body without a known centre and radii: Conjecture 1 of Bubeck, Eldan and Lee on their polytopes,
+where the program finds a centre itself, is the bit-model statement of release v2.3 (StatementConj1BitHP.lean), and
+its derivation from `TheoremUnified` is left open as an implication between the two frozen statements. A
 noise that reads the coins drawn after the play of its round, or a loss that reads the coins of the current draw (see
 "Why windows"). A real `δ` (a real `δ` is served by a rational in `[δ/2, δ]`, at the price of a constant inside `L`).
 The lower bound (a separate statement).

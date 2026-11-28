@@ -16,14 +16,11 @@ The paper's balance and game propositions, with
 the channel bound (S1): every answer cell carries at most
 `B = (3L/2 + g)²/(8σ²)` nats. Pure arithmetic on reals: no measure, no probability.
 
-Two layers, matching the interface `round`
+The layer of one round, matching the interface `round`
 
 * `RoundFacts`: the per-round facts at one live round of one path (given the history with the answers and the
   learner's seed), as reals: the floor, the price, the leak, the chain rule, the channel bound. `round_bound` turns
   them into three linear inequalities, the case split on `p_rest` done.
-* `GameFacts`: the expectations over the game, round by round (each quantity times the indicator that the round is
-  live): the three inequalities of `round_bound` in mean, the live count, the payment and the count.
-  `ripe_balance` is the balance proposition's two bounds.
 
 Rounds are indexed by `t ∈ Finset.range n`. Who discharges what: CellsRound.lean, Ledger.lean and Info.lean
 the fields of `RoundFacts`; Top.lean integrates `round_bound` over the live event, proves the live count, the
@@ -115,25 +112,6 @@ structure RoundFacts (dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ)
   /-- The rest lemma (i), the mass: `π(regular) ≥ p_rest - 3k²/d²`. -/
   reg : pr - 3 * k ^ 2 / dd ^ 2 ≤ preg
 
-/-- The expectations over the game, round by round, `t ∈ range n`, each quantity times the indicator that round
-`t` is live (`t < τ`): `Jm t = E[J_t; t < τ]`, `Pm t = E[P'_t; t < τ]`, `am t = E[∑_{c ripe} p_{t,c}; t < τ]`,
-`Dm t = E[D_{π_t}(x_t; x°); t < τ]`, `lm t = P(t < τ)`; `p = P(τ ≤ n)`, the probability that the phase ends; `w`
-the floor (`wStar d k L g`). -/
-structure GameFacts (dd k g σ B w : ℝ) (n : ℕ) (p : ℝ) (Jm Pm am Dm lm : ℕ → ℝ) : Prop where
-  /-- `round_bound`, first inequality, in mean over the live event (Top.lean). -/
-  round_J : ∀ t < n, Jm t ≤ (4 * (3 * Real.log dd + 1) + 8 * B) / k * Pm t + g / (σ ^ 2 * priceR dd k) * Dm t
-  /-- `round_bound`, second inequality, in mean over the live event (Top.lean). -/
-  round_floor : ∀ t < n, g / 2 * (999 / 1000 * lm t - am t) ≤ Dm t
-  /-- `round_bound`, third inequality, in mean over the live event (Top.lean). -/
-  round_mass : ∀ t < n, am t ≤ 4 / k * Pm t
-  /-- `{τ = n + 1} ⊆ {t < τ}` (Top.lean). -/
-  live : ∀ t < n, 1 - p ≤ lm t
-  /-- Lemma LEAK, last claim ((L2) summed): `E ∑_{t < τ} P'_t ≤ R_L` (Ledger.lean). -/
-  payment : ∑ t ∈ range n, Pm t ≤ ledgerR dd w
-  /-- The chain-rule lemma and the count lemma (b) at `π_τ` on `{τ ≤ n}`: `E ∑_{t < τ} J_t ≥ N* P(τ ≤ n)`
-  (Info.lean). -/
-  count : nStar dd w * p ≤ ∑ t ∈ range n, Jm t
-
 /-! ## One round -/
 
 /-- `3k²/d² ≤ 1/1000` for `d ≥ 2048 k`. -/
@@ -144,6 +122,12 @@ theorem three_k_sq_le (k dd : ℝ) (hk : 0 < k) (hd : 2048 * k ≤ dd) : 3 * k ^
   have h1000 : (0 : ℝ) < 1000 := by norm_num
   rw [div_le_div_iff₀ hddsq h1000]
   nlinarith
+
+theorem priceR_nonneg (dd k : ℝ) : 0 ≤ priceR dd k := by
+  unfold priceR
+  apply div_nonneg
+  · apply pow_two_nonneg
+  · positivity
 
 /-- The information of a round: the case split on `p_rest`. -/
 theorem round_J {dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ} (hk : 0 < k) (hg : 0 ≤ g) (hB : 0 ≤ B)
@@ -206,7 +190,7 @@ theorem round_floor {dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ} 
     g / 2 * (999 / 1000 - a) ≤ g / 2 * preg := mul_le_mul_of_nonneg_left hpreg hhalf
     _ ≤ Dbar := hfloor'
 
-/-- The round, in the form `GameFacts` integrates. -/
+/-- The round, in the form that is integrated over the game. -/
 theorem round_bound {dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ} (hk : 0 < k) (hd : 2048 * k ≤ dd)
     (hg : 0 ≤ g) (hB : 0 ≤ B) (h : RoundFacts dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg) :
     J ≤ (4 * (3 * Real.log dd + 1) + 8 * B) / k * Pay + g / (σ ^ 2 * priceR dd k) * Dbar ∧
@@ -214,7 +198,7 @@ theorem round_bound {dd k g σ B a pr H Iann Irest J Pay Dbar Drest preg : ℝ} 
   ⟨round_J hk hg hB h, round_floor hk hd hg h, h.leak_mass⟩
 
 /-- The three inequalities of `round_bound`, holding on the live event `S` of a round, integrated over `S`: the
-fields `round_J`, `round_floor`, `round_mass` of `GameFacts` at that round, with `lm t = μ.real S` (for Top.lean). -/
+fields `round_J`, `round_floor`, `round_mass` of the game facts at that round, with `lm t = μ.real S` (for Top.lean). -/
 theorem round_integral {Ω : Type*} [MeasurableSpace Ω] (μ : MeasureTheory.Measure Ω)
     [MeasureTheory.IsFiniteMeasure μ] (S : Set Ω) (hS : MeasurableSet S) (c₁ c g k : ℝ) (J P a D : Ω → ℝ)
     (hJ : MeasureTheory.Integrable J μ) (hP : MeasureTheory.Integrable P μ) (ha : MeasureTheory.Integrable a μ)
@@ -268,44 +252,6 @@ theorem nStar_ge_x (dd w : ℝ) (hd : 12288 ≤ dd) : dd / 4 * Real.log (xCount 
   rw [nStar_eq_x dd w]
   linarith [logpi_le dd hd]
 
-/-- (C3) -/
-theorem nStar_le_x (dd w : ℝ) (hd : 1 ≤ dd) : nStar dd w ≤ dd / 4 * Real.log (xCount dd w / 2) := by
-  have hnStar := nStar_eq_x dd w
-  rw [hnStar]
-  have hpi : 1 ≤ Real.pi * dd := by
-    have hpi3 : 3 < Real.pi := Real.pi_gt_three
-    nlinarith
-  have hlog : 0 ≤ Real.log (Real.pi * dd) := Real.log_nonneg hpi
-  have hinv : 0 ≤ 1 / dd := div_nonneg (by norm_num) (by linarith)
-  nlinarith
-
-/-- `ln(X/2) ≥ 2.002` for `X ≥ 15`. -/
-theorem log_half_x_ge (X : ℝ) (hX : 15 ≤ X) : 2002 / 1000 ≤ Real.log (X / 2) := by
-  have h75 : 2002 / 1000 ≤ Real.log (15 / 2) := by
-    rw [Real.le_log_iff_exp_le (by norm_num)]
-    have h1 : Real.exp (2002 / 1000) = Real.exp 1 ^ 2 * Real.exp (2 / 1000) := by
-      rw [← Real.exp_nat_mul, ← Real.exp_add]; norm_num
-    have h2 : Real.exp (2 / 1000) * (998 / 1000) ≤ 1 := by
-      have := Real.add_one_le_exp (-(2 / 1000) : ℝ)
-      have h3 : Real.exp (2 / 1000) * Real.exp (-(2 / 1000)) = 1 := by rw [← Real.exp_add]; simp
-      nlinarith [Real.exp_pos (2 / 1000 : ℝ)]
-    have h4 := Real.exp_one_lt_d9
-    have h5 := Real.exp_pos 1
-    rw [h1]
-    have h6 : Real.exp 1 ^ 2 ≤ 2.7182818286 ^ 2 := pow_le_pow_left₀ h5.le h4.le 2
-    nlinarith [Real.exp_pos (2 / 1000 : ℝ)]
-  exact h75.trans (Real.log_le_log (by norm_num) (by linarith))
-
-/-- (C1): `N* ≥ d/2` for `X ≥ 15`, `d ≥ 12288`. -/
-theorem nStar_half (dd w : ℝ) (hd : 12288 ≤ dd) (hX : 15 ≤ xCount dd w) : dd / 2 ≤ nStar dd w := by
-  have h_log := log_half_x_ge (xCount dd w) hX
-  have h_ns := nStar_ge_x dd w hd
-  have h_eq : dd / 4 * ((2002 : ℝ) / 1000) - dd / 2000 = dd / 2 := by
-    ring
-  have h_bound : dd / 2 ≤ dd / 4 * Real.log (xCount dd w / 2) - dd / 2000 := by
-    nlinarith
-  nlinarith
-
 theorem ledgerR_le_x (dd w : ℝ) (hd : 0 < dd) : ledgerR dd w ≤ dd / 2 * Real.log (1 + xCount dd w) := by
   unfold ledgerR xCount
   exact le_refl _
@@ -344,70 +290,6 @@ theorem xCount_wStar_ge (dd k L g : ℝ) (hd : 0 < dd) (hk : 0 < k) (hL : 0 < L)
   rw [le_div_iff₀ (by positivity)] at hR2
   have h0 : 0 ≤ g * (40 * dd) := by positivity
   nlinarith [mul_le_mul hR2 hR2 h0 (by positivity)]
-
-/-- (R1) gives the share `0.3` of the count to the answers and the irregular observations. -/
-theorem coef_R1 (dd k B : ℝ) (hk : 0 < k) (hR1 : 40 * (3 * Real.log dd + 1 + 2 * B) ≤ k) :
-    3 * ((4 * (3 * Real.log dd + 1) + 8 * B) / k) ≤ 3 / 10 := by
-  rw [← mul_div_assoc, div_le_iff₀ hk]
-  linarith
-
-theorem sum_live (n : ℕ) (p : ℝ) (lm : ℕ → ℝ) (h : ∀ t < n, 1 - p ≤ lm t) :
-    (n : ℝ) * (1 - p) ≤ ∑ t ∈ range n, lm t := by
-  rw [← (by
-    rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul] : ∑ t ∈ range n, (1 - p) = (n : ℝ) * (1 - p))]
-  exact Finset.sum_le_sum fun t ht => h t (Finset.mem_range.mp ht)
-
-/-! ## The balance proposition: the balance -/
-
-/-- The balance proposition, the two bounds:
-`E R_n ≥ max((σ² P_R/g) N* (p - 0.3), (g/2)(0.999 n (1 - p) - 12 N*/k))`, under (R1) and (R2). -/
-theorem ripe_balance {dd k g σ L B : ℝ} {n : ℕ} {p : ℝ} {Jm Pm am Dm lm : ℕ → ℝ} (hk : 1 ≤ k) (hg : 0 < g)
-    (hσ : 0 < σ) (hL : 0 < L) (hB : 0 ≤ B) (hR1 : 40 * (3 * Real.log dd + 1 + 2 * B) ≤ k) (hR1' : 2048 * k ≤ dd)
-    (hR2 : g ≤ k * L / (40 * dd)) (h : GameFacts dd k g σ B (wStar dd k L g) n p Jm Pm am Dm lm) :
-    σ ^ 2 * priceR dd k / g * nStar dd (wStar dd k L g) * (p - 3 / 10) ≤ ∑ t ∈ range n, Dm t ∧
-      g / 2 * (999 / 1000 * n * (1 - p) - 12 * nStar dd (wStar dd k L g) / k) ≤ ∑ t ∈ range n, Dm t := by
-  have hk0 : 0 < k := by linarith
-  have hd0 : 0 < dd := by linarith
-  have hlog : 0 ≤ Real.log dd := Real.log_nonneg (by linarith)
-  have hd12 : 12288 ≤ dd := by nlinarith
-  set w := wStar dd k L g with hw
-  have hX : 16 ≤ xCount dd w := xCount_wStar_ge dd k L g hd0 hk0 hL hg hR2
-  have hN : dd / 2 ≤ nStar dd w := nStar_half dd w hd12 (by linarith)
-  have hRL : ledgerR dd w ≤ 3 * nStar dd w := ledgerR_three dd w hd12 (by linarith)
-  have hP : ∑ t ∈ range n, Pm t ≤ 3 * nStar dd w := h.payment.trans hRL
-  set c1 := (4 * (3 * Real.log dd + 1) + 8 * B) / k with hc1
-  set c := g / (σ ^ 2 * priceR dd k) with hc
-  have hc1n : 0 ≤ c1 := by rw [hc1]; positivity
-  have hc13 : 3 * c1 ≤ 3 / 10 := coef_R1 dd k B hk0 hR1
-  have hPR : 0 < priceR dd k := by unfold priceR; positivity
-  have hcpos : 0 < c := by rw [hc]; positivity
-  have hJ : ∑ t ∈ range n, Jm t ≤ c1 * ∑ t ∈ range n, Pm t + c * ∑ t ∈ range n, Dm t := by
-    rw [mul_sum, mul_sum, ← sum_add_distrib]
-    exact sum_le_sum fun t ht => h.round_J t (mem_range.mp ht)
-  have hF : ∑ t ∈ range n, g / 2 * (999 / 1000 * lm t - am t) ≤ ∑ t ∈ range n, Dm t :=
-    sum_le_sum fun t ht => h.round_floor t (mem_range.mp ht)
-  have hA : ∑ t ∈ range n, am t ≤ 4 / k * ∑ t ∈ range n, Pm t := by
-    rw [mul_sum]
-    exact sum_le_sum fun t ht => h.round_mass t (mem_range.mp ht)
-  have hLv : (n : ℝ) * (1 - p) ≤ ∑ t ∈ range n, lm t := sum_live n p lm h.live
-  constructor
-  · have h1 : nStar dd w * p ≤ 3 / 10 * nStar dd w + c * ∑ t ∈ range n, Dm t := by
-      have : c1 * ∑ t ∈ range n, Pm t ≤ c1 * (3 * nStar dd w) := mul_le_mul_of_nonneg_left hP hc1n
-      nlinarith [h.count]
-    have he : σ ^ 2 * priceR dd k / g * nStar dd w * (p - 3 / 10) =
-        (nStar dd w * p - 3 / 10 * nStar dd w) / c := by
-      rw [hc]
-      field_simp
-    rw [he, div_le_iff₀ hcpos]
-    linarith
-  · rw [← mul_sum, sum_sub_distrib, ← mul_sum] at hF
-    have h4 : ∑ t ∈ range n, am t ≤ 12 * nStar dd w / k := by
-      calc ∑ t ∈ range n, am t ≤ 4 / k * ∑ t ∈ range n, Pm t := hA
-        _ ≤ 4 / k * (3 * nStar dd w) := mul_le_mul_of_nonneg_left hP (by positivity)
-        _ = 12 * nStar dd w / k := by ring
-    refine le_trans ?_ hF
-    apply mul_le_mul_of_nonneg_left _ (by positivity)
-    nlinarith
 
 /-! ## The balance proposition: the rate, `L = σ`, `k = 120 ln d + 68`, `g = gRipe d n σ` -/
 
@@ -473,27 +355,6 @@ theorem xCount_ripe (dd nn σ : ℝ) (hd : 0 < dd) (hk : 0 < kRipe dd) (hσ : 0 
   subst hs hr hu
   field_simp
   ring
-
-theorem log_x_ripe_le (dd nn k : ℝ) (hk : 1 ≤ k) (hd : 0 < dd) (hn : 0 < nn) (hΓ : 1 ≤ gamR dd nn) :
-    Real.log (k ^ 4 * nn / (4 / 10 ^ 6 * dd ^ 5 * gamR dd nn) / 2) ≤ gamR dd nn + 4 * Real.log k + 118 / 10 := by
-  have hE : nn / dd ^ 5 = Real.exp (gamR dd nn) := by rw [gamR, Real.exp_log (by positivity)]
-  generalize gamR dd nn = Γ at *
-  have harg : k ^ 4 * nn / (4 / 10 ^ 6 * dd ^ 5 * Γ) / 2 = k ^ 4 * Real.exp Γ / (8 / 10 ^ 6 * Γ) := by
-    rw [← hE]; field_simp; ring
-  have hk0 : 0 < k := by linarith
-  have hΓ0 : 0 < Γ := by linarith
-  rw [harg, Real.log_div (by positivity) (by positivity), Real.log_mul (by positivity) (by positivity),
-    Real.log_pow, Real.log_exp, Real.log_mul (by norm_num) (by positivity)]
-  have h1 : 0 ≤ Real.log Γ := Real.log_nonneg hΓ
-  have h2 : -Real.log (8 / 10 ^ 6) ≤ 118 / 10 := by
-    rw [show (8 / 10 ^ 6 : ℝ) = (125000)⁻¹ by norm_num, Real.log_inv, neg_neg]
-    have : Real.log 125000 ≤ Real.log (2 ^ 17) := Real.log_le_log (by norm_num) (by norm_num)
-    rw [Real.log_pow] at this
-    have h5 := Real.log_two_lt_d9
-    norm_num at this h5 ⊢
-    linarith
-  push_cast
-  linarith
 
 /-- (R2) at the rate's parameters. -/
 theorem R2_ripe (dd nn σ : ℝ) (hd1 : 1 ≤ dd) (hd : 2048 * kRipe dd ≤ dd) (hσ : 0 < σ)
@@ -569,71 +430,6 @@ theorem nStar_ripe_ge (dd Γ N : ℝ) (hd : 0 < dd) (hΓ : 4 ≤ Γ) (hN : dd / 
   have hineq : 1248 / 10000 * dd * Γ ≤ dd / 4 * (Γ / 2) - dd / 2000 := by
     nlinarith
   linarith
-
-theorem nStar_ripe_small (dd nn k Γ N : ℝ) (hk : 240 ≤ k) (hkd : k ≤ dd) (hd : 491520 ≤ dd) (hΓ : 4 ≤ Γ)
-    (hn : nn = dd ^ 5 * Real.exp Γ) (hN : N ≤ dd / 4 * (Γ + 4 * Real.log k + 118 / 10)) :
-    12 * N / k ≤ 2495 / 10000 * nn := by
-  have hk0 : 0 < k := by linarith
-  have hd0 : 0 < dd := by linarith
-  have hlk : Real.log k ≤ k := (Real.log_le_sub_one_of_pos hk0).trans (by linarith)
-  have hE1 : 1 ≤ Real.exp Γ := Real.one_le_exp (by linarith)
-  have hEΓ : Γ ≤ Real.exp Γ := by linarith [Real.add_one_le_exp Γ]
-  generalize Real.exp Γ = E at *
-  have hd4 : 1000 ≤ dd ^ 4 := by nlinarith [pow_le_pow_left₀ (by norm_num : (0:ℝ) ≤ 491520) hd 4]
-  have hkE := mul_le_mul_of_nonneg_left hE1 hk0.le
-  have hb : Γ + 4 * Real.log k + 118 / 10 ≤ E * (16 * k) := by nlinarith
-  have hN2 : N ≤ dd / 4 * (E * (16 * k)) := hN.trans (mul_le_mul_of_nonneg_left hb (by positivity))
-  rw [div_le_iff₀ hk0, hn]
-  have h0 : 0 ≤ dd * E * k := by positivity
-  nlinarith [mul_le_mul_of_nonneg_left hd4 h0]
-
-/-- The branch `p ≥ 1/2` of the rate. -/
-theorem rate_hi (dd nn k σ Γ g N p : ℝ) (hd : 0 < dd) (hk : 0 < k) (hσ : 0 < σ) (hn : 0 < nn) (hΓ : 0 < Γ)
-    (hg : g = 2 / 10 ^ 4 * σ * (dd * Real.sqrt dd) * Real.sqrt Γ / (k * Real.sqrt nn))
-    (hN : 1248 / 10000 * dd * Γ ≤ N) (hp : 1 / 2 ≤ p) :
-    25 / 10 ^ 6 * σ * (dd * Real.sqrt dd) * Real.sqrt (nn * Γ) / k ≤ σ ^ 2 * priceR dd k / g * N * (p - 3 / 10) := by
-  have hgpos : 0 < g := by rw [hg]; positivity
-  have hA : 0 ≤ σ ^ 2 * priceR dd k / g := by unfold priceR; positivity
-  have hstep : σ ^ 2 * priceR dd k / g * ((1248 / 10000 * dd * Γ) * (1 / 5)) ≤
-      σ ^ 2 * priceR dd k / g * N * (p - 3 / 10) := by
-    rw [mul_assoc (σ ^ 2 * priceR dd k / g)]
-    exact mul_le_mul_of_nonneg_left (mul_le_mul hN (by linarith) (by norm_num) (le_trans (by positivity) hN)) hA
-  refine le_trans ?_ hstep
-  rw [hg, Real.sqrt_mul hn.le]
-  unfold priceR
-  have hs := Real.sq_sqrt hd.le
-  have hr := Real.sq_sqrt hn.le
-  have hu := Real.sq_sqrt hΓ.le
-  have hs0 := Real.sqrt_pos.mpr hd
-  have hr0 := Real.sqrt_pos.mpr hn
-  have hu0 := Real.sqrt_pos.mpr hΓ
-  generalize Real.sqrt dd = s at *
-  generalize Real.sqrt nn = r at *
-  generalize Real.sqrt Γ = u at *
-  subst hs hr hu
-  rw [div_le_iff₀ hk]
-  field_simp
-  norm_num
-
-/-- The branch `p < 1/2` of the rate. -/
-theorem rate_lo (dd nn k σ Γ g N p : ℝ) (hd : 0 < dd) (hk : 0 < k) (hσ : 0 < σ) (hn : 0 < nn) (hΓ : 0 < Γ)
-    (hg : g = 2 / 10 ^ 4 * σ * (dd * Real.sqrt dd) * Real.sqrt Γ / (k * Real.sqrt nn))
-    (hN : 12 * N / k ≤ 2495 / 10000 * nn) (hp : p < 1 / 2) :
-    25 / 10 ^ 6 * σ * (dd * Real.sqrt dd) * Real.sqrt (nn * Γ) / k ≤ g / 2 * (999 / 1000 * nn * (1 - p) - 12 * N / k) := by
-  have hgpos : 0 < g := by rw [hg]; positivity
-  have hbr : 1 / 4 * nn ≤ 999 / 1000 * nn * (1 - p) - 12 * N / k := by nlinarith
-  refine le_trans ?_ (mul_le_mul_of_nonneg_left hbr (by positivity : (0:ℝ) ≤ g / 2))
-  rw [hg, Real.sqrt_mul hn.le]
-  have hs := Real.sq_sqrt hd.le
-  have hr := Real.sq_sqrt hn.le
-  have hs0 := Real.sqrt_pos.mpr hd
-  have hr0 := Real.sqrt_pos.mpr hn
-  generalize Real.sqrt dd = s at *
-  generalize Real.sqrt nn = r at *
-  subst hs hr
-  apply le_of_eq
-  field_simp
-  ring
 
 /-! ## The game proposition: `σ = 1/(8 (6 ln n)^{1/2})`, `n ≥ d^{10}`, `d ≥ 4·10⁶` -/
 
@@ -788,36 +584,6 @@ theorem ripeB_coef (nn Γ : ℝ) (hn : 1 < nn) (hΓ : Real.log nn / 2 ≤ Γ) :
   rw [show 25 / 10 ^ 6 * (1 / (8 * (c * a))) * (r * b) = 25 / 10 ^ 6 * r * b / (8 * c * a) by field_simp]
   rw [le_div_iff₀ (by positivity)]
   nlinarith [mul_le_mul_of_nonneg_left hba hr0.le, mul_le_mul_of_nonneg_right hcle (mul_nonneg hr0.le ha0.le)]
-
-/-- `9·10⁻⁷ d^{3/2} n^{1/2}/(120 ln d + 68) - 1/n ≥ 7·10⁻⁹ d^{3/2} n^{1/2}/ln d` (`9·10⁻⁷/125 = 7.2·10⁻⁹`). -/
-theorem ripeB_final (dd nn : ℝ) (hd : 4000000 ≤ dd) (hn : dd ^ 10 ≤ nn) :
-    7 / 10 ^ 9 * (dd * Real.sqrt dd) * Real.sqrt nn / Real.log dd ≤
-      9 / 10 ^ 7 * (dd * Real.sqrt dd) * Real.sqrt nn / kRipe dd - 1 / nn := by
-  have hL := ripeB_log dd hd
-  have hd0 : 0 < dd := by linarith
-  have hLd : Real.log dd ≤ dd := (Real.log_le_sub_one_of_pos hd0).trans (by linarith)
-  have hnn : (10 : ℝ) ^ 10 ≤ nn := le_trans (pow_le_pow_left₀ (by norm_num) (by linarith) 10) hn
-  have hn0 : 0 < nn := lt_of_lt_of_le (by norm_num) hnn
-  have hsd : 2000 ≤ Real.sqrt dd := (Real.le_sqrt' (by norm_num)).mpr (by nlinarith)
-  have hsn : 1 ≤ Real.sqrt nn := (Real.le_sqrt' (by norm_num)).mpr (by linarith)
-  have hX : 2000 * dd ≤ dd * Real.sqrt dd * Real.sqrt nn := by
-    have h1 := mul_le_mul_of_nonneg_left hsd hd0.le
-    have h2 := mul_le_mul_of_nonneg_left hsn (by positivity : (0:ℝ) ≤ dd * Real.sqrt dd)
-    linarith
-  have hk125 : kRipe dd ≤ 125 * Real.log dd := by unfold kRipe; linarith
-  have hk : 0 < kRipe dd := by unfold kRipe; linarith
-  have hX0 : 0 ≤ dd * Real.sqrt dd * Real.sqrt nn := by positivity
-  have h1 : 72 / 10 ^ 10 * (dd * Real.sqrt dd) * Real.sqrt nn / Real.log dd ≤
-      9 / 10 ^ 7 * (dd * Real.sqrt dd) * Real.sqrt nn / kRipe dd := by
-    rw [div_le_div_iff₀ (by linarith) hk]
-    nlinarith [mul_le_mul_of_nonneg_left hk125 hX0]
-  have h2 : 1 / nn ≤ 2 / 10 ^ 10 * (dd * Real.sqrt dd) * Real.sqrt nn / Real.log dd := by
-    rw [div_le_div_iff₀ hn0 (by linarith)]
-    nlinarith [mul_le_mul hX hnn (by norm_num) (by positivity)]
-  have h3 : 7 / 10 ^ 9 * (dd * Real.sqrt dd) * Real.sqrt nn / Real.log dd =
-      72 / 10 ^ 10 * (dd * Real.sqrt dd) * Real.sqrt nn / Real.log dd -
-        2 / 10 ^ 10 * (dd * Real.sqrt dd) * Real.sqrt nn / Real.log dd := by ring
-  linarith
 
 theorem rpow_three_halves (dd : ℝ) (hd : 0 ≤ dd) : dd ^ (3 / 2 : ℝ) = dd * Real.sqrt dd := by
   have hsum_ne_zero : (1 : ℝ) + (1/2 : ℝ) ≠ 0 := by norm_num

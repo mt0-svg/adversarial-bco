@@ -10,7 +10,7 @@ public import AdversarialBco.Bit.BLRun
 @[expose] public section
 
 /-!
-# Piece C of `RunOK`: the cut C1 / C2
+# Piece C of the run proposition of BL: the cut C1 / C2
 
 `RoundC` of Bit/BLRun.lean is cut in two:
 

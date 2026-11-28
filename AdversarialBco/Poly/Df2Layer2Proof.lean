@@ -14,13 +14,16 @@ public import AdversarialBco.Poly.Df2RowsProof
 /-!
 # DF2-O, second layer: proofs
 
-Proofs of two standard facts stated in `Df2Layer2.lean`.
+Proofs of the statements of `Df2Layer2.lean`, in the order of the chain of `Df2Layer2Comp`.
 
 * `lemmaFR : LemmaFR`, the freezing lemma: the conditional law of `ζ` given `𝒢` is its law (independence,
   `condDistrib_ae_eq_of_measure_eq_compProd_of_measurable` with the constant kernel), and the conditional expectation
   of `F(x, ζ)` is the integral against it (`condExp_prod_ae_eq_integral_condDistrib`, conditioning on the identity map
   from `(Ω, m0)` to `(Ω, 𝒢)`).
 * `lemmaNZProd : LemmaNZProd`, the noise on a product (Fubini on the slices, `setIntegral_condExp`).
+* `df2E1LocOf_holds : Df2E1LocOf`, a union bound of the five budgets off which DET applies.
+* `df2DetOf_holds : Df2DetOf`, DET: the hypotheses bundled in `DetHyp` (Df2DetMain.lean), the proof in
+  Df2DetState.lean to Df2DetW.lean, ending with `DetHyp.epoch_ok`.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -91,7 +94,7 @@ theorem lemmaNZProd : LemmaNZProd := by
 /-- DET from its inputs: one epoch on every path, (F) or (N). -/
 theorem df2DetOf_holds : Df2DetOf := by
   intro L1 W SI RH d n δ Kt ap π m hd hn hδ0 hδ1 heps hm1 hmn hbody hap hadm evG evY evLQ evSDF evDQ
-  exact (DetHyp.mk (DetBase.mk (c := df2CtxAt d n δ Kt ap) L1 W SI hd hn hδ0 hδ1 rfl heps
+  exact (DetHyp.mk (DetBase.ofOPar (c := df2CtxAt d n δ Kt ap) L1 W SI hd hn hδ0 hδ1 rfl heps
     (RH d n δ hd hn hδ0 hδ1 heps) hm1 hmn hbody (fun _ => hap) hadm) evG evY evLQ evSDF evDQ).epoch_ok
 
 end AdversarialBco.Poly

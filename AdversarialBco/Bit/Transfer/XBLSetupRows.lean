@@ -13,8 +13,8 @@ public import AdversarialBco.Bit.Transfer.XBLR2g
 /-!
 # BL's setup on the machine: P3's count and P5's row test
 
-One pass over the input rows `r < m` (R2's cells): row `r` is read from its cells and cleared (`XV.inRow`:
-`â_r = a_r Π_r`, `b̂_r D_S = b_r Π_r D_S`), then `s = â_r·â_r`; when `s > 0` (the row is kept), `rMk += 1`,
+One pass over the input rows `r < m` (R2's cells): row `r` is read from its cells and cleared (`â_r = a_r Π_r`,
+`b̂_r D_S = b_r Π_r D_S`), then `s = â_r·â_r`; when `s > 0` (the row is kept), `rMk += 1`,
 `u = b̂_r D_S - â_r·μ̂_S`, and the flag `sBadS` is set when `u ≤ 0`. `XV.s3`: `rMk` ends at the count of the rows with
 `s > 0`, the flag at `1` iff some such row has `u ≤ 0`.
 -/

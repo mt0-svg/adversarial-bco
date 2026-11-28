@@ -19,7 +19,7 @@ the inputs `R₀n, R₀d, r₀n, r₀d`), the confidence integer `ℓ = clog₂ 
 `n_e' = n_e(ℓ) + 1`, `j_s'` at `G_up' = (65/64) G_up`, `G'`, `G_c'`, the constants of a draw `tzDCO d ℓ`, the
 constants of SEP, of the gauge and of the stage test (`e₁`, `e_τ`, `stE1`, `stE`, `stEH`, `stEEta`, `stJ`, `stEu`,
 `stK`) and their powers of two; `126` steps on the slots `120, ...` of the block, inputs `k, r₀n, r₀d, d, n, s, R₀n,
-R₀d` in the slots `110 - 115, 118, 119`. The static test (`poSt_chk`, pair table `poEt` from `SL.etabAux`), the
+R₀d` in the slots `110 - 115, 118, 119`. The static test (`poSt_chk`, pair table `poEt`), the
 units (`poSt_units`) and the values `poV_k` in closed form; the integer forms `triJsTQ_eq`, `triE1Q_eq`, `triETauQ_eq`, `stEH_eq` of the new exponents.
 -/
 
@@ -116,7 +116,7 @@ def poSt : List SStep :=
 
 /-! ## The static test -/
 
-/-- The pairs of the values of `poSt` (`SL.etabAux 120 (fun _ => (1, 0)) poSt []`). -/
+/-- The pairs of the values of `poSt`. -/
 def poEtL : List (ℕ × ℕ) :=
   [(0, 1), (0, 2), (0, 2), (0, 3), (0, 3), (0, 3), (0, 4), (0, 4), (0, 4), (0, 5), (0, 6), (0, 7), (0, 7), (0, 7),
    (0, 8), (0, 28), (0, 29), (0, 15), (0, 15), (0, 21), (2, 0), (2, 3), (2, 8), (2, 4), (1, 0), (2, 5), (1, 0),

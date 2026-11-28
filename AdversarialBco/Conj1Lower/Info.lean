@@ -27,7 +27,7 @@ information `J` of the round (`infoJ`), the mutual information of the tip and `(
 * The count lemma (b) (`count_b`): on the prior uniform on `B(0, 1/2)`, a law with fewer than `d/2` eigenvalues of its
   covariance at least `w²` has `K ≥ N*` (`nStar` of Balance.lean): Gibbs against the Gaussian density whose precision
   is the clipped metric `M` of Frame.lean, the volume of the ball, crude Stirling (S3).
-* The game (`count_game`): `∑_{t < n} E J_t = E K(π_n) ≥ N* P(π_n dead)`, the field `count` of `GameFacts`.
+* The game (`count_game`): `∑_{t < n} E J_t = E K(π_n) ≥ N* P(π_n dead)`.
 -/
 
 open MeasureTheory ProbabilityTheory Matrix
@@ -3031,7 +3031,7 @@ theorem sum_infoRound (π0 : Measure (E d)) [IsProbabilityMeasure π0] (μ : Mea
       rw [Finset.sum_range_succ, ih (Nat.le_of_succ_le hm), kl_step π0 μ R hR hsc hpol hsb (Nat.lt_of_succ_le hm)]
   exact key n le_rfl
 
-/-- The chain-rule lemma and the count lemma (b) over the game, the field `count` of `GameFacts`:
+/-- The chain-rule lemma and the count lemma (b) over the game:
 `N* P(π_n has fewer than d/2 live directions) ≤ ∑_{t < n} E J_t`. -/
 theorem count_game (hd : 1 ≤ d) (μ : Measure Ω) [IsProbabilityMeasure μ] (R : Rule d (Option Cell))
     (hR : R.Meas (prior d (1 / 2))) {sc : ℝ} (hsc : sc ≠ 0) {pol : Learner Ω d} {n : ℕ}

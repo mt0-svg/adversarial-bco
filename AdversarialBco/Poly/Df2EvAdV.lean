@@ -11,6 +11,7 @@ public import AdversarialBco.Poly.Df2EvAdLQV
 public import AdversarialBco.Poly.Df2EvAdSDFV
 public import AdversarialBco.Poly.Df2EvAdDQV
 public import AdversarialBco.Poly.Poly32OTop
+public import AdversarialBco.Poly.Df2EvAd
 
 @[expose] public section
 

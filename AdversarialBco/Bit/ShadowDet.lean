@@ -7,26 +7,22 @@ module
 
 public import AdversarialBco.Bit.ShadowIface
 public import AdversarialBco.Poly.Df2WorldDetProof
-public import AdversarialBco.Poly.Df2EvAdMeas
-public import AdversarialBco.Poly.Df2EvSIDQ
-public import AdversarialBco.Poly.Df2EvSISDF
-public import AdversarialBco.Poly.Df2EvYProof
-public import AdversarialBco.Poly.Poly32OTop
+public import AdversarialBco.Poly.Df2EvAd
 
 @[expose] public section
 
 /-!
-# The regret of a run record on the good event
+# The regret of a run record on the good event (O1-GEN)
 
-* `df2DetF_holds`: DET for an epoch context with a routine per round (`df2CtxAtF`), from proved inputs
-  ((O7): `DetBase.hap` reads `∀ s, ApSpec (c.ap s)`);
+* `df2DetF_holds`: DET for an epoch context with a routine per round (`df2CtxAtF`), from the proved inputs of
+  `df2Det_holds` ((O7): `DetBase.hap` reads `∀ s, ApSpec (c.ap s)`);
 * `RunRec`: a run record `ρ = (n, δ, K, f, q, ap, ξ, nt, ζ)`, its round `rnd`, modes `mode`, plays `play`, means
   `mean`, and the context `ctxAt a` and path `pathAt a` of its virtual epoch started before round `a`;
 * `RunRec.det` (Lemma (O1-GEN)): at a good position (`PgGood`), with `ε ≤ 1/2`, admissible losses, `EpochOK` of every
   virtual epoch at the horizon `n - a`, and the Azuma inequality between the losses played and their means, the
   regret over the `n` rounds is at most `B_n = 2 ρ/η + n ε + (2 n log(7/δe))^{1/2}`.
 
-The proof is that of DET for D0 (Poly/Df2WorldDetProof.lean), with the context, path, modes and means of D0
+The proof is that of `df2WorldDet_of` (Poly/Df2WorldDetProof.lean), with the context, path, modes and means of D0
 replaced by those of the record; the routine of round `t` is `ap t`, which the epoch started at `a` reads at its round
 `t - a`.
 -/
@@ -48,7 +44,7 @@ theorem df2DetF_holds {n : ℕ} {δ : ℝ} {Kt : Set (E d)} (ap : ℕ → ApFun 
     (evG : (df2CtxAtF d n δ Kt ap).EvG π m) (evY : (df2CtxAtF d n δ Kt ap).EvY π m)
     (evLQ : (df2CtxAtF d n δ Kt ap).EvLQ π m) (evSDF : (df2CtxAtF d n δ Kt ap).EvSDF π m)
     (evDQ : (df2CtxAtF d n δ Kt ap).EvDQ π m) : (df2CtxAtF d n δ Kt ap).EpochOK π m :=
-  (DetHyp.mk (DetBase.mk (c := df2CtxAtF d n δ Kt ap) df2LayerOne_holds lemmaW SIF.df2SIFacts_holds hd hn hδ0 hδ1
+  (DetHyp.mk (DetBase.ofOPar (c := df2CtxAtF d n δ Kt ap) df2LayerOne_holds lemmaW SIF.df2SIFacts_holds hd hn hδ0 hδ1
     rfl heps (df2RowsHold d n δ hd hn hδ0 hδ1 heps) hm1 hmn hbody hap hadm) evG evY evLQ evSDF evDQ).epoch_ok
 
 /-- A run record: the horizon `n`, the confidence `δ`, the body `K`, the losses `f`, the

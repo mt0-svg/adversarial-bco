@@ -525,9 +525,4 @@ theorem roundBndO (hP : PlayCO) : RoundBndO := by
 
 end Rec
 
-/-- **Step 1 of SHADOW for BL-O's record** from piece C: `EngineRecO` given the round (`RoundCO`) and the play
-(`PlayCO`). -/
-theorem engineRecO (hC : RoundCO) (hP : PlayCO) : EngineRecO :=
-  engineRecO_of (indO hC) (roundBndO hP)
-
 end AdversarialBco.Unified.Eng

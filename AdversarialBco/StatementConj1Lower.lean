@@ -12,7 +12,7 @@ public import AdversarialBco.StatementConj1
 /-!
 # The lower bound: the learners, the run, the regret and the adversaries
 
-Definitions of the frozen lower bound on a polytope (StatementConj1LowerPoly.lean). The game is that of
+Definitions of the frozen lower bound on a polytope (StatementConj1LowerPoly.lean of release v2.3). The game is that of
 StatementConj1.lean: the strategy type `Strategy` and its class `Strats`, the observations `obsAd` and the losses
 `lossAd` are reused unchanged, with the regret `regretPts` of StatementPoly.lean, in the noiseless game. What is new
 is the learner side, which quantifies over every randomised learner, and the sub-class of strategies that the lower

@@ -20,7 +20,7 @@ PAR's length), the box `triRa`, `triRh`, `triJa`, `triR`, `triA`, `triB`, its sq
 `triElo` of `e_h(ρ_h)`, the sampler bits `triKg`, the coupling error `triEpsG`, the bound `triGu` of the subgradient,
 the rounding `triBv`, `triBu`, `triRound`, the number of steps `triNe` and the step `triJs`. The sampler of a vector draw
 at `B` bits per coin block (`gsCell`, `bmCos`, `gsVec`, `gsOmega`, `gsCells`, `gsEps`, `gsLaw`). The stage geometry: the
-cube `triCube`, its rows `triRowsA`, `triRowsB`, the number of stages `triMst`, the draw `triDraw` read off the coins and
+cube `triCube`, the number of stages `triMst`, the draw `triDraw` read off the coins and
 the coin layout `triLay`.
 
 The leaves:
@@ -33,8 +33,7 @@ The leaves:
   `gs_cells_ae`, `gs_pair_law`, `coin_curry_inj`, `readCoins_facts`, `readCoins_meas`;
 * the rounding: `tri_round_err`, `tri_round_meas`, `tri_V_meas`;
 * the stages: `rows_norm_le` (a polytope containing the unit ball has `‖a_k‖ ≤ b_k`, zero rows allowed),
-  `tri_rows_pull` (the rows of a polytope in a position), `tri_cube_mid`, `posBody_closed`, `tri_poly_cc`, `tri_mst`,
-  `tri_lay_inj` (the coin layout is injective).
+  `tri_cube_mid`, `posBody_closed`, `tri_mst`, `tri_lay_inj` (the coin layout is injective).
 
 Each lemma sits in a namespace `AdversarialBco.Bit.Aux_<name>` with its helpers, the lemma itself at
 `AdversarialBco.Bit.<name>`.

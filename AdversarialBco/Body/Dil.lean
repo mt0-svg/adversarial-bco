@@ -7,6 +7,8 @@ module
 
 public import AdversarialBco.Body.Convex
 public import AdversarialBco.Body.Cloud
+public import AdversarialBco.Body.Gauss
+public import AdversarialBco.Body.Basic
 
 @[expose] public section
 

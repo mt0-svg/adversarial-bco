@@ -21,7 +21,7 @@ Lemma AFF (the paper's affine invariance), on the definitions of StatementConj1L
 2. `pullStrat_mem_strats`: a strategy on `T K` pulled back by `T` (`pullStrat`: the loss `f' ∘ T` on the history
    pushed forward) is a strategy on `K`; `pullStrat_mem_stratsLipL`: reading the past points only is kept, and a
    loss `L`-Lipschitz on `T K` becomes `L M`-Lipschitz on `K` when `T` is `M`-Lipschitz (`StratsLipL`, the class
-   `StratsLip` with the constant `L` in place of `1/4`; `stratsLip_eq`).
+   `StratsLip` with the constant `L` in place of `1/4`).
 3. `transcript_push`, `plays_push`: the run of the pushed learner against `σ'` is the image by `T` of the run of the
    learner against the pulled strategy, with the same observations; `regretAd_push`: the regrets are equal, pointwise
    in the seed (`regretAd_pushLearner`), so integrability and the mean carry over.

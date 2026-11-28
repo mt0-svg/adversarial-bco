@@ -57,7 +57,7 @@ structure PgParts : Prop where
           Env.Frame σ σ' [n0] [s0 + 2, s0 + 8, s0 + 9, s0 + 34, s0 + 35] [a0, a0 + 1])
   gjCode : ∀ {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
       {w : AdversarialBco.RealRAM.World d} {dv one dd i j kk ri rk ij kj T A B p ip o z f t1 t2 : ℕ}
-      (σ : Env d) (hdv : dv < L.NN) (hone : one < L.NN) (hdd : dd < L.NN)
+      (σ : AdversarialBco.Poly.Mach.Env d) (hdv : dv < L.NN) (hone : one < L.NN) (hdd : dd < L.NN)
       (hi : i < L.NN) (hj : j < L.NN) (hkk : kk < L.NN) (hri : ri < L.NN) (hrk : rk < L.NN) (hij : ij < L.NN)
       (hkj : kj < L.NN) (hT : T < L.NA) (hA : A < L.NA) (hB : B < L.NA) (hp : p < L.NS) (hip : ip < L.NS)
       (ho : o < L.NS) (hz : z < L.NS) (hf : f < L.NS) (ht1 : t1 < L.NS) (ht2 : t2 < L.NS)
@@ -67,7 +67,7 @@ structure PgParts : Prop where
       AdversarialBco.Poly.Mach.Runs L w (gjCode L dv one dd i j kk ri rk ij kj T A B p ip o z f t1 t2) σ
         (d * (d * d * 21 + d * 31 + 17) + d * d * 12 + d * 7 + 16)
         (fun σ' => (σ'.mat A, σ'.mat B) = gjRun (σ.mat T) d ∧
-          Env.Frame σ σ' [i, j, kk, ri, rk, ij, kj] [p, ip, o, z, f, t1, t2] [A, B])
+          AdversarialBco.Poly.Mach.Env.Frame σ σ' [i, j, kk, ri, rk, ij, kj] [p, ip, o, z, f, t1, t2] [A, B])
   verdNorm : ∀ {d : ℕ} {L : Layout} {w : World d} {dv one n0 s0 a0 : ℕ}
       (σ : Env d) (hn0 : n0 + 20 ≤ L.NN) (hs0 : s0 + 64 ≤ L.NS) (ha0 : a0 + 32 ≤ L.NA) (hdv : dv < L.NN) (hone : one < L.NN)
       (hdvb : dv < n0 ∨ n0 + 20 ≤ dv) (honeb : one < n0 ∨ n0 + 20 ≤ one) (hd : σ.nat dv = d) (h1 : σ.nat one = 1)

@@ -7,6 +7,7 @@ module
 
 public import AdversarialBco.Conj1.ChainAd
 public import AdversarialBco.Conj1.Sanity
+public import AdversarialBco.StatementConj1
 
 @[expose] public section
 

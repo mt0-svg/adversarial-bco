@@ -13,7 +13,7 @@ public import AdversarialBco.Unified.BLOParam
 @[expose] public section
 
 /-!
-# Step 1 of SHADOW for BL-O's record: the pieces of `EngineRecO`
+# Step 1 of SHADOW for BL-O's record: the pieces of the engine hypothesis
 
 Bit/BLEngine.lean, Bit/BLRun.lean (`Track`, `PlayC`, `RoundC`) and Bit/BLRoundIface.lean (C1 / C2) for BL-O at a free
 `k` (`k = kDel δ` in the run), with the constants of Theorem BUD at `k` (Unified/BudDefs.lean). The pieces:
@@ -24,14 +24,10 @@ Bit/BLEngine.lean, Bit/BLRun.lean (`Track`, `PlayC`, `RoundC`) and Bit/BLRoundIf
   observation `Y° = pt'(f(x') + ε + Z/2)/2 + 2(pt' - 1)/ε'` with `|ε|` within the no-clip bound); `C1O` (R5 to R10,
   `C1OutK`), `C2O` (the test call, the fire, line μ, with `apO` and ELL-O's contract `apSpecO`), `RoundCO`
   (`roundCO_of : C1O → C2O → RoundCO`); `PlayCO` (`|X' - X°| ≤ X̄`, reads neither the loss nor the gauge).
-* On the record `recO`: `EngInvO` (`IND(t)` of Proposition SHADOW), `IndO` (`IND(t)` before the first decoupling
-  on `Case ∩ Ω_ref ∩ E_bits ∩ NoClip`), `RoundBndO` (the shift and the regret of a round in `IND(t)`:
-  `0 < r`, `tvB ≤ κ + κ |ε_t|` with `κ = kapO`, and the loss gap `regO/n`).
+* On the record `recO`: `EngInvO` (`IND(t)` of Proposition SHADOW) and `RoundBndO` (the shift and the regret of a round
+  in `IND(t)`: `0 < r`, `tvB ≤ κ + κ |ε_t|` with `κ = kapO`, and the loss gap `regO/n`).
 
-The assembly `engineRecO_of : IndO → RoundBndO → EngineRecO` is in Unified/EngAsm.lean. `IndO` follows from
-`RoundCO` with the virtual-epoch facts of P°'s run on `RunW` (Bit/BLEngine.lean's `vmode`, `detHyp_of_good` over
-Unified/WorldShadowRef.lean); `RoundBndO` from `PlayCO`, `GaugeBandO` and Lemma SHIFT with the noise
-(`tau_shift`, Unified/BLOParam.lean).
+`RoundBndO` follows from `PlayCO`, `GaugeBandO` and Lemma SHIFT with the noise (`tau_shift`, Unified/BLOParam.lean).
 -/
 
 open MeasureTheory
@@ -225,18 +221,6 @@ def EngInvO (n : ℕ) (δ r0 R0 : ℚ) (a : Fin d → ℚ) (orc : (Fin d → ℚ
       ((recO n δ r0 R0 a orc h hK).path (dBL d n δ) a0 ω) s) s
 
 end Rec
-
-/-- **`IND(t)` before the first decoupling** on `Case ∩ Ω_ref ∩ E_bits ∩ NoClip`, at every round `t ≤ n`. -/
-def IndO : Prop :=
-  ∀ (d n : ℕ) (δ r0 R0 : ℚ) (a : Fin d → ℚ) (K : Set (E d)) (orc : (Fin d → ℚ) → ℕ → Bool)
-    (hI : InpU n δ r0 R0 a K orc), RunCaseO d n δ →
-    ∀ (Ω : Type) [MeasurableSpace Ω] (μ : Measure Ω) (coin : Ω → ℕ → Bool) (loss : ℕ → Ω → E d → ℝ)
-      (noise : ℕ → Ω → ℝ) (h : NoisyAdv K n (DO d n δ r0 R0 a) (DO' d n δ r0 R0 a) μ coin loss noise)
-      (ω : Ω × (ℕ → ℝ)),
-      (recO n δ r0 R0 a orc h hI.convex).Case (dBL d n δ) ω → (recO n δ r0 R0 a orc h hI.convex).Good (dBL d n δ) ω →
-      ω ∈ (recO n δ r0 R0 a orc h hI.convex).bits →
-      ∀ t ≤ n, (∀ u < t, ¬ (recO n δ r0 R0 a orc h hI.convex).D (dBL d n δ) u ω) →
-        EngInvO n δ r0 R0 a orc h hI.convex ω t
 
 /-- **The shift and the regret of a round** in `IND(t)` on `Case ∩ Ω_ref ∩ E_bits ∩ NoClip`: `r > 0` and
 `tvB(m, r) ≤ κ + κ |ε_t|` with `κ = kapO` (Lemma SHIFT with the noise, `tau_shift`), and BL-O's loss exceeds P°'s by

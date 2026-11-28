@@ -21,6 +21,7 @@ public import AdversarialBco.Poly.Df2PropGProof
 public import AdversarialBco.Poly.Df2ApMeasProof
 public import AdversarialBco.Poly.MachDf2Caps
 public import AdversarialBco.Conj1Arith.ProcStage
+public import AdversarialBco.Poly.Df2DetProof
 
 @[expose] public section
 

@@ -13,8 +13,7 @@ public import AdversarialBco.Bit.Transfer.XBLInv
 # BL's setup on the machine: facts of P5 and the epoch start
 
 The test `1/2 < ε'` on the grid (`half_lt_up_iff`); the epoch start on the grid `2^{-p}` (`qn_smul_one`,
-`onG_smul_one`, `onG_rnd_s`, `onG_zero`) and the diagonal cells of a matrix (`diag_iff`); the height `M̂` of the
-input at most `M` (`frMhat_le_M`).
+`onG_smul_one`, `onG_rnd_s`, `onG_zero`) and the diagonal cells of a matrix (`diag_iff`).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM

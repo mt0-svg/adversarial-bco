@@ -15,9 +15,9 @@ public import AdversarialBco.Bit.Transfer.XBLTailSpec
 # The head of BL's round in BL's terms
 
 The values of R5 to R9 of `step` in mode `run` (Bit/Transfer/XBLStep.lean) as the integers the machine computes, once
-the state and the draw are fractions of integers (`Q = 2^p`, `F = 2^pF`, `G = 2^(2 p_B)`, `μ' = μ̂/D_μ`): `Y`, `c`
-(`head_Yc`), R7's tests (`head_tests`), the numerators of `A'`, `B'`, `s5` (`head_r8`), of `b'`, `k'`, `G'`, `l'`
-(`head_r9`). The point `w_μ` is `head_wmuO` (Unified/TailOFld.lean).
+the state and the draw are fractions of integers (`Q = 2^p`, `F = 2^pF`, `G = 2^(2 p_B)`, `μ' = μ̂/D_μ`): the numerators
+of `A'`, `B'`, `s5` (`head_r8`), of `b'`, `k'`, `G'`, `l'` (`head_r9`). The point `w_μ` is `head_wmuO`
+(Unified/TailOFld.lean).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -33,43 +33,6 @@ theorem eq_of_onG {k : ℕ} {x : ℚ} {z : ℤ} (hx : OnG k x) (hz : qn k x = z)
   push_cast
   rw [hx]
   field_simp
-
-section Head
-
-variable (cfg : Cfg d) (st : St d) (ξ : Fin d → ℚ) (ζ : ℚ) (obs : ℤ)
-
-/-- R5 and `c`. -/
-theorem head_Yc (pN pD gz : ℤ) (Γ : Fin d → ℤ) (g : ℕ) (hD : 0 < pD)
-    (hpt : ptQ cfg (XQ cfg st ξ) = (pN : ℚ) / pD) (hζ : ζ = (gz : ℚ) / 2 ^ g / 2)
-    (hξ : ξ = fun i => (Γ i : ℚ) / 2 ^ g) (he : OnG cfg.par.pF cfg.par.eps) (he0 : 0 < cfg.par.eps)
-    (hk : OnG cfg.par.pF cfg.par.kapc) :
-    rY cfg st ξ ζ obs =
-        (yHat (2 ^ cfg.par.p) (2 ^ cfg.par.pF) (2 ^ g) pN pD obs gz (qn cfg.par.pF cfg.par.eps) : ℚ) /
-          2 ^ cfg.par.p ∧
-      rc cfg st ξ ζ obs = (qn cfg.par.pF cfg.par.kapc : ℚ) / ((2 ^ cfg.par.pF : ℤ) : ℚ) *
-        ((yHat (2 ^ cfg.par.p) (2 ^ cfg.par.pF) (2 ^ g) pN pD obs gz (qn cfg.par.pF cfg.par.eps) : ℚ) /
-          ((2 ^ cfg.par.p : ℤ) : ℚ)) :=
-  r57_pure cfg.par _ ζ ξ obs pN pD gz Γ g hD hpt hζ hξ he he0 hk
-
-/-- R7's tests as the signs of the first line's values `6` and `8`. -/
-theorem head_tests (pN pD gz : ℤ) (Γ : Fin d → ℤ) (g : ℕ) (hξ : ξ = fun i => (Γ i : ℚ) / 2 ^ g)
-    (hc : rc cfg st ξ ζ obs = (qn cfg.par.pF cfg.par.kapc : ℚ) / ((2 ^ cfg.par.pF : ℤ) : ℚ) *
-        ((yHat (2 ^ cfg.par.p) (2 ^ cfg.par.pF) (2 ^ g) pN pD obs gz (qn cfg.par.pF cfg.par.eps) : ℚ) /
-          ((2 ^ cfg.par.p : ℤ) : ℚ))) :
-    (ra cfg st ξ ζ obs < 1 / 2 ↔ 0 < v1 (2 ^ cfg.par.p) (2 ^ cfg.par.pF) (2 ^ g) (qn cfg.par.pF cfg.par.eps)
-        (qn cfg.par.pF cfg.par.kapc) gz pN pD (Γ ⬝ᵥ Γ) obs 6) ∧
-      (rq cfg st ξ ζ obs < 1 / 2 ↔ 0 < v1 (2 ^ cfg.par.p) (2 ^ cfg.par.pF) (2 ^ g) (qn cfg.par.pF cfg.par.eps)
-        (qn cfg.par.pF cfg.par.kapc) gz pN pD (Γ ⬝ᵥ Γ) obs 8) := by
-  obtain ⟨-, -, t1, t2⟩ := r57_tests (2 ^ cfg.par.pF) (2 ^ cfg.par.p) (2 ^ g) (qn cfg.par.pF cfg.par.kapc)
-    (yHat (2 ^ cfg.par.p) (2 ^ cfg.par.pF) (2 ^ g) pN pD obs gz (qn cfg.par.pF cfg.par.eps)) Γ (by positivity)
-    (by positivity) (by positivity)
-  have hξ' : ξ = fun i => (Γ i : ℚ) / ((2 ^ g : ℤ) : ℚ) := by rw [hξ]; push_cast; rfl
-  rw [v1_6, v1_8]
-  refine ⟨?_, ?_⟩
-  · unfold ra; rw [hc]; exact t1
-  · unfold rq ra; rw [hc, hξ']; exact t2
-
-end Head
 
 section Head8
 

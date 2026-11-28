@@ -14,7 +14,7 @@ public import AdversarialBco.StatementConj1
 
 The input of Theorem 1 of Bubeck, Eldan and Lee (arXiv 1607.03084): a polytope given by rational constraints
 (`polytope`) and the bound on the heights of its data (`HeightLE`), which the bit-model statement
-(StatementConj1Bit.lean) and the lower bound on a polytope (StatementConj1LowerPoly.lean) use.
+(StatementConj1Bit.lean) and the lower bound on a polytope (StatementConj1LowerPoly.lean of release v2.3) use.
 
 * `polytope A b = {x ∈ ℝ^d : ∀ i, Σ_j A i j x_j ≤ b i}`, the polytope of Bubeck, Eldan and Lee ("K is a polytope
   described by poly(n) constraints whose coefficients are rational numbers with absolute values of numerators and

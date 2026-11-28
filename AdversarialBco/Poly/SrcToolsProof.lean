@@ -8,6 +8,7 @@ module
 public import AdversarialBco.Poly.SrcTools
 public import AdversarialBco.Poly.FreedmanProof
 public import AdversarialBco.Poly.CoverProof
+public import AdversarialBco.Poly.TruncProof
 
 @[expose] public section
 
@@ -713,6 +714,45 @@ theorem AdversarialBco.Poly.noise_tail {Ω : Type*} [MeasurableSpace Ω] (μ : M
       rw [← ENNReal.ofReal_toReal h_fin, measureReal_def]
     _ ≤ ENNReal.ofReal (2 / c) := ENNReal.ofReal_le_ofReal h_bound
     _ = ENNReal.ofReal (2 * Real.exp (-b ^ 2)) := by rw [h_div_eq]
+
+theorem AdversarialBco.Poly.cond_cauchy_schwarz {Ω : Type*} {m0 : MeasurableSpace Ω} (μ : Measure Ω)
+    [IsProbabilityMeasure μ] (m : MeasurableSpace Ω) (hm : m ≤ m0) (U V : Ω → ℝ) (hU : MemLp U 2 μ)
+    (hV : MemLp V 2 μ) :
+    ∀ᵐ ω ∂μ, μ[fun ω => U ω * V ω | m] ω ≤
+      Real.sqrt (μ[fun ω => U ω ^ 2 | m] ω) * Real.sqrt (μ[fun ω => V ω ^ 2 | m] ω) := by
+  have hUU : Integrable (fun ω => U ω ^ 2) μ := hU.integrable_sq
+  have hVV : Integrable (fun ω => V ω ^ 2) μ := hV.integrable_sq
+  have hUV : Integrable (fun ω => U ω * V ω) μ := hU.integrable_mul hV
+  have h_quad (q : ℚ) : ∀ᵐ ω ∂μ, 0 ≤ μ[fun ω => U ω ^ 2 | m] ω - 2 * (q : ℝ) * μ[fun ω => U ω * V ω | m] ω
+      + (q : ℝ) ^ 2 * μ[fun ω => V ω ^ 2 | m] ω := by
+    have h_nonneg : 0 ≤ᵐ[μ] μ[fun ω => (U ω - (q : ℝ) * V ω) ^ 2 | m] :=
+      condExp_nonneg (ae_of_all μ fun ω => sq_nonneg _)
+    have h_i2 : Integrable (fun ω => (-2 * (q : ℝ)) * (U ω * V ω)) μ := hUV.const_mul _
+    have h_i3 : Integrable (fun ω => (q : ℝ) ^ 2 * V ω ^ 2) μ := hVV.const_mul _
+    have h_eq : (fun ω => (U ω - (q : ℝ) * V ω) ^ 2) =
+        (fun ω => U ω ^ 2) + ((fun ω => (-2 * (q : ℝ)) * (U ω * V ω)) + fun ω => (q : ℝ) ^ 2 * V ω ^ 2) := by
+      ext ω; simp only [Pi.add_apply]; ring
+    have h_add := condExp_add hUU (h_i2.add h_i3) m
+    have h_add2 := condExp_add h_i2 h_i3 m
+    have h_s2 : μ[fun ω => (-2 * (q : ℝ)) * (U ω * V ω) | m] =ᵐ[μ] fun ω => (-2 * (q : ℝ)) * μ[fun ω => U ω * V ω | m] ω :=
+      condExp_smul (μ := μ) (-2 * (q : ℝ)) (fun ω => U ω * V ω) m
+    have h_s3 : μ[fun ω => (q : ℝ) ^ 2 * V ω ^ 2 | m] =ᵐ[μ] fun ω => (q : ℝ) ^ 2 * μ[fun ω => V ω ^ 2 | m] ω :=
+      condExp_smul (μ := μ) ((q : ℝ) ^ 2) (fun ω => V ω ^ 2) m
+    rw [h_eq] at h_nonneg
+    filter_upwards [h_nonneg, h_add, h_add2, h_s2, h_s3] with ω h0 h1 h2 h3 h4
+    rw [h1, Pi.add_apply, h2, Pi.add_apply] at h0
+    rw [h3, h4, Pi.zero_apply] at h0
+    linarith
+  have h_all : ∀ᵐ ω ∂μ, ∀ q : ℚ, 0 ≤ μ[fun ω => U ω ^ 2 | m] ω - 2 * (q : ℝ) * μ[fun ω => U ω * V ω | m] ω
+      + (q : ℝ) ^ 2 * μ[fun ω => V ω ^ 2 | m] ω := ae_all_iff.mpr h_quad
+  have hU0 : 0 ≤ᵐ[μ] μ[fun ω => U ω ^ 2 | m] := condExp_nonneg (ae_of_all μ fun ω => sq_nonneg _)
+  have hV0 : 0 ≤ᵐ[μ] μ[fun ω => V ω ^ 2 | m] := condExp_nonneg (ae_of_all μ fun ω => sq_nonneg _)
+  filter_upwards [h_all, hU0, hV0] with ω hq hu hv
+  have hd := AdversarialBco.Poly.quad_disc_of_rat _ _ _ hv hq
+  calc μ[fun ω => U ω * V ω | m] ω ≤ |μ[fun ω => U ω * V ω | m] ω| := le_abs_self _
+    _ = Real.sqrt ((μ[fun ω => U ω * V ω | m] ω) ^ 2) := (Real.sqrt_sq_eq_abs _).symm
+    _ ≤ Real.sqrt (μ[fun ω => U ω ^ 2 | m] ω * μ[fun ω => V ω ^ 2 | m] ω) := Real.sqrt_le_sqrt hd
+    _ = _ := Real.sqrt_mul hu _
 
 theorem AdversarialBco.Poly.lemmaTR1_main {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ]
     (Y Z : Ω → ℝ) (T : ℝ) (hY : ∀ ω, 0 ≤ Y ω) (hZ : ∀ ω, 0 ≤ Z ω) (hT : 0 ≤ T) (hY2 : MemLp Y 2 μ)

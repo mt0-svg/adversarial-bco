@@ -159,7 +159,7 @@ structure Run (d n : ℕ) (K : Set (E d)) where
   play : ℕ → WΩ → E d
   /-- BL's soundness event (the lemma of the draws): `E_bits ∩ Z_n`, the worlds at
   which BL's draws of the rounds `< n` are within their error bounds (`E_bits`, an event of the Gaussian coordinates)
-  and the noise of the rounds `< n` is `0` (`Z_n`, the noiseless worlds). `EngineHyp` is asked only on it. -/
+  and the noise of the rounds `< n` is `0` (`Z_n`, the noiseless worlds). -/
   bits : Set WΩ
   /-- The coupling. -/
   Coup : ℝ → ℝ → (Fin 3 → ℝ) → ℝ

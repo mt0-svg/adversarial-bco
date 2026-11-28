@@ -17,9 +17,19 @@ public import AdversarialBco.Bit.BLEngLeaves
 @[expose] public section
 
 /-!
-# Step 1 of SHADOW for BL's record: an epoch continued stays in mode `run`
+# Step 1 of SHADOW for BL's record: `EngineHyp`
 
-`mode_run_of_cont`: an epoch continued through its rounds `< s` is in mode `run` at its state before round `s`.
+The induction `IND(t)` on the good events `Case ∩ Ω_ref ∩ E_bits ∩ Z_n`, over P°'s run:
+
+* `Run.vmode`: from a fresh mode before round `a`, P°'s mode before round `a + s` is the mode of the virtual epoch
+  started before `a` (on `Case`);
+* `Run.detHyp_of_good`: the five events of the virtual epoch started at `a < n` at the horizon `n - a` give DET's
+  hypotheses there;
+* `ind`: before every round `t ≤ n` with no decoupled round before it, both learners are in mode `run` on one virtual
+  epoch of P° started at a fresh mode, the epoch continued through its rounds `< t - a`, with `Track` between BL's and
+  P°'s states (pieces C, `RoundC`, at each step, and Lemma HOR (c), `hor_step`);
+* `engine_of`: the shift clause (piece C `PlayC`, Lemma MPAR, Lemma TV with `κ1 = 0` on `Z_n`) and the regret clause
+  (E17 with (P4)).
 -/
 
 open scoped Matrix
@@ -96,7 +106,7 @@ theorem detHyp_of_good (hAP : ∀ v : Adv d, ApSpec (apAdv v)) (hreg : Regime d 
   have hR := row_one_le_R _ d n H
   have hmw : 1 / (df2oPar d n δ).R ≤ df2Mw d := by rw [H.R]; exact inv_R_le_df2Mw d hd
   obtain ⟨evG, evY, evLQ, evSDF, evDQ⟩ := hev
-  exact DetHyp.mk (DetBase.mk (c := B.ctx δ a ω) df2LayerOne_holds lemmaW SIF.df2SIFacts_holds hd hn hδ0 hδ1 rfl
+  exact DetHyp.mk (DetBase.ofOPar (c := B.ctx δ a ω) df2LayerOne_holds lemmaW SIF.df2SIFacts_holds hd hn hδ0 hδ1 rfl
     heps (df2RowsHold d n δ hd hn hδ0 hδ1 heps) (by omega) (Nat.sub_le n a) (body_kTh hKc hKconv hR hmw _)
     (fun s => hAP _) (fun s hs => adm_gTh (f := fun t => B.F.L t (lamAt n B.F.lam a s ω)) (a := a) (s := s)
       hKconv hKc hR hmw (B.F.adm (a + s) (by omega) _) _)) evG evY evLQ evSDF evDQ
@@ -138,6 +148,8 @@ theorem mode_run_of_cont (c : Df2Ctx d) (π : Df2Path d) :
     simp only [Df2Ctx.st, hst, Df2Mode.stOr]
 
 end AdversarialBco.Bit.Cpl
+
+/-! ## BL's record -/
 
 namespace AdversarialBco.Bit.BLP
 
@@ -181,7 +193,7 @@ theorem playPt_run {R : Routines} {d n m : ℕ} {A : Matrix (Fin m) (Fin d) ℚ}
 
 /-! ## The parameters and the epoch start -/
 
-/-- The enclosure lemma on `ε`: `0 < ε ≤ ε' ≤ 1/2` and `ε' - ε ≤ w_ε`. -/
+/-- Lemma ENC on `ε`: `0 < ε ≤ ε' ≤ 1/2` and `ε' - ε ≤ w_ε`. -/
 theorem eps_facts {d n : ℕ} (hd : 1 ≤ d) (hn : 1 ≤ n) (hc : RunCase d n) (hbud : Bud.BudOK d n) :
     0 < (po d n).eps ∧ (po d n).eps ≤ ((par d n).eps : ℝ) ∧ ((par d n).eps : ℝ) ≤ 1 / 2 ∧
       ((par d n).eps : ℝ) - (po d n).eps ≤ Bud.we d n := by
@@ -295,7 +307,7 @@ def EngInv (R : Routines) (d n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fi
     Track d n st (((blRun R d n m A b σ).ctx (deltaBL d n) a ω).st ((blRun R d n m A b σ).path (deltaBL d n) a ω) s) s
 
 /-- In `IND(t)` at `t = a + s < n` on `Case ∩ Ω_ref`: P°'s mode before round `t` is the epoch's state, DET holds at
-the horizon `s + 1` and the stopping time there is `s` (the horizon lemma (c)). -/
+the horizon `s + 1` and the stopping time there is `s` (Lemma HOR (c)). -/
 theorem round_ctx (hd : 1 ≤ d) (hn : 1 ≤ n) (hc : RunCase d n) {ω : WΩ}
     (hq : (blRun R d n m A b σ).Case (deltaBL d n) ω) (hG : (blRun R d n m A b σ).Good (deltaBL d n) ω)
     {a s : ℕ} (ht : a + s < n)
@@ -335,7 +347,7 @@ theorem admFW {ω : WΩ} (hq : (blRun R d n m A b σ).Case (deltaBL d n) ω) {t 
   exact this
 
 /-- The shift and the regret of a round `t < n` in `IND(t)` on `Case ∩ Ω_ref ∩ E_bits ∩ Z_n`: piece C (`PlayC`),
-Lemma MPAR and the coupling lemma with `κ1 = 0` for the shift, the play gap of E17 for the regret. -/
+Lemma MPAR and Lemma TV with `κ1 = 0` for the shift, the play gap of E17 for the regret. -/
 theorem round_bound (hP : PlayC) (hd : 1 ≤ d) (hn : 1 ≤ n) (hc : RunCase d n) (hbud : Bud.BudOK d n) {ω : WΩ}
     (hq : (blRun R d n m A b σ).Case (deltaBL d n) ω) (hG : (blRun R d n m A b σ).Good (deltaBL d n) ω)
     (hbits : ω ∈ Ebits R d n ∩ Zn n) {t : ℕ} (ht : t < n) (hI : EngInv R d n m A b σ ω t) :

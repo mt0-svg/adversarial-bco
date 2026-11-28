@@ -7,11 +7,12 @@ project:
     Adversarial bandit convex optimisation with a weak membership oracle, an adaptive adversary and a noisy
     observation. One program of a random access machine with logarithmic cost and a weak membership oracle plays each
     round, on every convex body given by the oracle and two rational balls about a known centre, within a number of bit
-    operations polynomial in d, log n, log(1/delta) and the bit length of the centre and the radii, and has regret at
-    most a constant times d^(3/2) sqrt(n) log^5(2dn/delta) with probability at least 1 - delta. On the same bodies, for
-    d >= 4e6 and n >= d^10, every learner has regret at least 7e-9 d^(3/2) sqrt(n)/log d in mean and
-    2.8e-9 d^(3/2) sqrt(n)/log d with probability at least 1/2 against some adversary. On the polytopes of Bubeck,
-    Eldan and Lee this gives their Conjecture 1 with time counted in bit operations.
+    operations polynomial in d, log n and the bit lengths of delta, the centre and the radii. Its regret is at most a
+    constant times d^(3/2) sqrt(n) log^5(2dn) + d sqrt(n log(2/delta)) log^(9/2)(2dn) with probability at least
+    1 - delta. On the same bodies, for d >= 4e6, n >= d^10, delta < 1/2 and log(1/delta) <= n/d^6, the minimax
+    (1 - delta)-quantile of the regret is at least a constant times
+    d^(3/2) sqrt(n)/log d + d sqrt(n log(1/delta))/(log d sqrt(log n)), and the minimax mean of its positive part at
+    least a constant times d^(3/2) sqrt(n)/log d; the program attains both up to factors polylogarithmic in d and n.
   authors: [mt0-svg]
   license: "Apache-2.0"
 
@@ -20,14 +21,14 @@ sources:
     authors: ["Sébastien Bubeck", "Ronen Eldan", "Yin Tat Lee"]
     id: "https://doi.org/10.1145/3453721"
     type: article
-    location: "Conjecture 1 (arXiv:1607.03084), with time in bit operations: Corollary 1.5 of the original proof"
+    location: "Conjecture 1 (arXiv:1607.03084): the lower bound in mean on the cube, Corollary 1.8 of the original proof"
     relationship: background
     author_endorsement: not-contacted
   - title: "Optimal regret for adversarial bandit convex optimisation in polynomial time"
     authors: [mt0-svg]
     id: "https://github.com/mt0-svg/adversarial-bco"
     type: original-proof
-    location: "paper/main.tex, Theorems 1.2, 1.3 and 3.2 and Corollaries 1.4 and 1.5, in the form of Section 7.1"
+    location: "paper/main.tex, Theorems 1.2 to 1.7 and 3.2 and Corollary 1.8, in the form of Section 8.1"
     relationship: formalizes
     author_endorsement: n/a
 
@@ -38,13 +39,13 @@ classification:
   msc2020: ["68Q32", "90C25", "62L05", "03B35"]
 
 status:
-  scope: "Theorems 1.2, 1.3 and 3.2 and Corollaries 1.4 and 1.5 with their constants, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, in the form the paper states them except where Section 7.2 of the paper says otherwise (alignment)"
+  scope: "Theorems 1.2 to 1.7 and 3.2 and Corollary 1.8 with their constants, with no hypothesis beyond those of the statements; the other numbered statements as steps of their proofs, in the form the paper states them (alignment)"
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: [propext, Classical.choice, Quot.sound]
   main_results:
     - declaration: "AdversarialBco.theoremUnified"
-      file: "AdversarialBco/Unified/Main.lean"
+      file: "AdversarialBco/UW/TheoremU.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: "config-unified.json"
@@ -62,7 +63,7 @@ status:
       comparator_config: "config-unified.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.Unified.UnifiedSanity.hyps_satisfiable"
-      file: "AdversarialBco/Conj1Bit/Sanity.lean"
+      file: "AdversarialBco/Unified/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: "config-unified.json"
@@ -79,167 +80,161 @@ status:
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: "config-unified.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.theoremLowerU"
-      file: "AdversarialBco/UnifiedLower/Main.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.theoremLowerUDQ"
+      file: "AdversarialBco/LowerDeltaQ/Statement.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.theoremLowerUProg"
-      file: "AdversarialBco/UnifiedLower/Main.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.theoremLowerUDProgQ"
+      file: "AdversarialBco/LowerDeltaQ/Statement.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.theoremLowerU_cube"
-      file: "AdversarialBco/UnifiedLower/Main.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.theoremMinimaxQ"
+      file: "AdversarialBco/LowerDeltaQ/Minimax.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.lowerU_hyps_satisfiable"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.theoremConj1LowerPolyDQ_holds"
+      file: "AdversarialBco/LowerDeltaQ/Conj1.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.lowerU_zero"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.lowerU_b_of_UDQ"
+      file: "AdversarialBco/LowerDeltaQ/LowerUB.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.progU_hyps_satisfiable"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.lowerUProg_b_of_UDProgQ"
+      file: "AdversarialBco/LowerDeltaQ/LowerUB.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.nil_not_machineOK"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.Sanity.lowerUDQ_a_hyps_satisfiable"
+      file: "AdversarialBco/LowerDeltaQ/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.progU_zero"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.Sanity.lowerUDQ_a_small_hyps_satisfiable"
+      file: "AdversarialBco/LowerDeltaQ/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.bodyU_of_unified"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.Sanity.minimaxQ_high_hyps_satisfiable"
+      file: "AdversarialBco/LowerDeltaQ/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.theoremConj1Lower_of_lowerU"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.Sanity.boundDQ_facts"
+      file: "AdversarialBco/LowerDeltaQ/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.corollaryMatch_of_unified_lower"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.LowerDeltaQ.Sanity.zeroStrat_fails_of_nonemptyDQ"
+      file: "AdversarialBco/LowerDeltaQ/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.theoremUnified_of_corollaryMatch"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.Lower.PolyDSanity.constLearner_mem_of_mem"
+      file: "AdversarialBco/Conj1LowerPolyD/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-unified-lower.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.corollaryMatch"
-      file: "AdversarialBco/UnifiedMatch/Main.lean"
+    - declaration: "AdversarialBco.Minimax.MinimaxSanity.payoffs_bounded"
+      file: "AdversarialBco/Minimax/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.Unified.UnifiedSanity.weakMemOracle_exact"
-      file: "AdversarialBco/Unified/Sanity.lean"
+    - declaration: "AdversarialBco.Minimax.MinimaxSanity.meanPosOf_tail_eq_integral"
+      file: "AdversarialBco/Minimax/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.Unified.UnifiedSanity.histσ_le"
-      file: "AdversarialBco/Unified/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.Unified.UnifiedSanity.hyps_satisfiable"
-      file: "AdversarialBco/Conj1Bit/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.Unified.UnifiedSanity.noisyAdv_signNoise"
-      file: "AdversarialBco/Unified/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.Unified.UnifiedSanity.nil_not_costOKO"
-      file: "AdversarialBco/Unified/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.UnifiedLower.LowerSanity.lowerU_hyps_satisfiable"
       file: "AdversarialBco/UnifiedLower/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.lowerU_zero"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.UnifiedLower.LowerSanity.progU_hyps_satisfiable"
       file: "AdversarialBco/UnifiedLower/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-minimax-q.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.nil_not_machineOK"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.UW.theoremUW"
+      file: "AdversarialBco/UW/Main.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-uw.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.progU_zero"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.UW.theoremUnified_of_UW"
+      file: "AdversarialBco/UW/ToUnified.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-uw.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.bodyU_of_unified"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.Grow.theoremGrowG"
+      file: "AdversarialBco/Grow/Main.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-matched.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.theoremConj1Lower_of_lowerU"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.Grow.theoremGrowGProg"
+      file: "AdversarialBco/Grow/Main.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-matched.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.corollaryMatch_of_unified_lower"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.Matched.theoremMinimaxMatched"
+      file: "AdversarialBco/Matched/Main.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-matched.json"
       literature_dependencies: []
-    - declaration: "AdversarialBco.UnifiedLower.LowerSanity.theoremUnified_of_corollaryMatch"
-      file: "AdversarialBco/UnifiedLower/Sanity.lean"
+    - declaration: "AdversarialBco.Matched.theoremMinimaxMatched_of"
+      file: "AdversarialBco/Matched/Main.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-match.json"
+      comparator_config: "config-matched.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.Matched.MatchedSanity.growG_hyps_satisfiable"
+      file: "AdversarialBco/Matched/Sanity.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-matched.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.Matched.MatchedSanity.matched_hyps_satisfiable"
+      file: "AdversarialBco/Matched/Sanity.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-matched.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.Matched.MatchedSanity.matched_exceeds_flat"
+      file: "AdversarialBco/Matched/Sanity.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-matched.json"
+      literature_dependencies: []
+    - declaration: "AdversarialBco.Matched.MatchedSanity.growGProg_matched_hyps_satisfiable"
+      file: "AdversarialBco/Matched/Sanity.lean"
+      sorry_count: 0
+      axioms: [propext, Classical.choice, Quot.sound]
+      comparator_config: "config-matched.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.theoremConj1UpperBitHP"
       file: "AdversarialBco/Conj1BitHP/Main.lean"
@@ -254,7 +249,7 @@ status:
       comparator_config: "config-conj1-bit-hp.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.BitRAM.Conj1BitSanity.hyps_satisfiable_exists"
-      file: "AdversarialBco/Conj1/Sanity.lean"
+      file: "AdversarialBco/Conj1Bit/Sanity.lean"
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: "config-conj1-bit-hp.json"
@@ -270,24 +265,6 @@ status:
       sorry_count: 0
       axioms: [propext, Classical.choice, Quot.sound]
       comparator_config: "config-conj1-bit-hp.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.theoremConj1LowerPoly_holds"
-      file: "AdversarialBco/Conj1LowerPoly/Main.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-conj1-lower-poly.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.Lower.Sanity.constLearner_mem_of_mem"
-      file: "AdversarialBco/Conj1Lower/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-conj1-lower-poly.json"
-      literature_dependencies: []
-    - declaration: "AdversarialBco.Lower.Sanity.zeroStrat_fails_of_nonempty"
-      file: "AdversarialBco/Conj1Lower/Sanity.lean"
-      sorry_count: 0
-      axioms: [propext, Classical.choice, Quot.sound]
-      comparator_config: "config-conj1-lower-poly.json"
       literature_dependencies: []
     - declaration: "AdversarialBco.theoremConj1Upper"
       file: "AdversarialBco/Conj1/Main.lean"
@@ -328,13 +305,17 @@ fidelity:
     played some later step plays one more round at a cost at most B above the first. Theorem 1.3 asks a
     learner to be jointly measurable and a strategy to read no earlier observation, to take values in [1/8, 7/8] on the
     body and to be 1/(4 r0)-Lipschitz on R^d and Borel in the history; its clause on programs asks of the program what
-    clause (i) of Theorem 1.2 asserts, with any cost bound. Corollary 1.4 is the conjunction of Theorem
-    1.2 and of that clause for its program. Corollary 1.5 gives the polytope by a rational matrix and
+    clause (i) of Theorem 1.2 asserts, with any cost bound; the powers are real powers at a positive base.
+    Theorems 1.4 and 1.7 take as learners the programs of Definition 4.2 with two sequences of
+    windows, and read both payoffs from the tail of the regret, with the outer measure on a set that is not measurable:
+    the mean of the positive part is the integral of the tail over (0, infinity) and the quantile the infimum of the
+    reals at which the tail is at most delta. Theorem 1.5 has the program, inputs, oracles and environments of
+    Theorem 1.2, and Theorem 1.6 the learners, strategies and programs of Theorem 1.3, with the
+    probability asserted strictly greater than delta. Corollary 1.8 gives the polytope by a rational matrix and
     vector, bounds the numerator and denominator of each entry in lowest terms by the height, allows any centre for the
-    unit ball, writes the diameter hypothesis as |x - y| <= n, and asserts a polytope of the class for the lower half
-    without naming it. Theorem 3.2 states the program as a list of instructions of Definition 3.1. The
-    other statements are proved as steps, in places in the form the proofs use (Section 7.2 of the
-    paper).
+    unit ball, writes the diameter hypothesis as |x - y| <= n, and asserts a polytope of the class without naming it.
+    Theorem 3.2 states the program as a list of instructions of Definition 3.1. The other statements
+    are proved as steps of these proofs (Section 8.2 of the paper).
 
 review:
   status: agent-reviewed
@@ -345,24 +326,39 @@ alignment:
   statements:
     - source: "Theorem 1.2"
       lean: "AdversarialBco.theoremUnified"
-      module: "AdversarialBco/Unified/Main.lean"
+      module: "AdversarialBco/UW/TheoremU.lean"
       status: proved
-      note: "AdversarialBco.theoremUnified : TheoremUnified (AdversarialBco/Unified/Main.lean), theoremUnified_of_prog progSetupO progTail_holds, over the reduction theoremUnified_of_open (AdversarialBco/Unified/Main.lean) from AdversarialBco.Unified.Asm.theoremUnified_of (AdversarialBco/Unified/AsmMain.lean) with C = 10^29, the setup progSetupO (AdversarialBco/Unified/ProgOSetupAll.lean) and the round progTail_holds (AdversarialBco/Unified/TailOAll.lean); the statement AdversarialBco.TheoremUnified (AdversarialBco/StatementUnified.lean, over the machine of AdversarialBco/StatementBitRAMO.lean)"
+      note: "the declaration AdversarialBco.theoremUnified := UW.theoremUnified_of_UW UW.theoremUW (AdversarialBco/UW/TheoremU.lean)"
     - source: "Theorem 1.3"
-      lean: "AdversarialBco.theoremLowerU"
-      module: "AdversarialBco/UnifiedLower/Main.lean"
+      lean: "AdversarialBco.LowerDeltaQ.theoremLowerUDQ"
+      module: "AdversarialBco/LowerDeltaQ/Statement.lean"
       status: proved
-      note: "AdversarialBco.theoremLowerU : TheoremLowerU and AdversarialBco.theoremLowerUProg : TheoremLowerUProg (AdversarialBco/UnifiedLower/Main.lean), the statements of AdversarialBco/StatementUnifiedLower.lean"
-    - source: "Corollary 1.4"
-      lean: "AdversarialBco.corollaryMatch"
-      module: "AdversarialBco/UnifiedMatch/Main.lean"
+      note: "AdversarialBco.LowerDeltaQ.theoremLowerUDQ : TheoremLowerUDQ and AdversarialBco.LowerDeltaQ.theoremLowerUDProgQ : TheoremLowerUDProgQ (AdversarialBco/LowerDeltaQ/Statement.lean), the statements of AdversarialBco/StatementMinimaxQ.lean"
+    - source: "Theorem 1.4"
+      lean: "AdversarialBco.LowerDeltaQ.theoremMinimaxQ"
+      module: "AdversarialBco/LowerDeltaQ/Minimax.lean"
       status: proved
-      note: "AdversarialBco.corollaryMatch : CorollaryMatch (AdversarialBco/UnifiedMatch/Main.lean), the statement of AdversarialBco/StatementUnifiedLower.lean, by AdversarialBco.UnifiedLower.LowerSanity.corollaryMatch_of_unified_lower : TheoremUnified -> TheoremLowerUProg -> CorollaryMatch (AdversarialBco/UnifiedLower/Sanity.lean) applied to theoremUnified and theoremLowerUProg"
-    - source: "Corollary 1.5"
+      note: "AdversarialBco.LowerDeltaQ.theoremMinimaxQ : TheoremMinimaxQ (AdversarialBco/LowerDeltaQ/Minimax.lean), AdversarialBco.LowerDeltaQ.theoremMinimaxQ_of_UD theoremUnified theoremLowerUDProgQ, with theoremMinimaxQ_of_UD : TheoremUnified -> TheoremLowerUDProgQ -> TheoremMinimaxQ; the statement AdversarialBco.TheoremMinimaxQ (AdversarialBco/StatementMinimaxQ.lean, over the game and the values of AdversarialBco/StatementMinimax.lean)"
+    - source: "Theorem 1.5"
+      lean: "AdversarialBco.UW.theoremUW"
+      module: "AdversarialBco/UW/Main.lean"
+      status: proved
+      note: "the proof: AdversarialBco.UW.theoremUW : TheoremUW (AdversarialBco/UW/Main.lean), theoremUW_of_prog at the program of AdversarialBco.UW.ProgW.theoremProgW; the statement AdversarialBco.TheoremUW (AdversarialBco/StatementUW.lean)"
+    - source: "Theorem 1.6"
+      lean: "AdversarialBco.TheoremGrowG"
+      module: "AdversarialBco/StatementMatched.lean"
+      status: proved
+      note: "the statements AdversarialBco.TheoremGrowG and TheoremGrowGProg (AdversarialBco/StatementMatched.lean); their proofs AdversarialBco.Grow.theoremGrowG and theoremGrowGProg (AdversarialBco/Grow/Main.lean)"
+    - source: "Theorem 1.7"
+      lean: "AdversarialBco.Matched.theoremMinimaxMatched"
+      module: "AdversarialBco/Matched/Main.lean"
+      status: proved
+      note: "AdversarialBco.Matched.theoremMinimaxMatched : TheoremMinimaxMatched (AdversarialBco/Matched/Main.lean), the reduction applied to UW.theoremUW, LowerDeltaQ.theoremLowerUDProgQ and Grow.theoremGrowGProg"
+    - source: "Corollary 1.8"
       lean: "AdversarialBco.theoremConj1UpperBitHP"
       module: "AdversarialBco/Conj1BitHP/Main.lean"
       status: proved
-      note: "AdversarialBco.theoremConj1UpperBitHP : TheoremConj1UpperBitHP, in the release tree conj1BitHP_of_unified theoremUnified (AdversarialBco/Conj1BitHP/Main.lean of the release; the statement of AdversarialBco/StatementConj1BitHP.lean); the lower half: AdversarialBco.theoremConj1LowerPoly_holds : TheoremConj1LowerPoly (AdversarialBco/Conj1LowerPoly/Main.lean); on the unit ball, the statement TheoremConj1Lower of v2.1, an instance of Theorem 1.3 (a): AdversarialBco.UnifiedLower.LowerSanity.theoremConj1Lower_of_lowerU"
+      note: "the upper half: AdversarialBco.theoremConj1UpperBitHP : TheoremConj1UpperBitHP, conj1BitHP_of_unified theoremUnified (AdversarialBco/Conj1BitHP/Main.lean; the statement of AdversarialBco/StatementConj1BitHP.lean); the lower half: AdversarialBco.theoremConj1LowerPolyDQ_holds : TheoremConj1LowerPolyDQ (AdversarialBco/LowerDeltaQ/Conj1.lean), the cube instance of clause (b) of theoremLowerUDQ; the statement of AdversarialBco/StatementMinimaxQ.lean"
     - source: "Algorithm 2.1"
       lean: "AdversarialBco.Poly.df2RoundGa"
       module: "AdversarialBco/Poly/Df2Layer2.lean"
@@ -499,130 +495,200 @@ alignment:
       status: proved
       note: "AdversarialBco.Bit.Sched.w0Law_beta, w0Sched, grp_odd and meas_comp_beta (AdversarialBco/Bit/CoinSchedLaw.lean) on the schedule of AdversarialBco/Bit/CoinSched.lean, for BL by AdversarialBco.Bit.Asm.w0Law_blInst (AdversarialBco/Bit/Assembly.lean)"
     - source: "Proposition 4.16"
-      lean: "AdversarialBco.Unified.Eng.engineRecO_of_C2"
-      module: "AdversarialBco/Unified/EngMain.lean"
-      status: proved
-      note: "(A3): AdversarialBco.Unified.Eng.engineRecO_of_C2 AdversarialBco.Unified.Eng.c2O : EngineRecO (AdversarialBco/Unified/EngMain.lean, EngC2d.lean), through engineRecO and roundBndO (EngBnd.lean) and indO (EngInd.lean)"
-    - source: "Proposition 4.17"
       lean: "AdversarialBco.Unified.ProgO.progO_ok"
       module: "AdversarialBco/Unified/ProgODrv.lean"
       status: proved
       note: "AdversarialBco.Unified.ProgO.progO_ok (AdversarialBco/Unified/ProgODrv.lean), from AdversarialBco.Uni.xtransferO (AdversarialBco/Unified/XTransO.lean) and the driver of AdversarialBco/Bit/Transfer/XDriver.lean (costP, costR)"
-    - source: "Proposition 4.18"
-      lean: "AdversarialBco.Unified.MagO.magBLO"
-      module: "AdversarialBco/Unified/MagRun.lean"
-      status: proved
-      note: "(a) AdversarialBco.Unified.MagO.magBLO : MagBLO (AdversarialBco/Unified/MagRun.lean), with C = 20000, k = 1; (b) expBLO : ExpBLO (AdversarialBco/Unified/MagExp.lean), with C = 30000, k = 1; the three blocks of the round: progR1a, progR1b, progOG, progR3 (AdversarialBco/Unified/ProgOR1.lean, ProgOOG.lean, ProgOR3.lean); the program from its contracts: AdversarialBco.Unified.ProgO.theoremProg_of : ProgSetupO -> ProgRoundO -> (exists P, BLOLink P and BLOMachOK P C' k) (AdversarialBco/Unified/ProgOBL.lean), and progR2 (ProgOR2s.lean), theoremProg_of_tail : ProgSetupO -> ProgTail -> ... (ProgORound.lean), applied to progSetupO (ProgOSetupAll.lean) and progTail_holds (TailOAll.lean) for the unit counts of the prologue and of a round"
-    - source: "Lemma 4.19"
-      lean: "AdversarialBco.Unified.Asm.thrO"
-      module: "AdversarialBco/Unified/AsmThr.lean"
-      status: proved
-      note: "AdversarialBco.Unified.Asm.thrO : ThrO (AdversarialBco/Unified/AsmThr.lean), from deltaRef_le, thr_scale and n_le_thr_gen, and AdversarialBco.Poly.Layer2.comp_thresh (AdversarialBco/Poly/Df2CompProof.lean)"
-    - source: "Lemma 4.20"
+    - source: "Lemma 4.17"
       lean: "AdversarialBco.Unified.Asm.regMeasU"
       module: "AdversarialBco/Unified/AsmMeas.lean"
       status: proved
       note: "AdversarialBco.Unified.Asm.regMeasU : RegMeasU (AdversarialBco/Unified/AsmMeas.lean), a port of AdversarialBco.Bit.RegMeas.measurable_regret (AdversarialBco/Bit/RegMeas.lean)"
-    - source: "Lemma 4.21"
+    - source: "Lemma 4.18"
       lean: "AdversarialBco.Conj1Poly.polytope_sub_ball"
       module: "AdversarialBco/Conj1Poly/Geom.lean"
       status: proved
       note: "AdversarialBco.Conj1Poly.polytope_sub_ball (AdversarialBco/Conj1Poly/Geom.lean), from extreme_ker, clear_den, gram_det_ne_zero, cramer_int_bound and extreme_norm_le"
-    - source: "Theorem 4.22"
+    - source: "Theorem 4.19"
       lean: "AdversarialBco.Bit.ApQ.frameQ_ball"
       module: "AdversarialBco/Bit/ApQ/FrameB.lean"
       status: proved
       note: "the frame: AdversarialBco.Bit.ApQ.frameQ_ball, from frameQ_d1 and frameQ_d2 (AdversarialBco/Bit/ApQ/FrameB.lean), on the procedure frameQ of AdversarialBco/Bit/RoutQ.lean. The program: AdversarialBco.Bit.Transfer.frameRule : FrameRule (AdversarialBco/Bit/Transfer/XFrameRule.lean; FrameRule of AdversarialBco/Bit/RoutM.lean), with C = 10^8 and k = 11"
     - source: "Lemma 5.1"
+      lean: "AdversarialBco.UW.BLOW.schedUW"
+      module: "AdversarialBco/UW/ParamW.lean"
+      status: proved
+      note: "AdversarialBco.UW.BLOW.schedUW : SchedUW (implW P C' k), from schedW (AdversarialBco/UW/ParamW.lean), on the case RunCaseUW (AdversarialBco/UW/Defs.lean)"
+    - source: "Theorem 5.2"
+      lean: "AdversarialBco.UW.refPropUW_of"
+      module: "AdversarialBco/UW/Reduction.lean"
+      status: proved
+      note: "AdversarialBco.UW.refPropUW_of (evProbOfUW rowsUW condIncrW condBiasW lemmaUSetW) (refRegOf (detOf rowsUW sifactsUW)) : RefPropUW, as theoremUW_of_all assembles it in AdversarialBco.UW.theoremUW (AdversarialBco/UW/Main.lean), which imports both halves"
+    - source: "Lemma 5.3"
+      lean: "AdversarialBco.UW.obsW_sure"
+      module: "AdversarialBco/UW/Interfaces.lean"
+      status: proved
+      note: "(i): obsW_sure (AdversarialBco/UW/Interfaces.lean) and the first bound of (iv) AdversarialBco.UW.condBiasW : CondBiasW, from cond_bias_w (AdversarialBco/UW/WrapBias.lean); (ii) to (iv): AdversarialBco.UW.SKp.cond_bset, cond_pow_four and bias_round (AdversarialBco/UW/SKpCond.lean), in a round of the epoch AdversarialBco.UW.biasE (AdversarialBco/UW/SKpRound.lean), the constant 52 of lvBias (AdversarialBco/UW/EvCNeeds.lean); (v): lq_d4E (AdversarialBco/UW/EvCLQ.lean) and phiHE_d4E (AdversarialBco/UW/EvEDQ.lean) at the level lvQ"
+    - source: "Lemma 5.4"
+      lean: "AdversarialBco.UW.condIncrW"
+      module: "AdversarialBco/UW/WrapIncr.lean"
+      status: proved
+      note: "(i) AdversarialBco.UW.condIncrW : CondIncrW, from cond_incr_w; (ii) AdversarialBco.UW.lemmaUSetW : LemmaUSetW, from lemmaU_setW (AdversarialBco/UW/WrapIncr.lean)"
+    - source: "Lemma 5.5"
+      lean: "AdversarialBco.UW.evNeedsUW"
+      module: "AdversarialBco/UW/RowsEvNeeds.lean"
+      status: proved
+      note: "(iv): AdversarialBco.UW.evNeedsUW : EvNeedsUW (AdversarialBco/UW/RowsEvNeeds.lean)"
+    - source: "Lemma 5.6"
+      lean: "AdversarialBco.UW.evProbOfUW"
+      module: "AdversarialBco/UW/EvProb.lean"
+      status: proved
+      note: "the lemma: AdversarialBco.UW.evProbOfUW rowsUW condIncrW condBiasW lemmaUSetW : EvProbUW (AdversarialBco/UW/EvProb.lean), which reads evNeedsUW"
+    - source: "Proposition 5.7"
+      lean: "AdversarialBco.UW.DetUW"
+      module: "AdversarialBco/UW/Interfaces.lean"
+      status: proved
+      note: "DetUW as AdversarialBco.UW.detOf rowsUW sifactsUW: detOf : RowsUW -> SIFactsUW -> DetUW (AdversarialBco/UW/DetUW.lean, over DetRound.lean to DetW.lean), with sifactsUW : SIFactsUW (SIFacts.lean)"
+    - source: "Lemma 5.8"
+      lean: "AdversarialBco.UW.RefRegUW"
+      module: "AdversarialBco/UW/Interfaces.lean"
+      status: proved
+      note: "RefRegUW as AdversarialBco.UW.refRegOf (detOf rowsUW sifactsUW): refRegOf : DetUW -> RefRegUW (AdversarialBco/UW/RefReg.lean)"
+    - source: "Lemma 5.9"
+      lean: "AdversarialBco.UW.obsW_sure"
+      module: "AdversarialBco/UW/Interfaces.lean"
+      status: proved
+      note: "AdversarialBco.UW.obsW_sure and obsW_lip (AdversarialBco/UW/Interfaces.lean)"
+    - source: "Theorem 5.10"
+      lean: "AdversarialBco.UW.BudW.budW"
+      module: "AdversarialBco/UW/BudA.lean"
+      status: proved
+      note: "the other conditions: AdversarialBco.UW.BudW.budW and reg_okW (AdversarialBco/UW/BudA.lean), read by the engine AdversarialBco.UW.Eng.engineOfW : DomW -> EngineRecUW (AdversarialBco/UW/EngMain.lean)"
+    - source: "Proposition 5.11"
+      lean: "AdversarialBco.UW.BLOW.measRecUW"
+      module: "AdversarialBco/UW/MeasRec.lean"
+      status: proved
+      note: "the measurability: AdversarialBco.UW.BLOW.measRecUW : MeasRecUW (AdversarialBco/UW/MeasRec.lean); (A3): AdversarialBco.UW.Eng.engineOfW (AdversarialBco/UW/EngMain.lean), through engineRecW (AdversarialBco/UW/EngBnd.lean)"
+    - source: "Proposition 5.12"
+      lean: "AdversarialBco.UW.coupStepPropUW"
+      module: "AdversarialBco/UW/Coup.lean"
+      status: proved
+      note: "Step 2, the coupling of the dithers: AdversarialBco.UW.coupStepPropUW : CoupStepPropUW (AdversarialBco/UW/Coup.lean)"
+    - source: "Proposition 5.13"
+      lean: "AdversarialBco.Unified.BLO.BLOMachOK"
+      module: "AdversarialBco/Unified/BLOSpec.lean"
+      status: proved
+      note: "BLOMachOK P C' k and BLOWLink (implW P C' k): AdversarialBco.UW.ProgW.theoremProgW (AdversarialBco/UW/ProgMachFinal.lean), with progSetupW, progRoundW and progTailW; the interior play: AdversarialBco.UW.BLOW.playIntUW (AdversarialBco/UW/ProgRec.lean)"
+    - source: "Lemma 5.14"
+      lean: "AdversarialBco.UW.thrUW_holds"
+      module: "AdversarialBco/UW/Thr.lean"
+      status: proved
+      note: "AdversarialBco.UW.thrUW_holds : ThrUW cThr with cThr = 10^21 (AdversarialBco/UW/Thr.lean)"
+    - source: "Lemma 6.1"
       lean: "AdversarialBco.Lower.dent_convexOn"
       module: "AdversarialBco/Conj1Lower/Dent.lean"
       status: proved
       note: "AdversarialBco.Lower.dent_convexOn, AdversarialBco.Lower.dent_nonneg, AdversarialBco.Lower.dent_le_bowl, AdversarialBco.Lower.dent_self, AdversarialBco.Lower.dent_lipschitz, AdversarialBco.Lower.dent_closed_form, AdversarialBco.Lower.devq_bounds, AdversarialBco.Lower.dent_tangent, AdversarialBco.Lower.hgen_le_two_k, AdversarialBco.Lower.hgen_tail (AdversarialBco/Conj1Lower/Dent.lean), on a real inner product space, with M = A*A for a bounded operator A"
-    - source: "Lemma 5.2"
+    - source: "Lemma 6.2"
       lean: "AdversarialBco.Lower.smul_clipM_le_one"
       module: "AdversarialBco/Conj1Lower/Frame.lean"
       status: proved
       note: "AdversarialBco.Lower.smul_clipM_le_one, AdversarialBco.Lower.norm_frameA_le, AdversarialBco.Lower.frameW_inv_le_clipM, AdversarialBco.Lower.clipM_le_two_frameW_inv, AdversarialBco.Lower.frameW_le_two_clipM_inv, AdversarialBco.Lower.dLive_le_DM, AdversarialBco.Lower.DM_le (AdversarialBco/Conj1Lower/Frame.lean)"
-    - source: "Algorithm 5.3"
+    - source: "Algorithm 6.3"
       lean: "AdversarialBco.Lower.Bayes.stratOf"
       module: "AdversarialBco/Conj1Lower/RuleS.lean"
       status: proved
       note: "AdversarialBco.Lower.Bayes.stratOf with the rule AdversarialBco.Lower.Bayes.ruleS (AdversarialBco/Conj1Lower/RuleS.lean)"
-    - source: "Lemma 5.4"
+    - source: "Lemma 6.4"
       lean: "AdversarialBco.Lower.Bayes.ruleS_meas"
       module: "AdversarialBco/Conj1Lower/RuleS.lean"
       status: proved
       note: "AdversarialBco.Lower.Bayes.ruleS_meas, AdversarialBco.Lower.Bayes.measurable_stratOf (AdversarialBco/Conj1Lower/RuleS.lean), AdversarialBco.Lower.Bayes.measurable_dens, AdversarialBco.Lower.Bayes.measurable_hist (AdversarialBco/Conj1Lower/Bayes.lean)"
-    - source: "Lemma 5.5"
+    - source: "Lemma 6.5"
       lean: "AdversarialBco.Lower.Top.stratOf_mem"
       module: "AdversarialBco/Conj1Lower/Top.lean"
       status: proved
       note: "AdversarialBco.Lower.Top.stratOf_mem, AdversarialBco.Lower.Top.regretAd_stratOf, AdversarialBco.Lower.Top.dentS_convexOn, AdversarialBco.Lower.Top.dentS_lipschitz, AdversarialBco.Lower.Top.dentS_nonneg, AdversarialBco.Lower.Top.dentS_le (AdversarialBco/Conj1Lower/Top.lean)"
-    - source: "Lemma 5.6"
+    - source: "Lemma 6.6"
       lean: "AdversarialBco.Lower.Bayes.post_disintegrates"
       module: "AdversarialBco/Conj1Lower/Bayes.lean"
       status: proved
       note: "AdversarialBco.Lower.Bayes.post_disintegrates (AdversarialBco/Conj1Lower/Bayes.lean), from AdversarialBco.Lower.Bayes.bayes_step (AdversarialBco/Conj1Lower/BayesRound.lean)"
-    - source: "Lemma 5.7"
+    - source: "Lemma 6.7"
       lean: "AdversarialBco.Lower.infoJ_chain"
       module: "AdversarialBco/Conj1Lower/Info.lean"
       status: proved
       note: "AdversarialBco.Lower.infoJ_chain, AdversarialBco.Lower.kl_round (AdversarialBco/Conj1Lower/Info.lean)"
-    - source: "Lemma 5.8"
+    - source: "Lemma 6.8"
       lean: "AdversarialBco.Lower.cells_floor"
       module: "AdversarialBco/Conj1Lower/CellsRound.lean"
       status: proved
       note: "AdversarialBco.Lower.cells_floor, AdversarialBco.Lower.cells_reg, AdversarialBco.Lower.cells_price (AdversarialBco/Conj1Lower/CellsRound.lean), from AdversarialBco.Lower.regular_closed, AdversarialBco.Lower.regular_dev, AdversarialBco.Lower.regular_half, AdversarialBco.Lower.gap_sq_regular, AdversarialBco.Lower.gap_sq_tail, AdversarialBco.Lower.gap_nontail (AdversarialBco/Conj1Lower/Cells.lean), with any operator in place of the square root of M and any real in place of DM, and cells_price with the square of T integrable on the tail, which holds for a law on the ball"
-    - source: "Lemma 5.9"
+    - source: "Lemma 6.9"
       lean: "AdversarialBco.Lower.ledger_identity"
       module: "AdversarialBco/Conj1Lower/Ledger.lean"
       status: proved
       note: "AdversarialBco.Lower.ledger_identity, AdversarialBco.Lower.ledger_round, AdversarialBco.Lower.pay_tail, AdversarialBco.Lower.pay_inner, AdversarialBco.Lower.pay_outer, AdversarialBco.Lower.ledger_game (AdversarialBco/Conj1Lower/Ledger.lean), AdversarialBco.Lower.cells_leak (AdversarialBco/Conj1Lower/CellsRound.lean)"
-    - source: "Lemma 5.10"
+    - source: "Lemma 6.10"
       lean: "AdversarialBco.Lower.count_b"
       module: "AdversarialBco/Conj1Lower/Info.lean"
       status: proved
       note: "AdversarialBco.Lower.count_b, AdversarialBco.Lower.count_game (AdversarialBco/Conj1Lower/Info.lean)"
-    - source: "Proposition 5.11"
-      lean: "AdversarialBco.Lower.ripe_balance"
+    - source: "Proposition 6.11"
+      lean: "AdversarialBco.LowerDeltaQ.stopQ_prob"
+      module: "AdversarialBco/LowerDeltaQ/Stop.lean"
+      status: proved
+      note: "AdversarialBco.LowerDeltaQ.stopQ_prob (AdversarialBco/LowerDeltaQ/Stop.lean), from stop_round_gen, stop_paymentQ, stop_countQ, stopQ_regret, crossQ_or_dead, prob_crossQ_ge, regG_ge_of_crossQ and mean_gapQ (same file), over AdversarialBco.Lower.Stop.stopped_ledger and stopped_count (AdversarialBco/Conj1Lower/Stop.lean)"
+    - source: "Proposition 6.12"
+      lean: "AdversarialBco.Lower.ripeB_params"
       module: "AdversarialBco/Conj1Lower/Balance.lean"
       status: proved
-      note: "AdversarialBco.Lower.ripe_balance (AdversarialBco/Conj1Lower/Balance.lean), AdversarialBco.Lower.ripe_rate_K, from AdversarialBco.Lower.R2_ripe_K, AdversarialBco.Lower.log_R0_le, AdversarialBco.Lower.log_x_ripe_ge_K and AdversarialBco.Lower.log_x_ripe_le_K (AdversarialBco/Conj1Lower/BalanceK.lean)"
-    - source: "Proposition 5.12"
-      lean: "AdversarialBco.Lower.Top.gameFacts_ext"
-      module: "AdversarialBco/Lower/R0Ext.lean"
+      note: "AdversarialBco.Lower.ripeB_params, R1_ripe, chanB_ripe (AdversarialBco/Conj1Lower/Balance.lean), AdversarialBco.Lower.ripeK_params_ext, R2_ripe_Kext, log_x_ripe_ge_Kext, log_R0_le_ext (AdversarialBco/Lower/R0Ext.lean); AdversarialBco.LowerDeltaQ.pDQ, good_pDQ, count_pDQ, c1_pDQ, c2x_pDQ, thr_pDQ (AdversarialBco/LowerDeltaQ/Prob.lean), wStar_scaleQ, xCount_scaleQ, three_c1_le, c2x_idQ, thr_idQ (AdversarialBco/LowerDeltaQ/Arith.lean), with AdversarialBco.LowerDelta.chanBK_mono and ripe_Y0_ge (AdversarialBco/LowerDelta/Arith.lean)"
+    - source: "Theorem 6.13"
+      lean: "AdversarialBco.LowerDeltaQ.lowerBodyProbDeltaQ_mid"
+      module: "AdversarialBco/LowerDeltaQ/Prob.lean"
       status: proved
-      note: "for 1 <= R0 <= d k: AdversarialBco.Lower.Top.gameFacts_ext, good_pK_ext (AdversarialBco/Lower/R0Ext.lean), AdversarialBco.Lower.ripeK_params_ext"
-    - source: "Theorem 5.13"
-      lean: "AdversarialBco.UnifiedLower.Body.lowerBody_mid"
-      module: "AdversarialBco/UnifiedLower/Body.lean"
-      status: proved
-      note: "AdversarialBco.UnifiedLower.Body.lowerBody_mid (AdversarialBco/UnifiedLower/Body.lean), from AdversarialBco.Lower.Top.lowerBody_of_inputs_ext (AdversarialBco/Lower/R0Ext.lean) and stratOf_mid, on AdversarialBco.Lower.Top.coupling, exists_good_point and integrable_regretAd_stratOf (AdversarialBco/Conj1Lower/Top.lean)"
-    - source: "Proposition 5.14"
-      lean: "AdversarialBco.Lower.Stop.stopFacts_of_good"
-      module: "AdversarialBco/Conj1Lower/StopGame.lean"
-      status: proved
-      note: "AdversarialBco.Lower.Stop.stopFacts_of_good (AdversarialBco/Conj1Lower/StopGame.lean) and AdversarialBco.Lower.stop_balance (AdversarialBco/Conj1Lower/StopBalance.lean)"
-    - source: "Corollary 5.15"
-      lean: "AdversarialBco.UnifiedLower.Body.lowerBodyProb_mid"
-      module: "AdversarialBco/UnifiedLower/Body.lean"
-      status: proved
-      note: "AdversarialBco.UnifiedLower.Body.lowerBodyProb_mid (AdversarialBco/UnifiedLower/Body.lean), from AdversarialBco.Lower.Stop.lowerBodyProb_of_inputs_ext, prob_regG_clamped and derand_prob (AdversarialBco/Conj1Lower/StopTop.lean)"
-    - source: "Lemma 5.16"
+      note: "AdversarialBco.LowerDeltaQ.lowerBodyProbDeltaQ_mid (AdversarialBco/LowerDeltaQ/Prob.lean), from stopQ_prob (AdversarialBco/LowerDeltaQ/Stop.lean), count_pDQ, c1_pDQ, c2x_pDQ, thr_pDQ, thr_lowQ, log_le_four_rootQ, ledger_le_levelQ (AdversarialBco/LowerDeltaQ/Prob.lean) and fail_budgetQ (AdversarialBco/LowerDeltaQ/Arith.lean), with AdversarialBco.Lower.Stop.prob_regG_clamped (AdversarialBco/Conj1Lower/StopTop.lean), AdversarialBco.LowerDelta.derand_prob_mid_bdd (AdversarialBco/LowerDelta/Prob.lean) and AdversarialBco.UnifiedLower.Body.stratOf_mid (AdversarialBco/UnifiedLower/Body.lean)"
+    - source: "Lemma 6.14"
       lean: "AdversarialBco.Lower.isLearnerAd_push"
       module: "AdversarialBco/Lower/Aff.lean"
       status: proved
       note: "AdversarialBco.Lower.isLearnerAd_push, pullStrat_mem_strats, pullStrat_mem_stratsLipL, regretAd_push (AdversarialBco/Lower/Aff.lean); AdversarialBco.UnifiedLower.Body.pullStrat_mem_mid and dist_le_of_ball_image (AdversarialBco/UnifiedLower/Body.lean)"
-    - source: "Lemma 5.17"
+    - source: "Lemma 6.15"
       lean: "AdversarialBco.UnifiedLower.Body.exists_position"
       module: "AdversarialBco/UnifiedLower/Body.lean"
       status: proved
       note: "AdversarialBco.UnifiedLower.Body.exists_position, position_facts and posR_bounds (AdversarialBco/UnifiedLower/Body.lean), from AdversarialBco.Poly.pgThm"
-    - source: "Lemma 5.18"
+    - source: "Lemma 6.16"
       lean: "AdversarialBco.UnifiedLower.Prog.progLearner_isLearner"
       module: "AdversarialBco/UnifiedLower/Prog.lean"
       status: proved
       note: "AdversarialBco.UnifiedLower.Prog.progLearner_isLearner, closedLoop_cl, noisyAdv_cl, regretU_cl and playedO_closed (AdversarialBco/UnifiedLower/Prog.lean), on the run facts of AdversarialBco/Unified/RunFacts.lean"
+    - source: "Algorithm 6.17"
+      lean: "AdversarialBco.Grow.stratG"
+      module: "AdversarialBco/Grow/Prob.lean"
+      status: proved
+      note: "AdversarialBco.Grow.stratG (AdversarialBco/Grow/Prob.lean), with the dent dentG and the bowl bowlG (AdversarialBco/Grow/Price.lean) and the vertex law tipLaw (AdversarialBco/Grow/Tip.lean)"
+    - source: "Lemma 6.18"
+      lean: "AdversarialBco.Grow.CellsOK"
+      module: "AdversarialBco/Grow/Price.lean"
+      status: proved
+      note: "AdversarialBco.Grow.CellsOK and restSet_tipLaw (AdversarialBco/Grow/Price.lean, Tip.lean), with tipLaw_outer_inner, not_ripe_tipLaw, tail_mass_le, tail_moment_le, mgf_tipLaw_le (AdversarialBco/Grow/Tip.lean); (i) price_floor, (ii) price_gap, (iii) gap_le_sphere (AdversarialBco/Grow/Price.lean); the conditions at k = 3 ln d: cellsOK_kG (AdversarialBco/Grow/Arith.lean)"
+    - source: "Lemma 6.19"
+      lean: "AdversarialBco.Grow.measure_ge_shift"
+      module: "AdversarialBco/Grow/Shift.lean"
+      status: proved
+      note: "AdversarialBco.Grow.measure_ge_shift, from lintegral_shiftAll, integral_noiseSum_sq, lintegral_exp_neg_ge and integral_abs_le_sqrt (AdversarialBco/Grow/Shift.lean)"
+    - source: "Proposition 6.20"
+      lean: "AdversarialBco.Grow.growBody_mid"
+      module: "AdversarialBco/Grow/Prob.lean"
+      status: proved
+      note: "AdversarialBco.Grow.growBody_mid (AdversarialBco/Grow/Prob.lean) at the parameters pG d n l, the budget bG l = 4l/5, the margin 1/5 and the clamp ellB n, with routeG_pG (AdversarialBco/Grow/Arith.lean); through prob_shift_ge, stratG_mid, regretAd_stratG (Prob.lean), budget_mG, regGG_shift_ge, abs_mG_le_sphere (Game.lean), stop_mass_ge, prob_stopS_lt (Cheb.lean) and AdversarialBco.Lower.Top.exists_good_point"
+    - source: "Lemma 6.21"
+      lean: "AdversarialBco.Grow.routeG_pG"
+      module: "AdversarialBco/Grow/Arith.lean"
+      status: proved
+      note: "AdversarialBco.Grow.routeG_pG, cellsOK_kG, gamG_ge, gG_mul_le, budget_pG, wG_le, lipG_le, cheb_fail_le, clamp_fail_le, qZero_ge, delta_lt, target_le (AdversarialBco/Grow/Arith.lean)"
     - source: "Lemma B.1"
       lean: "AdversarialBco.Poly.lemmaR1i"
       module: "AdversarialBco/Poly/Df2R1Proof.lean"
@@ -669,8 +735,8 @@ alignment:
       status: proved
       note: "AdversarialBco.Poly.lemmaD2_holds (AdversarialBco/Poly/Df2DetProof.lean), the statement LemmaD2 of AdversarialBco/Poly/Df2.lean"
     - source: "Lemma B.10"
-      lean: "AdversarialBco.Poly.DetHyp.c3_tau"
-      module: "AdversarialBco/Poly/Df2DetRound.lean"
+      lean: "AdversarialBco.UW.DetHypW.c3_tau"
+      module: "AdversarialBco/UW/DetRound.lean"
       status: proved
       note: "c3_tau and aq (AdversarialBco/Poly/Df2DetRound.lean)"
     - source: "Lemma B.11"
@@ -812,7 +878,7 @@ alignment:
       lean: "AdversarialBco.Unified.BudK.encOKK"
       module: "AdversarialBco/Unified/BudA.lean"
       status: proved
-      note: "AdversarialBco.Unified.BudK.encOKK (AdversarialBco/Unified/BudA.lean), through encR_ok (AdversarialBco/Unified/BudEnc.lean), on the relative errors of AdversarialBco/Unified/BudEncMaj.lean; at the N_e of release v2.1, AdversarialBco.Bit.PieceA.encOK (AdversarialBco/Bit/PieceA/BudA.lean)"
+      note: "AdversarialBco.Unified.BudK.encOKK (AdversarialBco/Unified/BudA.lean), through encR_ok (AdversarialBco/Unified/BudEnc.lean), on the relative errors of AdversarialBco/Unified/BudEncMaj.lean"
     - source: "Algorithm E.6"
       lean: "AdversarialBco.Unified.BLO.parO"
       module: "AdversarialBco/Unified/BLOSpec.lean"

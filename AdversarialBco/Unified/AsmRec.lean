@@ -262,12 +262,6 @@ theorem recO_loss (n : ℕ) (δ r0 R0 : ℚ) (a : Fin d → ℚ) (orc : (Fin d �
   show (lossProcE (winO h) (extO_ok n δ r0 R0 a h) hK).L t ((lossProcE (winO h) (extO_ok n δ r0 R0 a h) hK).lam t p) = _
   simp only [lossProcE, ht, ↓reduceDIte]
 
-/-- The record's plays are BL-O's on the environment's world. -/
-theorem recO_play (n : ℕ) (δ r0 R0 : ℚ) (a : Fin d → ℚ) (orc : (Fin d → ℚ) → ℕ → Bool)
-    (h : NoisyAdv K n (DO d n δ r0 R0 a) (DO' d n δ r0 R0 a) μ coin loss noise) (hK : Convex ℝ K)
-    (p : Ω × (ℕ → ℝ)) (t : ℕ) :
-    (recO n δ r0 R0 a orc h hK).play t p = toE (playO d n δ r0 R0 a (envWorld orc coin loss noise p.1) t) := rfl
-
 end Rec
 
 end AdversarialBco.Unified.Asm

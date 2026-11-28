@@ -1,0 +1,25 @@
+{
+  "challenge_module": "AdversarialBco.ChallengeMinimaxQ",
+  "solution_module": "AdversarialBco.LowerDeltaQ.Minimax",
+  "theorem_names": [
+    "AdversarialBco.LowerDeltaQ.theoremLowerUDQ",
+    "AdversarialBco.LowerDeltaQ.theoremLowerUDProgQ",
+    "AdversarialBco.LowerDeltaQ.theoremMinimaxQ",
+    "AdversarialBco.theoremConj1LowerPolyDQ_holds",
+    "AdversarialBco.LowerDeltaQ.lowerU_b_of_UDQ",
+    "AdversarialBco.LowerDeltaQ.lowerUProg_b_of_UDProgQ",
+    "AdversarialBco.LowerDeltaQ.Sanity.lowerUDQ_a_hyps_satisfiable",
+    "AdversarialBco.LowerDeltaQ.Sanity.lowerUDQ_a_small_hyps_satisfiable",
+    "AdversarialBco.LowerDeltaQ.Sanity.minimaxQ_high_hyps_satisfiable",
+    "AdversarialBco.LowerDeltaQ.Sanity.boundDQ_facts",
+    "AdversarialBco.LowerDeltaQ.Sanity.zeroStrat_fails_of_nonemptyDQ",
+    "AdversarialBco.Lower.PolyDSanity.constLearner_mem_of_mem",
+    "AdversarialBco.Minimax.MinimaxSanity.payoffs_bounded",
+    "AdversarialBco.Minimax.MinimaxSanity.meanPosOf_tail_eq_integral",
+    "AdversarialBco.UnifiedLower.LowerSanity.lowerU_hyps_satisfiable",
+    "AdversarialBco.UnifiedLower.LowerSanity.progU_hyps_satisfiable"
+  ],
+  "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+  "enable_nanoda": true,
+  "lean_kernel": false
+}

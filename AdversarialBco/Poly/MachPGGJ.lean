@@ -95,7 +95,7 @@ theorem rowPart_set {d : ℕ} (X0 : Matrix (Fin d) (Fin d) ℝ) (i : Fin d) (g :
   · simp [ha]
 
 theorem runs_gjScale {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
-    {w : AdversarialBco.RealRAM.World d} {dv one j kj A B ip t : ℕ} (σ : Env d)
+    {w : AdversarialBco.RealRAM.World d} {dv one j kj A B ip t : ℕ} (σ : AdversarialBco.Poly.Mach.Env d)
     (k : Fin d) (hdv : dv < L.NN) (hone : one < L.NN) (hj : j < L.NN) (hkj : kj < L.NN) (hA : A < L.NA)
     (hB : B < L.NA) (hip : ip < L.NS) (ht : t < L.NS) (hjdv : j ≠ dv) (hjone : j ≠ one) (hjkj : j ≠ kj)
     (hkjdv : kj ≠ dv) (hkjone : kj ≠ one) (hAB : A ≠ B) (hipt : ip ≠ t) (hd : σ.nat dv = d)
@@ -103,7 +103,7 @@ theorem runs_gjScale {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     AdversarialBco.Poly.Mach.Runs L w (gjScale L dv one j kj A B ip t) σ (d * 14 + 3)
       (fun σ' => σ'.mat A = Matrix.updateRow (σ.mat A) k (fun c => σ.mat A k c * σ.sc ip) ∧
         σ'.mat B = Matrix.updateRow (σ.mat B) k (fun c => σ.mat B k c * σ.sc ip) ∧ σ'.nat kj = d * k + d ∧
-        Env.Frame σ σ' [j, kj] [t] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [j, kj] [t] [A, B]) := by
   have hk' : (k : ℕ) < d := k.2
   set A0 := σ.mat A with hA0
   set B0 := σ.mat B with hB0
@@ -167,7 +167,7 @@ theorem runs_gjScale {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     exact ⟨mA.trans (rowPart_full _ _ _), mB.trans (rowPart_full _ _ _), ekj, F'⟩
 
 theorem runs_gjElimRow {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
-    {w : AdversarialBco.RealRAM.World d} {dv one j ij kj A B f t1 t2 : ℕ} (σ : Env d)
+    {w : AdversarialBco.RealRAM.World d} {dv one j ij kj A B f t1 t2 : ℕ} (σ : AdversarialBco.Poly.Mach.Env d)
     (i k : Fin d) (hik : i ≠ k) (hdv : dv < L.NN) (hone : one < L.NN) (hj : j < L.NN) (hij : ij < L.NN)
     (hkj : kj < L.NN) (hA : A < L.NA) (hB : B < L.NA) (hf : f < L.NS) (ht1 : t1 < L.NS) (ht2 : t2 < L.NS)
     (hjdv : j ≠ dv) (hjone : j ≠ one) (hjij : j ≠ ij) (hjkj : j ≠ kj) (hijkj : ij ≠ kj) (hijdv : ij ≠ dv)
@@ -178,7 +178,7 @@ theorem runs_gjElimRow {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
       (fun σ' => σ'.mat A = Matrix.updateRow (σ.mat A) i (fun c => σ.mat A i c - σ.sc f * σ.mat A k c) ∧
         σ'.mat B = Matrix.updateRow (σ.mat B) i (fun c => σ.mat B i c - σ.sc f * σ.mat B k c) ∧
         σ'.nat ij = d * i + d ∧ σ'.nat kj = d * k + d ∧
-        Env.Frame σ σ' [j, ij, kj] [t1, t2] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [j, ij, kj] [t1, t2] [A, B]) := by
   have hi' : (i : ℕ) < d := i.2
   have hk' : (k : ℕ) < d := k.2
   set A0 := σ.mat A with hA0
@@ -272,7 +272,7 @@ theorem runs_gjElimRow {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
 
 theorem runs_gjElim {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     {w : AdversarialBco.RealRAM.World d} {dv one j ri rk kk ij kj A B f t1 t2 : ℕ}
-    (σ : Env d) (i k : Fin d) (hik : i ≠ k) (hdv : dv < L.NN) (hone : one < L.NN)
+    (σ : AdversarialBco.Poly.Mach.Env d) (i k : Fin d) (hik : i ≠ k) (hdv : dv < L.NN) (hone : one < L.NN)
     (hj : j < L.NN) (hri : ri < L.NN) (hrk : rk < L.NN) (hkk : kk < L.NN) (hij : ij < L.NN) (hkj : kj < L.NN)
     (hA : A < L.NA) (hB : B < L.NA) (hf : f < L.NS) (ht1 : t1 < L.NS) (ht2 : t2 < L.NS)
     (hN : [j, ij, kj].Nodup) (hjN : j ∉ [dv, one, ri, rk, kk]) (hijN : ij ∉ [dv, one, ri, rk, kk])
@@ -281,7 +281,7 @@ theorem runs_gjElim {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     AdversarialBco.Poly.Mach.Runs L w (gjElim L dv one j ri rk kk ij kj A B f t1 t2) σ (d * 21 + 10)
       (fun σ' => σ'.mat A = Matrix.updateRow (σ.mat A) i (fun c => σ.mat A i c - σ.mat A i k * σ.mat A k c) ∧
         σ'.mat B = Matrix.updateRow (σ.mat B) i (fun c => σ.mat B i c - σ.mat A i k * σ.mat B k c) ∧
-        Env.Frame σ σ' [j, ij, kj] [f, t1, t2] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [j, ij, kj] [f, t1, t2] [A, B]) := by
   simp only [List.nodup_cons, List.mem_cons, List.not_mem_nil, or_false, not_or, List.nodup_nil, and_true]
     at hN hjN hijN hkjN hS
   obtain ⟨⟨hjij, hjkj⟩, hijkj, -⟩ := hN
@@ -373,7 +373,7 @@ theorem gjPart_full {d : ℕ} (A0 X0 : Matrix (Fin d) (Fin d) ℝ) (k : Fin d) :
 
 theorem runs_gjElimAll {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     {w : AdversarialBco.RealRAM.World d} {dv one i j kk ri rk ij kj A B f t1 t2 : ℕ}
-    (σ : Env d) (k : Fin d) (hdv : dv < L.NN) (hone : one < L.NN) (hi : i < L.NN)
+    (σ : AdversarialBco.Poly.Mach.Env d) (k : Fin d) (hdv : dv < L.NN) (hone : one < L.NN) (hi : i < L.NN)
     (hj : j < L.NN) (hri : ri < L.NN) (hrk : rk < L.NN) (hkk : kk < L.NN) (hij : ij < L.NN) (hkj : kj < L.NN)
     (hA : A < L.NA) (hB : B < L.NA) (hf : f < L.NS) (ht1 : t1 < L.NS) (ht2 : t2 < L.NS)
     (hN : [i, j, ri, ij, kj].Nodup) (hNo : ∀ q ∈ [i, j, ri, ij, kj], q ∉ [dv, one, rk, kk]) (hAB : A ≠ B)
@@ -385,7 +385,7 @@ theorem runs_gjElimAll {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
             σ.mat A a b - σ.mat A a k * σ.mat A k b) ∧
         σ'.mat B = Matrix.of (fun a b => if a = k then σ.mat B k b else
             σ.mat B a b - σ.mat A a k * σ.mat B k b) ∧
-        Env.Frame σ σ' [i, j, ri, ij, kj] [f, t1, t2] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [i, j, ri, ij, kj] [f, t1, t2] [A, B]) := by
   have hS' := hS
   simp only [List.nodup_cons, List.mem_cons, List.not_mem_nil, or_false, not_or, List.nodup_nil, and_true,
     forall_eq_or_imp, forall_eq] at hN hNo hS
@@ -473,7 +473,7 @@ theorem runs_gjElimAll {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
 
 theorem runs_gjPivot {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     {w : AdversarialBco.RealRAM.World d} {dv one i j kk ri rk ij kj A B p ip o f t1 t2 : ℕ}
-    (σ : Env d) (k : Fin d) (hdv : dv < L.NN) (hone : one < L.NN) (hi : i < L.NN)
+    (σ : AdversarialBco.Poly.Mach.Env d) (k : Fin d) (hdv : dv < L.NN) (hone : one < L.NN) (hi : i < L.NN)
     (hj : j < L.NN) (hri : ri < L.NN) (hrk : rk < L.NN) (hkk : kk < L.NN) (hij : ij < L.NN) (hkj : kj < L.NN)
     (hA : A < L.NA) (hB : B < L.NA) (hp : p < L.NS) (hip : ip < L.NS) (ho : o < L.NS) (hf : f < L.NS)
     (ht1 : t1 < L.NS) (ht2 : t2 < L.NS) (hN : [i, j, ri, rk, ij, kj].Nodup)
@@ -483,7 +483,7 @@ theorem runs_gjPivot {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     AdversarialBco.Poly.Mach.Runs L w (gjPivot L dv one i j kk ri rk ij kj A B p ip o f t1 t2) σ
       (d * d * 21 + d * 31 + 14)
       (fun σ' => (σ'.mat A, σ'.mat B) = gjStep k (σ.mat A, σ.mat B) ∧ σ'.nat rk = d * k + d ∧
-        Env.Frame σ σ' [i, j, ri, rk, ij, kj] [p, ip, f, t1, t2] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [i, j, ri, rk, ij, kj] [p, ip, f, t1, t2] [A, B]) := by
   simp only [List.nodup_cons, List.mem_cons, List.not_mem_nil, or_false, not_or, List.nodup_nil, and_true,
     forall_eq_or_imp, forall_eq] at hN hNo hS
   obtain ⟨⟨hij_, hiri, hirk, hiij, hikj⟩, ⟨hjri, hjrk, hjij, hjkj⟩, ⟨hrirk, hriij, hrikj⟩, ⟨hrkij, hrkkj⟩,
@@ -561,7 +561,7 @@ theorem runs_gjPivot {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
 
 theorem runs_gjLoop {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     {w : AdversarialBco.RealRAM.World d} {dv one i j kk ri rk ij kj A B p ip o f t1 t2 : ℕ}
-    (σ : Env d) (T : Matrix (Fin d) (Fin d) ℝ) (hdv : dv < L.NN) (hone : one < L.NN)
+    (σ : AdversarialBco.Poly.Mach.Env d) (T : Matrix (Fin d) (Fin d) ℝ) (hdv : dv < L.NN) (hone : one < L.NN)
     (hi : i < L.NN) (hj : j < L.NN) (hri : ri < L.NN) (hrk : rk < L.NN) (hkk : kk < L.NN) (hij : ij < L.NN)
     (hkj : kj < L.NN) (hA : A < L.NA) (hB : B < L.NA) (hp : p < L.NS) (hip : ip < L.NS) (ho : o < L.NS)
     (hf : f < L.NS) (ht1 : t1 < L.NS) (ht2 : t2 < L.NS) (hN : [i, j, kk, ri, rk, ij, kj].Nodup)
@@ -572,7 +572,7 @@ theorem runs_gjLoop {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
       (AdversarialBco.Poly.Mach.VL.forN kk dv one (gjPivot L dv one i j kk ri rk ij kj A B p ip o f t1 t2)) σ
       (d * (d * d * 21 + d * 31 + 17) + 3)
       (fun σ' => (σ'.mat A, σ'.mat B) = gjRun T d ∧
-        Env.Frame σ σ' [i, j, kk, ri, rk, ij, kj] [p, ip, f, t1, t2] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [i, j, kk, ri, rk, ij, kj] [p, ip, f, t1, t2] [A, B]) := by
   have hS' := hS
   simp only [List.nodup_cons, List.mem_cons, List.not_mem_nil, or_false, not_or, List.nodup_nil, and_true,
     forall_eq_or_imp, forall_eq] at hN hNo hS
@@ -611,7 +611,7 @@ theorem runs_gjLoop {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
 
 theorem runs_gjCode {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     {w : AdversarialBco.RealRAM.World d} {dv one dd i j kk ri rk ij kj T A B p ip o z f t1 t2 : ℕ}
-    (σ : Env d) (hdv : dv < L.NN) (hone : one < L.NN) (hdd : dd < L.NN)
+    (σ : AdversarialBco.Poly.Mach.Env d) (hdv : dv < L.NN) (hone : one < L.NN) (hdd : dd < L.NN)
     (hi : i < L.NN) (hj : j < L.NN) (hkk : kk < L.NN) (hri : ri < L.NN) (hrk : rk < L.NN) (hij : ij < L.NN)
     (hkj : kj < L.NN) (hT : T < L.NA) (hA : A < L.NA) (hB : B < L.NA) (hp : p < L.NS) (hip : ip < L.NS)
     (ho : o < L.NS) (hz : z < L.NS) (hf : f < L.NS) (ht1 : t1 < L.NS) (ht2 : t2 < L.NS)
@@ -621,7 +621,7 @@ theorem runs_gjCode {d : ℕ} {L : AdversarialBco.Poly.Mach.Layout}
     AdversarialBco.Poly.Mach.Runs L w (gjCode L dv one dd i j kk ri rk ij kj T A B p ip o z f t1 t2) σ
       (d * (d * d * 21 + d * 31 + 17) + d * d * 12 + d * 7 + 16)
       (fun σ' => (σ'.mat A, σ'.mat B) = gjRun (σ.mat T) d ∧
-        Env.Frame σ σ' [i, j, kk, ri, rk, ij, kj] [p, ip, o, z, f, t1, t2] [A, B]) := by
+        AdversarialBco.Poly.Mach.Env.Frame σ σ' [i, j, kk, ri, rk, ij, kj] [p, ip, o, z, f, t1, t2] [A, B]) := by
   have hN' := hN
   simp only [List.nodup_cons, List.mem_cons, List.not_mem_nil, or_false, not_or, List.nodup_nil, and_true,
     forall_eq_or_imp, forall_eq] at hN hNo hS hAr

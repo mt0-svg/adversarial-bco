@@ -11,12 +11,14 @@ public import AdversarialBco.Poly.Df2EvSIMat
 @[expose] public section
 
 /-!
-# One round up to the stopping time: the functions of a round
+# One round up to the stopping time: means and second moments
 
-At a round of the context at the parameters, with `X(z) = μ_s + (1 - λ) A_s z`: the extension `eR` and the gauge
-factor `pR` at the draw `z`, and `yR = e² + pip²`; their continuity, the integrability and the `L²` membership of a
-function of polynomial growth under the Gaussian (`integrable_of_poly`, `memLp_two_of_poly`), and the pointwise
-bounds on a body of the analysis (`eR_pR_le`, `yR_le`, `pR_sub_le`, `yR_le_poly`).
+At a round `s ≤ τ` of the context at the parameters, with `e_s`, `pip_s` at `X(z) = μ_s + (1 - λ) A_s z`:
+
+* `mean_L`, `mean_H`: the Gaussian means of `e_s φ` for the directions of LQ and of the Hessian are
+  `⟨s'_s(μ_s), y - μ_s⟩` and `hᵀ s''_s(μ_s) h` (Lemma UB');
+* `var_L`, `var_H`: the second moments of `(e_s, pip_s) φ` against the truncation `T` (Lemma TR);
+* `sumY_le`: `∑_{s ≤ t} E[e_s² + pip_s²] ≤ 9 n` (from `vsum_le`); `intY2_le`: `E[(e_s² + pip_s²)²] ≤ Wb`.
 -/
 
 open MeasureTheory ProbabilityTheory Matrix
@@ -202,7 +204,7 @@ theorem integrable_yR (H : DetBase (df2CtxAt d n δ Kt ap) δ π m) {s : ℕ} (h
     Integrable (yR n δ Kt (π.g s) ((df2CtxAt d n δ Kt ap).st π s)) (gam d) :=
   (memLp_yR H hs).integrable one_le_two
 
-/-- The lemma of the derivatives of the surrogate for the direction of LQ. -/
+/-- Lemma UB' for the direction of LQ. -/
 theorem mean_L (H : DetBase (df2CtxAt d n δ Kt ap) δ π m) {s : ℕ} (hs : s ≤ (df2CtxAt d n δ Kt ap).tau π m) (y : Fin d → ℝ) :
     ∫ z, eR n δ Kt (π.g s) ((df2CtxAt d n δ Kt ap).st π s) z * phiL n δ y ((df2CtxAt d n δ Kt ap).st π s) z ∂(gam d) =
       (df2CtxAt d n δ Kt ap).sGrad π s ⬝ᵥ (y - ((df2CtxAt d n δ Kt ap).st π s).mu) := by
@@ -221,7 +223,7 @@ theorem mean_L (H : DetBase (df2CtxAt d n δ Kt ap) δ π m) {s : ℕ} (hs : s �
   rw [e1, integral_div, hm, mul_div_cancel_left₀ _ h1]
   rfl
 
-/-- The lemma of the derivatives of the surrogate for the direction of the Hessian. -/
+/-- Lemma UB' for the direction of the Hessian. -/
 theorem mean_H (H : DetBase (df2CtxAt d n δ Kt ap) δ π m) {s : ℕ} (hs : s ≤ (df2CtxAt d n δ Kt ap).tau π m) (hf : Df2St d → Fin d → ℝ) :
     ∫ z, eR n δ Kt (π.g s) ((df2CtxAt d n δ Kt ap).st π s) z * phiH n δ hf ((df2CtxAt d n δ Kt ap).st π s) z ∂(gam d) =
       df2Sq ((df2CtxAt d n δ Kt ap).sHess π s) (hf ((df2CtxAt d n δ Kt ap).st π s)) := by
@@ -288,7 +290,7 @@ theorem var_H (H : DetBase (df2CtxAt d n δ Kt ap) δ π m) {s : ℕ} (hs : s �
 /-- `∑_{s ≤ t} E[e_s² + pip_s²] ≤ 9 n` for `t ≤ τ`. -/
 theorem sumY_le (H : DetBase (df2CtxAt d n δ Kt ap) δ π m) {t : ℕ} (ht : t ≤ (df2CtxAt d n δ Kt ap).tau π m) :
     ∑ s ∈ Finset.range (t + 1), ∫ z, yR n δ Kt (π.g s) ((df2CtxAt d n δ Kt ap).st π s) z ∂(gam d) ≤ 9 * n := by
-  have hv := EvGY.vsum_le H.SI d n δ Kt ap π m H.hd H.hn H.hδ0 H.hδ1 H.heps H.hm1 H.hmn H.body (H.hap 0) H.adm t ht
+  have hv := EvGY.vsum_le_of H t ht
   have he0 : 0 < (df2oPar d n δ).eps := H.rows.pos_eps
   have he2 : 0 < (df2oPar d n δ).eps ^ 2 := by positivity
   have hpt : ∀ s ≤ t, ∫ z, yR n δ Kt (π.g s) ((df2CtxAt d n δ Kt ap).st π s) z ∂(gam d) ≤

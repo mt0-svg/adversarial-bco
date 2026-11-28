@@ -1,6 +1,6 @@
 {
   "challenge_module": "AdversarialBco.ChallengeUnified",
-  "solution_module": "AdversarialBco.Unified.Main",
+  "solution_module": "AdversarialBco.UW.TheoremU",
   "theorem_names": [
     "AdversarialBco.theoremUnified",
     "AdversarialBco.Unified.UnifiedSanity.weakMemOracle_exact",

@@ -12,14 +12,11 @@ public import AdversarialBco.Conj1Bit.Sanity
 @[expose] public section
 
 /-!
-# The compiler, part 5: the driver, from rounds to the clauses of the frozen statement
+# The compiler, part 5: the cost of a run, the start state and the costs of a program
 
-* `space_run_le`: along a run, the space grows at most by the cost spent (`space_step_le`).
-* `driver`: a run in a fixed world that reaches a checkpoint within cost `Bp`, and from every checkpoint before round
-  `n` reaches the next checkpoint within cost `Bc` with one more round played, meets the cost clause with
-  `Bp + 2 Bc` and the space clause with `max S0 Sc + Bp + Bc` (`S0` the space of the start, `Sc` that of a checkpoint).
-* `driver_bit`: the same for `runBit` against a strategy, as `CostOKBit` and `SpaceOKBit`, through
-  `Conj1BitSanity.runBit_eq_run`.
+* `step_cost_le`: the cost of a run does not decrease from one step to the next.
+* `zeroState`: the real state the run starts from, with the point `0` (`toE_zero`).
+* `costP`, `costR`: the cost of the prologue and setup, and of a round, in units of `xstepCost`.
 -/
 
 namespace AdversarialBco.Bit.Transfer

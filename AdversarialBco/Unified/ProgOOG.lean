@@ -14,7 +14,7 @@ public import AdversarialBco.Unified.ProgOSplit
 
 In the modes `off` and `guard` BL-O plays the frame centre `a` (`playPtO`), which BL-O's invariant holds in the array
 `aC` in the form of the play leaf (`BLInv.ctr` on `cfgV`). The block `xOG` copies the cells `0, ..., d` of `aC` into
-`aPl`. `progOG : ProgOG`, the contract `SpecOG` of ProgOSplit.lean.
+`aPl`.
 -/
 
 namespace AdversarialBco.Unified.ProgO
@@ -76,43 +76,5 @@ theorem XV.og {L : Layout} {X : XCtx d} {ℓa ℓ : ℕ} (hL : LayOK L d ℓa) {
 
 /-- The constants of `xOG`. -/
 def kOG : BlkK := ⟨20, 1, 0, 0, 64, 32, 32⟩
-
-theorem specOG : SpecOG (fun L => .base (xOG L)) kOG := by
-  intro d R σ0 σ hH hI hmo hA
-  have hNS : sC1 < R.L.NS := by have := hH.room.1; simp only [kOG, sC1] at *; omega
-  have hNN : rk < R.L.NN := by have := hH.room.2.1; simp only [kOG, rk] at *; omega
-  have hNA : aPl < R.L.NA := by have := hH.room.2.2; simp only [kOG, aPl] at *; omega
-  have hdW : d ≤ R.W := by show d ≤ wU d R.n R.δ R.r0 R.R0 R.a; unfold wU; omega
-  have hb : R.bud kOG = 20 * (R.W + R.E + 1) := by simp [RdO.bud, kOG]
-  have hEℓ : R.E < R.ℓ := by have := hH.hℓ; omega
-  have hda : d + 2 < 2 ^ R.ℓa := by have := hH.hℓa; omega
-  obtain ⟨r0, -, -, r3, -⟩ := hI.regs
-  have eN : ∀ j < 8, σ.nat j = σ0.nat j := hA.pers.1
-  have eA : ∀ k, σ.arr aC k = σ0.arr aC k := hA.pers.2.2 aC (by decide)
-  have hℓ2 : ∀ {z : ℤ}, |z| ≤ 2 ^ R.E → |(z : ℝ)| < 2 ^ R.ℓ := fun hz => by
-    have : (2 : ℝ) ^ R.E < 2 ^ R.ℓ := pow_lt_pow_right₀ (by norm_num) hEℓ
-    rw [← Int.cast_abs]
-    exact lt_of_le_of_lt (by exact_mod_cast hz) this
-  have hd1 : 1 ≤ d := hH.inU.hd
-  have hbC : ∀ j ≤ d, |σ.arr aC j| < 2 ^ R.ℓ := fun j hj => by
-    obtain ⟨z, hz, bz⟩ := hI.bnd.2 aC (by decide) j (le_asz hd1 hj)
-    rw [eA, hz]; exact hℓ2 bz
-  refine XVO.mono (XVO.ofX (XV.og hH.lay hNS hNN hNA hH.inU.hd (by rw [eN _ (by decide), r0]) (by rw [eN _ (by decide), r3])
-    hda hbC)) (by rw [hb]; nlinarith) fun σ' ⟨hc, hdr, F⟩ => ?_
-  have hpers : SamePers σ σ' := SamePers.ofFrame F (fun y h => by simp only [SOG] at h; subst h; decide)
-    (fun j h => by rcases h with h | h <;> subst h <;> decide) (fun a k h => by simp only [AOG] at h; subst h; decide)
-  have hplay : R.play = R.c.a := by
-    show playPtO R.w.orc R.c R.mo R.ξ = R.c.a
-    rcases hmo with h | h <;> rw [h] <;> rfl
-  refine ⟨⟨hA.pers.trans hpers, by rw [F.2.2.2.1, hA.rounds], by rw [hdr, hA.draws], fun i => ?_⟩, ?_, ?_⟩
-  · rw [F.2.2.1 aGam i (by simp [AOG, aGam, aPl])]; exact hA.gam i
-  · obtain ⟨D, hD, h0, hj⟩ := hI.ctr
-    refine ⟨D, hD, by rw [hc 0 (Nat.zero_le _), eA, h0], fun j => ?_⟩
-    obtain ⟨x, hx, hq⟩ := hj j
-    exact ⟨x, by rw [hc _ (by omega), eA, hx], by rw [hplay]; exact hq⟩
-  · intro j hj
-    rw [hc j hj]; exact hbC j hj
-
-theorem progOG : ProgOG := ⟨_, _, specOG⟩
 
 end AdversarialBco.Unified.ProgO

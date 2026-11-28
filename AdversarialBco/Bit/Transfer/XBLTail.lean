@@ -17,9 +17,8 @@ public import AdversarialBco.Bit.Transfer.XBLR3
 
 The specification of R15 COMMIT as a named proposition (`ComSpec`, the body of `CommitBL`), the frame of the two
 data commands (`SDat`, `NDat`, `ADat`), the post of a tail (`RPost`), the guard `xG` (`sMode := 1`, from `BLInv` in
-mode `run` to `BLInv` in mode `guard`), the invariant moved to another round, a frame or a larger bound
-(`BLInv.ofPers`, `BLInv.frame`, `BLInv.mono`), and the last tail of the round: R15 COMMIT behind the test of the
-routine's flag (`XV.tCom`).
+mode `run` to `BLInv` in mode `guard`), and the invariant moved to another round, a frame or a larger bound
+(`BLInv.ofPers`, `BLInv.frame`, `BLInv.mono`).
 -/
 
 namespace AdversarialBco.Bit.Transfer.BLM
@@ -130,17 +129,6 @@ theorem BLInv.toGuard {L : Layout} {n m K0 E : ℕ} {cfg : Cfg d} {st : St d} {t
     exact ⟨1, by simp, by rw [abs_one]; exact one_le_pow₀ (by norm_num)⟩
   · rw [e y hy']; exact h.bnd.1 y hy
 
-/-- **The guard on the machine.** -/
-theorem XV.guard {L : Layout} {X : XCtx d} {ℓa ℓ : ℕ} (hL : LayOK L d ℓa) {n m K0 E : ℕ} {cfg : Cfg d}
-    {st : St d} {t : ℕ} {σ : Env d} {P0 : ℕ → EuclideanSpace ℝ (Fin d)}
-    (hI : BLInv L n m K0 E cfg (.run st) t σ) (hp : σ.pts = P0) (hℓ : 1 ≤ ℓ) :
-    XRunsB L X ℓa ℓ (xG L) σ 1 (RPost L n m K0 E cfg .guard t P0) := by
-  have hS := hI.lay.2.1
-  refine XV.mono (XV.sconst hL (x := sMode) (by simp only [nS0, sMode] at hS ⊢; omega) (1 : ℚ) rfl
-    (by rw [Rat.cast_one, abs_one]; exact one_lt_pow₀ (by norm_num) (by omega))) le_rfl fun σ' e => ?_
-  subst e
-  exact ⟨hI.toGuard, by simp [hp]⟩
-
 /-- Small constants fit. -/
 theorem abs_small_lt {ℓ : ℕ} (hℓ : 1 ≤ ℓ) {v : ℤ} (hv : 0 ≤ v ∧ v ≤ 1) : |((v : ℤ) : ℝ)| < 2 ^ ℓ := by
   have h2 : (2 : ℝ) ≤ 2 ^ ℓ := by
@@ -149,44 +137,5 @@ theorem abs_small_lt {ℓ : ℕ} (hℓ : 1 ≤ ℓ) {v : ℤ} (hv : 0 ≤ v ∧ 
   have : |((v : ℤ) : ℝ)| ≤ 1 := by
     rw [abs_le]; exact ⟨by exact_mod_cast (by omega : (-1 : ℤ) ≤ v), by exact_mod_cast hv.2⟩
   linarith
-
-/-! ## R15 COMMIT behind the flag -/
-
-/-- **R15 behind the routine's flag**: the flag `0` leaves for `guard`, the flag `1` commits the new state. -/
-theorem XV.tCom {xcom : Layout → XCmd} {Cc kc : ℕ} (hcom : ComSpec xcom Cc kc) {L : Layout} {X : XCtx d}
-    {ℓa ℓ n m K0 E t : ℕ} {cfg : Cfg d} {st : St d} {σ : Env d} {P0 : ℕ → EuclideanSpace ℝ (Fin d)}
-    {Ap Bp : Matrix (Fin d) (Fin d) ℚ} {bp Gp : Fin d → ℚ} {kp lp : ℚ} {r : Option (Fin d → ℤ)} {e : ℕ}
-    (hd1 : 1 ≤ d) (hL : LayOK L d ℓa) (hlay : BLLay L) (hI : BLInv L n m K0 E cfg (.run st) t σ)
-    (hp : σ.pts = P0)
-    (hA : ∀ i j : Fin d, σ.arr 26 (d * i + j) = qn cfg.par.p (Ap i j) ∧ OnG cfg.par.p (Ap i j) ∧
-      |qn cfg.par.p (Ap i j)| ≤ 2 ^ E)
-    (hB : ∀ i j : Fin d, σ.arr 27 (d * i + j) = qn cfg.par.p (Bp i j) ∧ OnG cfg.par.p (Bp i j) ∧
-      |qn cfg.par.p (Bp i j)| ≤ 2 ^ E)
-    (hb : ∀ j : Fin d, σ.arr 28 j = qn cfg.par.p (bp j) ∧ OnG cfg.par.p (bp j) ∧ |qn cfg.par.p (bp j)| ≤ 2 ^ E)
-    (hG : ∀ j : Fin d, σ.arr 29 j = qn cfg.par.p (Gp j) ∧ OnG cfg.par.p (Gp j) ∧ |qn cfg.par.p (Gp j)| ≤ 2 ^ E)
-    (hk : σ.sc 59 = qn cfg.par.p kp) (hkg : OnG cfg.par.p kp) (hkb : |qn cfg.par.p kp| ≤ 2 ^ E)
-    (hl : σ.sc 63 = qn cfg.par.p lp) (hlg : OnG cfg.par.p lp) (hlb : |qn cfg.par.p lp| ≤ 2 ^ E)
-    (hout : EllOut blkBL r e σ) (hx : ∀ x, r = some x → (∀ j, |x j| ≤ 2 ^ E) ∧ e ≤ E)
-    (hT : Cc * (d + E + 1) ^ kc ≤ ℓ) (hTa : Cc * (d + E + 1) ^ kc < 2 ^ ℓa) (hℓ : 1 ≤ ℓ) :
-    XRunsB L X ℓa ℓ (xifS L sZ oE (xcom L) (xG L)) σ (Cc * (d + E + 1) ^ kc + 3)
-      (RPost L n m K0 E cfg (match r with
-        | none => .guard
-        | some x => .run ⟨false, fun j => (x j : ℚ) / 2 ^ e, Ap, Bp, bp, kp, Gp, lp⟩) t P0) := by
-  have hz : σ.sc sZ = 0 := hI.consts.1
-  have hS := hlay.1
-  have h0 : |σ.sc sZ| < 2 ^ ℓ := by rw [hz]; exact_mod_cast abs_small_lt (v := 0) hℓ (by norm_num)
-  cases r with
-  | none =>
-    have hf : σ.sc oE = 0 := hout
-    exact XV.mono (XV.ifS_f hL (by simp only [oE, sZ] at hS ⊢; omega) (by simp only [oE] at hS ⊢; omega) h0
-      (by rw [hf]; exact_mod_cast abs_small_lt (v := 0) hℓ (by norm_num)) (by rw [hz, hf]; exact lt_irrefl 0)
-      (XV.guard hL hI hp hℓ)) (by omega) fun _ h => h
-  | some x =>
-    have hf : σ.sc oE = 1 := hout.1
-    obtain ⟨bx, he⟩ := hx x rfl
-    exact XV.mono (XV.ifS_t hL (by simp only [oE, sZ] at hS ⊢; omega) (by simp only [oE] at hS ⊢; omega) h0
-      (by rw [hf]; exact_mod_cast abs_small_lt (v := 1) hℓ (by norm_num)) (by rw [hz, hf]; exact one_pos)
-      (hcom d L X ℓa ℓ n m K0 E t cfg st Ap Bp bp Gp kp lp x e σ hd1 hL hlay hI hA hB hb hG hk hkg hkb
-        hl hlg hlb hout bx he hT hTa)) (by omega) fun σ' ⟨hI', _, hF'⟩ => ⟨hI', by rw [hF'.2.2.2.2, hp]⟩
 
 end AdversarialBco.Bit.Transfer.BLM

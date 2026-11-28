@@ -10,24 +10,16 @@ public import AdversarialBco.Bit.BLLink
 @[expose] public section
 
 /-!
-# BL's run record and the frozen interfaces of `RunOK`
+# BL's run record and the frozen interfaces of the run proposition
 
 This file builds BL's run record `blRun R` (`Run` of Bit/ShadowIface.lean) from the pure function of Bit/BLPure.lean,
-the instance `blInst P R` of `BLInst`, and freezes the statements that the proof of `RunOK (blInst P R)` is cut into
-:
+and freezes the statements that the proof of the run proposition of BL is cut into:
 
-* piece A (`BudA`): the enclosure lemma and the precision theorem, the real inequalities `BudOK d n` on
-  the constants of the lemma of the errors of a round (namespace `Bud`);
-* piece B (`BitsB`, `MeasDrawB`): the probability of BL's unsound draws and the measurability of the draw of a round;
+* piece A: the real inequalities `BudOK d n` on the constants of the lemma of the errors of a round (namespace `Bud`);
 * piece C (`RoundC`): one round of BL against one round of P°'s virtual epoch (Lemmas TRACK, TRACK-2, SEL, VAL,
-  GUARD with E1 to E18), deterministic;
-* the requirement `PosTri R` on BL's position routine, for the brick `PosInst`.
+  GUARD with E1 to E18), deterministic.
 
-Piece D proves `RunOK (blInst P R)` from `BLLink P R`, `O3SpecQ R.ap`, `PosLocal R` and these
-statements: the record's `BLMeas`, `BitsHyp`, `EngineHyp` (the induction `IND(t)` over P°'s run,
-through the horizon lemma), and the losses and plays of `RunSpec`.
-
-Two choices of the record, both invisible to `RunOK`:
+Two choices of the record, both invisible to the run proposition:
 
 * the loss parameter of round `t` is BL's history before round `t` in the type `HistQ d` with the discrete
   sigma-field; it is the history itself when that history is measurable at `cσ d t` (which piece B's prefix lemma gives)
@@ -73,7 +65,7 @@ instance : MeasurableSpace (HistQ d) := ⊤
 /-- The empty history. -/
 def histZero : HistQ d := fun _ _ => 0
 
-/-- BL's digit map at `(d, n)`: `BLInst.β` of the instance `blInst`. -/
+/-- BL's digit map at `(d, n)`: `BLInst.β` for BL. -/
 noncomputable def betaR (R : Routines) (d n : ℕ) : (ℕ → ℝ) → ℕ → Bool := Sched.beta d (R.K0 d n) (par d n).B
 
 /-- The noiseless worlds `Z_n`. -/
@@ -545,9 +537,9 @@ structure BudOK (d n : ℕ) : Prop where
   gA : 11 / 10 ^ 35 + Dc d n * (1 + Xi1 d n ^ 2) ≤ 1 / 2
   /-- The coins: `n (⌈d/2⌉ + 1) 2^{-B/2} ≤ 2^{-p-2}`. -/
   coins : n * ((d + 1) / 2 + 1 : ℕ) * (1 / 2 ^ ((par d n).B / 2) : ℝ) ≤ dbits d n
-  /-- The budget of `RunSpec.engine` with `δbits = 2^{-p-2}`, `κ0`, `κ1 = 0`. -/
+  /-- The budget of the engine hypothesis with `δbits = 2^{-p-2}`, `κ0`, `κ1 = 0`. -/
   budget : n * (dbits d n + n * kap0 d n) ≤ 1 / 4
-  /-- `κ0 ≥ 0` (asked by piece D: `RunSpec.engine`). -/
+  /-- `κ0 ≥ 0` (asked by piece D). -/
   kap0_nonneg : 0 ≤ kap0 d n
 
 end Bud
@@ -573,7 +565,7 @@ structure Track (d n : ℕ) (st : St d) (so : Df2St d) (k : ℕ) : Prop where
 /-- Piece C, the play (the tracking lemma and E6): in the setting of `RoundC`, before the round is
 observed, BL's point `X' = μ' + (1 - λ') A' ξ'` is within `X̄` of P°'s `X°_s`. It reads neither the loss nor the
 observation nor the routine of the round, so it holds at every round before the first decoupling (the shift clause of
-`EngineHyp`). -/
+BL's engine hypothesis). -/
 def PlayC : Prop :=
   ∀ (R : Routines) (d n m : ℕ) (A : Matrix (Fin m) (Fin d) ℚ) (b : Fin m → ℚ) (cs : ℕ → Bool)
     (ap : ℕ → ApFun d) (π : Df2Path d) (s : ℕ) (st : St d) (ξ' : Fin d → ℚ),

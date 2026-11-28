@@ -16,11 +16,7 @@ public import AdversarialBco.Bit.ProjBit
 
 Statements of the list FR1 to FR18.
 
-* F0 to F2, the rows: `fr_height` (the height computed from the input), `fr_cleared_row` (a row and its cleared integer
-  row test the same margin), `fr_test_sq` (the row test on squares, F4 step 1), `fr_margin_iff` (FR14: the closed ball
-  `B̄(y, r)` lies in the polytope iff `⟨A_i, y⟩ + r |A_i| ≤ b_i` for every row); at `d = 1`, `fr_d1_signs` (a bounded
-  nonempty polytope has rows of both signs), `fr_d1_readoff` (the polytope is the interval `[lo, hi]`) and
-  `fr_d1_centre` (FR16: the centre and its size, for `hi - lo ≥ 1`).
+* The rows: `fr_test_sq` (the row test on squares, F4 step 1).
 * F3 and F4: `fr_lam_sq` (the blow-up factor `λ`), `fr_mat_step` (the matrix step in integers), `fr_rnd_vec` (the
   centre rounding in vector form), `fr_rnd_ediv` (`⌊(2u + v)/(2v)⌋` is the rounded quotient of the machine).
 * Theorem ELL-F, proof of (b): `fr_det_factor` (the determinant factor), `fr_lmax_step` (the cap on the largest

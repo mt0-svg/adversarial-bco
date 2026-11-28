@@ -14,10 +14,10 @@ public import AdversarialBco.Unified.SepGauge
 
 `xcm d L c` and `xgauge d L g` of `SepCM` and `SepGauge` write the constant `d` into their loop bounds, so their text
 depends on `d`. The blocks `xcmU L c` and `xgaugeU L g` here read `d` from the natural register `0` instead (the
-register `rD` of the machine, which holds `d` throughout): one program text for every `d`. Their contracts
-`CMBlockOKU` and `GaugeBlockOKU` are `CMBlockOK` and `GaugeBlockOK` with `σ.nat 0 = d` in the data, the layouts'
-written naturals away from `0`, and the gauge's test block keeping the register `0` out of its frame. The proofs are
-those of `cmBlockOK` and `gaugeBlockOK`, with one more unit in each preamble.
+register `rD` of the machine, which holds `d` throughout): one program text for every `d`. Their contracts `CMBlockOKU`
+and `GaugeBlockOKU` are the contracts of `xcm` and `xgauge` with `σ.nat 0 = d` in the data, the layouts' written
+naturals away from `0`, and the gauge's test block keeping the register `0` out of its frame. The proofs are those of
+the contracts of `xcm` and `xgauge`, with one more unit in each preamble.
 -/
 
 namespace AdversarialBco.Uni

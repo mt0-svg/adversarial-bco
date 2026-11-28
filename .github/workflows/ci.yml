@@ -134,7 +134,7 @@ jobs:
           if [ "$hits" -eq 0 ]; then r=PASS; else r=FAIL; fi
           printf 'source-scan\tscan of %s/ for sorry, admit and native_decide outside comments\t%s uses\t%s\tlean/source-scan.txt\n' "$ROOT" "$hits" "$r" > verify/results/source-scan.tsv
           [ "$r" = PASS ]
-      - name: The challenges of StatementPoly.lean, StatementBitRAM.lean and StatementConj1*.lean are copies of these files
+      - name: The challenges copy the statement files verbatim
         shell: bash
         run: |
           set -u
@@ -369,7 +369,7 @@ jobs:
           printf 'axioms\tlake env lean code/formal-proof/main_axioms.lean\t%s theorems\t%s\tlean/axioms.txt\n' \
             "$(grep -c 'depends on axioms' axioms.txt)" "$r" > verify/results/axioms.tsv
           [ "$r" = PASS ]
-      # For the badges: the hypotheses of the theorem of config-unified.json and its axioms.
+      # For the badges: the hypotheses of the main theorems of the six configurations and their axioms.
       - name: code/formal-proof/facts.lean
         id: facts
         shell: bash
@@ -394,11 +394,11 @@ jobs:
       matrix:
         include:
           - { config: config-unified.json, out: comparator-unified }
-          - { config: config-unified-lower.json, out: comparator-unified-lower }
-          - { config: config-match.json, out: comparator-match }
+          - { config: config-uw.json, out: comparator-uw }
+          - { config: config-minimax-q.json, out: comparator-minimax-q }
+          - { config: config-matched.json, out: comparator-matched }
           - { config: config-conj1-bit-hp.json, out: comparator-conj1-bit-hp }
           - { config: config-conj1.json, out: comparator-conj1 }
-          - { config: config-conj1-lower-poly.json, out: comparator-conj1-lower-poly }
     env:
       CONFIG: ${{ matrix.config }}
       OUT: ${{ matrix.out }}
@@ -427,8 +427,15 @@ jobs:
         working-directory: .ci/landrun
         run: go build -o landrun cmd/landrun/main.go
 
+      # nanoda checks each declaration on a worker thread with a fixed stack of 16 MiB, which a declaration of the closure
+      # of Theorem UW overflows (a crash, not a rejection); .github/nanoda-stack.patch raises that stack to 256 MiB and
+      # changes nothing else.
       - name: Build nanoda
-        run: cargo install --locked --git https://github.com/ammkrn/nanoda_lib --rev 3a2407216ee84a75f9e1aead6803d0578be06ae7 --root "$RUNNER_TEMP/nanoda"
+        run: |
+          git clone --quiet https://github.com/ammkrn/nanoda_lib "$RUNNER_TEMP/nanoda-src"
+          git -C "$RUNNER_TEMP/nanoda-src" checkout --quiet 3a2407216ee84a75f9e1aead6803d0578be06ae7
+          git -C "$RUNNER_TEMP/nanoda-src" apply "$GITHUB_WORKSPACE/.github/nanoda-stack.patch"
+          cargo install --locked --path "$RUNNER_TEMP/nanoda-src" --root "$RUNNER_TEMP/nanoda"
 
       - name: Set up Lean and fetch the Mathlib cache
         uses: leanprover/lean-action@v1

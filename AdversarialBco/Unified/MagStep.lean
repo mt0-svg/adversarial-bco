@@ -8,7 +8,7 @@ module
 public import AdversarialBco.Unified.MagField
 public import AdversarialBco.Unified.EllOProof
 public import AdversarialBco.Unified.SepGauge
-public import AdversarialBco.Unified.ProgOMag
+public import AdversarialBco.Unified.ProgOSplit
 
 @[expose] public section
 
@@ -136,22 +136,5 @@ theorem apO_abs (orc : (Fin d → ℚ) → ℕ → Bool) (c : CfgO d) (D : CallQ
   have : |((x j : ℝ) / 2 ^ ellExpO (clearO D))| ≤ (D.R : ℝ) := by
     rw [← hR]; exact hj.trans hn
   exact_mod_cast this
-
-/-! ## One round -/
-
-/-- **One round of BL-O keeps the bounds**, on every reading in the clip range. -/
-theorem step_bndO (orc : (Fin d → ℚ) → ℕ → Bool) {c : CfgO d} {T : ℚ} (hc : CfgBO T c) (n : ℕ) {st : St d}
-    {t : ℕ} (hs : StI T c.par.Rint t st) (ξ : Fin d → ℚ) (ζ : ℚ) (o : ℤ) (hξ : ∀ i, |ξ i| ≤ T) (hζ : |ζ| ≤ T)
-    (ho : |(o : ℚ)| ≤ 2 ^ c.qO) {st' : St d} (h : BLO.stepO orc c n (.run st) ξ ζ o = .run st') :
-    StI T c.par.Rint (t + 1) st' := by
-  have hY := Y_bndO orc hc hs ξ ζ o hξ hζ ho
-  have hcb : CfgB T (cfgV c) := hc.cb
-  have hs' : StI T (cfgV c).par.Rint t st := hs
-  simp only [BLO.stepO] at h
-  repeat' (first | split at h | split_ifs at h)
-  all_goals (try (cases h))
-  all_goals first
-    | exact init_bnd (by linarith [hcb.T4]) (Nat.cast_nonneg _) _ hcb.A0 hcb.B0 _
-    | exact commit_bnd hcb hs' ξ hξ _ (apO_abs orc c _ _ ‹_›) _ _ ‹_› _ hY
 
 end AdversarialBco.Unified.MagO

@@ -14,7 +14,7 @@ public import AdversarialBco.StatementUnifiedLower
 
 `bodyU_cube`: the cube `{x | ∀ i, |x i| ≤ 1}` of `E d`, `d ≥ 1`, is compact and convex and lies between the closed
 unit ball about `0` and the closed ball of radius `√d`, so `TheoremLowerU` applies to it with `a = 0`, `r0 = 1`,
-`R0 = √d` (`theoremLowerU_cube`, UnifiedLower/Main.lean).
+`R0 = √d`.
 -/
 
 namespace AdversarialBco.UnifiedLower.Cube

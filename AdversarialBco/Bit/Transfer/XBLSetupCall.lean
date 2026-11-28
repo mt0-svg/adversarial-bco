@@ -11,10 +11,9 @@ public import AdversarialBco.Bit.Transfer.XBLSetupFacts
 @[expose] public section
 
 /-!
-# BL's setup on the machine: the block of FRAME and TRI
+# BL's setup on the machine: the cells of FRAME and TRI
 
-`FrameSpec`: the body of the machine rule of FRAME for a given command and constants. `blkS`: the block of the
-setup's calls of FRAME and TRI, and `SC`, `NC`, `AC` the cells they change. `ptIn_fun`, `posIn_fun`: `PtIn` and
+`SC`, `NC`, `AC`: the cells that the setup's calls of FRAME and TRI change. `ptIn_fun`, `posIn_fun`: `PtIn` and
 `PosIn` as functions of the cells.
 -/
 

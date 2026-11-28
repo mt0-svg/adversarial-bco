@@ -11,13 +11,9 @@ public import AdversarialBco.Poly.Df2EvVSumV
 @[expose] public section
 
 /-!
-# One round up to the stopping time, with a routine per round
+# Df2EvSIRound with a routine per round
 
-At the context `df2CtxAtF d n δ Kt ap` with a routine `ap s` in round `s` (`ap : ℕ → ApFun d`), on a path with the
-hypotheses of DET without the events (`DetBase`), at a round `s ≤ τ`: the continuity, the integrability and the `L²`
-membership of `yR = e² + pip²` under the Gaussian; Lemma UB' for the directions of LQ and of the Hessian (`mean_LV`,
-`mean_HV`); Lemma TR for the same directions (`var_LV`, `var_HV`); `∑_{s ≤ t} E[e_s² + pip_s²] ≤ 9 n` (`sumY_leV`) and
-the fourth moment `E[(e² + pip²)²] ≤ 72 + 25600 (R⁴ + 3 d²)/ε⁴` (`intY2_leV`).
+The section `ctx` of Df2EvSIRound.lean at `df2CtxAtF d n δ Kt ap`, `ap : ℕ → ApFun d`, names suffixed `V`.
 -/
 
 open MeasureTheory ProbabilityTheory Matrix
@@ -145,7 +141,7 @@ theorem var_HV (H : DetBase (df2CtxAtF d n δ Kt ap) δ π m) {s : ℕ} (hs : s 
 /-- `∑_{s ≤ t} E[e_s² + pip_s²] ≤ 9 n` for `t ≤ τ`. -/
 theorem sumY_leV (H : DetBase (df2CtxAtF d n δ Kt ap) δ π m) {t : ℕ} (ht : t ≤ (df2CtxAtF d n δ Kt ap).tau π m) :
     ∑ s ∈ Finset.range (t + 1), ∫ z, yR n δ Kt (π.g s) ((df2CtxAtF d n δ Kt ap).st π s) z ∂(gam d) ≤ 9 * n := by
-  have hv := EvGY.vsum_leV H.SI d n δ Kt ap π m H.hd H.hn H.hδ0 H.hδ1 H.heps H.hm1 H.hmn H.body H.hap H.adm t ht
+  have hv := EvGY.vsum_leV_of H t ht
   have he0 : 0 < (df2oPar d n δ).eps := H.rows.pos_eps
   have he2 : 0 < (df2oPar d n δ).eps ^ 2 := by positivity
   have hpt : ∀ s ≤ t, ∫ z, yR n δ Kt (π.g s) ((df2CtxAtF d n δ Kt ap).st π s) z ∂(gam d) ≤

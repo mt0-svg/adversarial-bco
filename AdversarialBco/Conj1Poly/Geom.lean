@@ -15,23 +15,7 @@ public import Mathlib.Data.Int.NatAbs
 /-!
 # The real-RAM upper bound on a polytope, geometry of a rational polytope
 
-The localisation lemma in the form the proof uses: a compact polytope whose data has height at most `M` lies in the
-closed ball of
-radius `Rloc d m M = (d m M^{2(d+1)})^{d+1}` about `0`. The route avoids the basic-solution argument of Lemma BASIC:
-
-* `extreme_ker` (G1): at an extreme point `x` of the polytope, the rows active at `x` have no common nonzero null
-  vector (else `x ± ε v` stay in the polytope);
-* `clear_den` (G3): a family of `k` rationals of height at most `M` becomes a family of integers of absolute value at
-  most `M^k` on multiplying by the product of the denominators;
-* `gram_det_ne_zero` (G4): the integer Gram matrix `Σ_{i ∈ S} α_i α_iᵀ` of rows with no common nonzero null vector is
-  invertible;
-* `cramer_int_bound` (G2): a solution of an invertible integer system with entries at most `X` has coordinates at most
-  `d! X^d` (Cramer's rule and `Matrix.det_le`);
-* `extreme_norm_le` (G5): an extreme point has norm at most `Rloc d m M` (G1 to G4 on the active rows, cleared row by
-  row: `G x = h` with `G` the Gram matrix of the cleared active rows and `h = Σ β_i α_i`);
-* `polytope_sub_ball` (G6): Krein and Milman (`closure_convexHull_extremePoints`) carries the bound to the polytope.
-
-G1 to G6 are proved here, with the elementary facts on polytopes they use.
+Elementary facts on a rational polytope: it is closed (`isClosed_polytope`) and convex (`convex_polytope`).
 -/
 
 open MeasureTheory Matrix

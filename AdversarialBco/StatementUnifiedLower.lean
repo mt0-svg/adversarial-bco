@@ -103,7 +103,8 @@ any coins, the oracle `orc`), the cost clause `CostOKO` with the bound `B`, the 
 the coin clause `CoinWindowsOK` with the windows `D`, `D'`: three of the four machine clauses of `TheoremUnified`,
 word for word. The space clause `SpaceOKO` is not asked, and `B` is any real: the hypothesis is weaker than the machine
 clauses of `TheoremUnified` (with its `B = C' (d log(2dn/δ) S)^k`), so the claim is stronger, and the program of
-`TheoremUnified` meets it with its own `B`, `D`, `D'` (`corollaryMatch_of_unified_lower` in the sanity module).
+`TheoremUnified` meets it with its own `B`, `D`, `D'` (a corollary in the sanity module of
+release v2.3).
 
 `ClosedLoop P s0 orc n σ loss`: on every coin sequence `cs` and in every round `t < n`, the loss `loss t cs` is the
 loss that `σ` chooses from the points that `P` played in the rounds before `t` in the world of these losses, the noise
@@ -172,12 +173,8 @@ The hypotheses of `TheoremLowerU` hold for every `d`, `n` at the closed unit bal
 constant learner on `Unit` (`lowerU_hyps_satisfiable`); those of `TheoremLowerUProg` hold at the closed unit ball about
 the rational centre `0` with its exact membership oracle and the program of three instructions that plays the point
 `0`, the centre, in every round and reads no coin, with the windows `D = D' = 0`, for every `d`, `n`, `δ` and oracle
-(`progU_hyps_satisfiable`); the empty program fails `MachineOK` (`nil_not_machineOK`). The conclusions are not
-contradictory and carry their content in the constants: at the threshold `0` they hold for every learner and every
-program, against the constant loss `1/2` (`lowerU_zero`, `progU_zero`; the second builds a closed-loop `NoisyAdv`).
-`TheoremLowerU` contains the lower statement of v2.1 on the unit ball (`theoremConj1Lower_of_lowerU`). The Comparator
-configuration config-unified-lower.json certifies them next to the two theorems, from its solution module
-`AdversarialBco.UnifiedLower.Main`.
+(`progU_hyps_satisfiable`). The Comparator configurations config-minimax-q.json and config-matched.json certify these
+two witnesses.
 -/
 
 open MeasureTheory

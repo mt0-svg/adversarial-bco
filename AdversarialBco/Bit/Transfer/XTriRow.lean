@@ -10,14 +10,11 @@ public import AdversarialBco.Bit.Transfer.XTriDraw
 @[expose] public section
 
 /-!
-# TRI-M, the rows of a stage read on demand
+# TRI-M, the rows of a stage: a bound on products
 
-Row `k` of stage `j` into the array `aRow` (cells `0, ..., d - 1`) and its right-hand side `β'` into a slot:
-
-* an input row, `k < m`: the cleared row `frAl A b k` and `frBe A b k * D`, read from the input cells (numerator in the
-  cell `3 + 2 e`, denominator in `4 + 2 e`, `e = (d + 1) k + j`): `xdenProd` (the product of the `d + 1`
-  denominators), `xrowEnt` (the entries), `xrowBeta` (`β'`), `xinRow` (the three);
-* a box row, `k = m + i` or `k = m + d + i`: `± e_i` and `ĉ_i 2^e + 2^j D`, `2^j D - ĉ_i 2^e`.
+Row `k` of stage `j` is read from the input cells (for an input row `k < m`: numerator in the cell `3 + 2 e`,
+denominator in `4 + 2 e`, `e = (d + 1) k + j`). This file holds `prod_range_abs_le`: a product of `N` integers in
+`[1, M]` lies in `[1, M^N]`.
 -/
 
 namespace AdversarialBco.Bit.Transfer

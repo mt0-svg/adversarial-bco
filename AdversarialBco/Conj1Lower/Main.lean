@@ -12,8 +12,8 @@ public import AdversarialBco.Conj1Lower.Top
 /-!
 # The hypotheses of the lower bound on a body between two balls, discharged
 
-`lowerTopInputs`: the hypotheses `Lower.Top.Inputs` of `Lower.Top.lowerBody_of_inputs`, filled with the theorems of
-Moments.lean, Ledger.lean and Info.lean.
+`lowerTopInputs`: the hypotheses `Lower.Top.Inputs` of the lower bound on a body between two balls, filled with the
+theorems of Moments.lean, Ledger.lean and Info.lean.
 -/
 
 open MeasureTheory

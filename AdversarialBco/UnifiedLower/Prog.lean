@@ -31,7 +31,6 @@ Unified/RunFacts.lean. Fix a program `P` that meets `MachineOK` on an input of `
   resp. `D' t` only (M1 with the coin clause of `MachineOK`, `played_coin_dep`), so it is independent of the coins from
   `D t`, resp. `D' t`, on (on the product of fair coins, `coordσ_indep`); and `regretU` of `P` against them is the
   regret of the learner against `σ`, coin sequence by coin sequence.
-* `progU_of_lowerU`: `TheoremLowerU → TheoremLowerUProg`.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -285,31 +284,5 @@ theorem noisyAdv_cl (hσ : σ ∈ StratsLowU K n r0) (hM : MachineOK P K orc s0 
     exact Filter.Eventually.of_forall fun _ => by norm_num
 
 end Real
-
-/-! ## `TheoremLowerUProg` -/
-
-open LowerSanity in
-/-- `TheoremLowerUProg` from `TheoremLowerU`: the learner of the program (Lemma BRIDGE) meets, for each clause, a
-strategy of `StratsLowU`; its closed loop with the program (Lemma REAL) is the environment, and the regrets agree. -/
-theorem progU_of_lowerU (hL : TheoremLowerU) : TheoremLowerUProg := by
-  intro P d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hKc hKv hK1 hK2 orc _ B D D' hM
-  have hs0 : (initU d n δ r0 R0 a).rounds = 0 := rfl
-  have hb := bodyU_of_unified hr0 hr0R a hKc hKv hK1 hK2
-  have hpol := progLearner_isLearner hKv hM hs0
-  obtain ⟨hab, hcm, hcp⟩ := hL d hd n hn (toE a) r0 R0 K hb (ℕ → Bool) _ coinStream inferInstance
-    (progLearner P (initU d n δ r0 R0 a) orc) hpol
-  have mean : ∀ c, LowerMean K n r0 coinStream (progLearner P (initU d n δ r0 R0 a) orc) c →
-      ProgMean P K orc (initU d n δ r0 R0 a) n r0 D D' c := by
-    rintro c ⟨σ, hσ, hint, hge⟩
-    refine ⟨σ, clLoss P (initU d n δ r0 R0 a) orc σ, hσ, closedLoop_cl _ _ _ _ hσ, noisyAdv_cl hσ hM, ?_, ?_⟩
-    · simpa only [regretU_cl] using hint
-    · simpa only [regretU_cl] using hge
-  have prob : ∀ c p, LowerProb K n r0 coinStream (progLearner P (initU d n δ r0 R0 a) orc) c p →
-      ProgProb P K orc (initU d n δ r0 R0 a) n r0 D D' c p := by
-    rintro c p ⟨σ, hσ, hm, hge⟩
-    refine ⟨σ, clLoss P (initU d n δ r0 R0 a) orc σ, hσ, closedLoop_cl _ _ _ _ hσ, noisyAdv_cl hσ hM, ?_, ?_⟩
-    · simpa only [regretU_cl] using hm
-    · simpa only [regretU_cl] using hge
-  exact ⟨fun h1 h2 => ⟨mean _ (hab h1 h2).1, prob _ _ (hab h1 h2).2⟩, mean _ hcm, prob _ _ hcp⟩
 
 end AdversarialBco.UnifiedLower.Prog

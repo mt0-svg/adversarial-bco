@@ -16,8 +16,6 @@ v2.1's R1 (Bit/Transfer/XBLR1.lean) runs BM-INT on the `nBlk d` blocks of the ro
 (`xR1a`) runs the loop body `xR1body` on the blocks `0, ..., nBlk d - 2`, which give `Γ_0, ..., Γ_{d-1}` (block `j`
 gives `Γ_{2j}`, `Γ_{2j+1}`), before the play; R1b (`xR1b`) runs it on the last block `(d + 1)/2 = nBlk d - 1`, which
 gives `Γ_ζ`, after the reading. Both run on the bit machine's language, under `base`.
-
-`progR1a : ProgR1a` and `progR1b : ProgR1b`, the contracts `SpecR1a`, `SpecR1b` of ProgOSplit.lean.
 -/
 
 namespace AdversarialBco.Unified.ProgO
@@ -189,11 +187,6 @@ theorem parO_B_pos (d n : ℕ) (δ : ℚ) : 1 ≤ (parO d n δ).B := by
   show 1 ≤ 2 * (_ + _ + 2)
   omega
 
-/-- A block's facts from BL-O's invariant: `2 p_B ≤ E`. -/
-theorem prec_le_E {R : RdO d} {σ : Env d} (hI : R.Inv σ) : 2 * gsm_prec R.pB ≤ R.E := by
-  obtain ⟨-, -, -, -, c2g, -⟩ := hI.consts
-  exact pow_two_le (hI.sc_abs (y := s2g) (by decide) (by rw [c2g]; push_cast; rfl))
-
 /-- The room of BL's layout from a block's room. -/
 theorem blLay_of {L : Layout} {nS nN nA : ℕ} (h : RoomO L nS nN nA) (hS : oE + 3 ≤ nS) (hN : rEE + 1 ≤ nN)
     (hA : aWE + 2 ≤ nA) : BLLay L :=
@@ -207,62 +200,5 @@ theorem pow3_facts {x : ℕ} (hx : 1 ≤ x) : x ≤ x ^ 3 ∧ x ^ 2 ≤ x ^ 3 �
   refine ⟨?_, Nat.pow_le_pow_right hx (by norm_num), Nat.one_le_pow _ _ hx⟩
   calc x = x ^ 1 := (pow_one x).symm
     _ ≤ x ^ 3 := Nat.pow_le_pow_right hx (by norm_num)
-
-/-- The bit widths and the budget of R1a and R1b from a round's hypotheses. -/
-theorem r1_widths {R : RdO d} {σ : Env d} (hH : R.Hyp kR1 (R.bud kR1)) (hI : R.Inv σ) :
-    4 * gsm_prec R.pB + 2 < 2 ^ R.ℓa ∧ 4 * gsm_prec R.pB + 4 ≤ R.ℓ ∧ d + 2 < 2 ^ R.ℓa ∧
-      r1aUnits d R.pB ≤ R.bud kR1 ∧ bmUnits R.pB + 18 ≤ R.bud kR1 := by
-  have hg := prec_le_E hI
-  have hdW : d ≤ R.W := by show d ≤ wU d R.n R.δ R.r0 R.R0 R.a; unfold wU; omega
-  set x := R.W + R.E + 1 with hx
-  have hx1 : 1 ≤ x := by omega
-  obtain ⟨p1, p2, p3⟩ := pow3_facts hx1
-  have hb : R.bud kR1 = 400 * x ^ 3 := rfl
-  have hEx : R.E + 1 ≤ x := by omega
-  have hgx : gsm_prec R.pB + 1 ≤ x := by omega
-  have hbm : bmUnits R.pB ≤ 300 * x ^ 2 :=
-    (bmUnits_le _).trans (Nat.mul_le_mul_left _ (Nat.pow_le_pow_left hgx 2))
-  have hnb : Bit.Sched.nBlk d - 1 ≤ x := by unfold Bit.Sched.nBlk; omega
-  have hr1 : r1aUnits d R.pB ≤ 400 * x ^ 3 := by
-    unfold r1aUnits
-    have : (Bit.Sched.nBlk d - 1) * (bmUnits R.pB + 18) ≤ x * (300 * x ^ 2 + 18) :=
-      Nat.mul_le_mul hnb (by omega)
-    have e : x * (300 * x ^ 2 + 18) = 300 * x ^ 3 + 18 * x := by ring
-    omega
-  have hK1 : 4 * gsm_prec R.pB + 4 ≤ R.bud kR1 := by rw [hb]; omega
-  have hd : d + 2 < R.bud kR1 := by rw [hb]; omega
-  exact ⟨by have := hH.hℓa; omega, hK1.trans hH.hℓ, lt_of_lt_of_le hd (le_of_lt hH.hℓa), hr1.trans_eq hb.symm,
-    by rw [hb]; omega⟩
-
-/-! ## The two contracts -/
-
-theorem specR1a : SpecR1a (fun L => .base (xR1a L)) kR1 := by
-  intro d R σ hH hI
-  obtain ⟨w1, w2, w3, w4, -⟩ := r1_widths hH hI
-  obtain ⟨r0, -, -, r3, -, -, r6, r7⟩ := hI.regs
-  obtain ⟨c0, -⟩ := hI.consts
-  refine XVO.mono (XVO.ofX (XV.r1a hH.lay (blLay_of hH.room le_rfl le_rfl le_rfl) (cs := R.w.cs) rfl
-    (parO_B_pos _ _ _) r7 r0 r3 r6 c0 hI.draws w1 w2 w3)) w4 fun σ' ⟨hg, hd, F⟩ => ?_
-  exact ⟨SamePers.ofFrame F (fun y h => by simp only [SR1a] at h; uomega) (fun j h => by simp only [NR1a] at h; uomega)
-    (fun a k h => by simp only [AR1] at h; uomega), by rw [F.2.2.2.1, hI.rounds], hd, hg⟩
-
-theorem specR1b : SpecR1b (fun L => .base (xR1b L)) kR1 := by
-  intro d R σ0 σ hH hI hP hdr
-  obtain ⟨w1, w2, w3, -, w5⟩ := r1_widths hH hI
-  obtain ⟨r0, -, -, r3, -, -, r6, r7⟩ := hI.regs
-  obtain ⟨c0, -⟩ := hI.consts
-  have eN : ∀ j < 8, σ.nat j = σ0.nat j := hP.1
-  refine XVO.mono (XVO.ofX (XV.r1b hH.lay (blLay_of hH.room le_rfl le_rfl le_rfl) (cs := R.w.cs) rfl
-    (parO_B_pos _ _ _) (by rw [eN _ (by decide), r7]; rfl) (by rw [eN _ (by decide), r0]) (by rw [eN _ (by decide), r3])
-    (by rw [eN _ (by decide), r6]) (by rw [hP.2.1 _ (by decide), c0]) hdr w1 w2 w3)) w5 fun σ' ⟨hz, hd, F⟩ => ?_
-  refine ⟨hz, F.2.2.2.1, hd, (FrameC.ofA F).mono (fun y h => ?_) (fun j h => ?_) (fun _ _ h => h.elim)⟩
-  · rcases h with h | h
-    · exact Or.inl h
-    · exact Or.inr (by simp only [oBM, tR] at h ⊢; omega)
-  · simp only [NR1a, NScr] at h ⊢; uomega
-
-theorem progR1a : ProgR1a := ⟨_, _, specR1a⟩
-
-theorem progR1b : ProgR1b := ⟨_, _, specR1b⟩
 
 end AdversarialBco.Unified.ProgO

@@ -13,9 +13,8 @@ public import AdversarialBco.Unified.Sanity
 /-!
 # Sanity checks of the statements `TheoremLowerU` and `TheoremLowerUProg` (StatementUnifiedLower.lean)
 
-The theorems stated in the challenge (ChallengeUnifiedLower.lean) next to `theoremLowerU` and `theoremLowerUProg` are
-proved here under the same names, and Comparator checks them against it next to the two theorems
-(config-unified-lower.json).
+The witnesses `lowerU_hyps_satisfiable` and `progU_hyps_satisfiable` are certified by Comparator in the configurations
+config-minimax-q.json and config-matched.json, against the challenges ChallengeMinimaxQ.lean and ChallengeMatched.lean.
 
 * The hypotheses of `TheoremLowerU` hold for every `d` and `n` at the closed unit ball about `0` with the constant
   learner on `Unit` (`lowerU_hyps_satisfiable`).
@@ -23,15 +22,7 @@ proved here under the same names, and Comparator checks them against it next to 
   centre `0`, with its exact membership oracle, and for the program of three instructions `M (-1) := -2`,
   `play (-1)`, `jmp 1`, which plays the point `0` (the centre; the denominator cell `-2` holds `0`) in every round
   and reads no coin, with the windows `D = D' = 0`, on every world and for every oracle (`progU_hyps_satisfiable`).
-* `MachineOK` is not met for free: the empty program fails it on every input with `n ≥ 1` (`nil_not_machineOK`).
-* The conclusions are consistent, and their content is in the constants: at the threshold `0`, against the constant
-  loss `1/2`, they hold for every learner (`lowerU_zero`) and for every program, with a closed-loop environment of
-  `TheoremUnified` on the coin space (`progU_zero`).
-* Every body of `TheoremUnified` is a body of `BodyU` (`bodyU_of_unified`), and `TheoremLowerU` contains the lower
-  statement of v2.1 on the unit ball (`theoremConj1Lower_of_lowerU`).
-* Corollary MATCH: `TheoremUnified` and `TheoremLowerUProg` give `CorollaryMatch`
-  (`corollaryMatch_of_unified_lower`), whose upper part is `TheoremUnified` word for word
-  (`theoremUnified_of_corollaryMatch`).
+* Every body of `TheoremUnified` is a body of `BodyU` (`bodyU_of_unified`).
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -43,26 +34,6 @@ open RealRAM (Strategy Strats regretPts)
 open Lower (Learner IsLearnerAd regretAd)
 
 /-! ## The constant loss -/
-
-/-- The regret against a constant loss is `0` on a nonempty `K`. -/
-theorem regretPts_const {d : ℕ} {K : Set (E d)} (hne : K.Nonempty) (c : ℝ) (x : ℕ → E d) (n : ℕ) :
-    regretPts K (fun _ _ => c) x n = 0 := by
-  unfold regretPts
-  rw [show (fun y : E d => ∑ t ∈ Finset.range n, (fun (_ : ℕ) (_ : E d) => c) t y) =
-      fun _ => ∑ t ∈ Finset.range n, c from rfl, hne.image_const, csInf_singleton, sub_self]
-
-/-- The constant strategy `1/2`. -/
-noncomputable def halfStrat (d : ℕ) : Strategy d := fun _ _ _ _ => 1 / 2
-
-/-- The constant strategy `1/2` is a strategy of the lower bound on every convex `K`, at every inner radius
-`r0 > 0`. -/
-theorem halfStrat_mem {d : ℕ} {K : Set (E d)} (hK : Convex ℝ K) (n : ℕ) {r0 : ℝ} (hr0 : 0 < r0) :
-    halfStrat d ∈ StratsLowU K n r0 := by
-  refine ⟨fun t _ => ⟨fun x o => ⟨convexOn_const _ hK, fun y _ => ⟨by norm_num [halfStrat], by norm_num [halfStrat]⟩⟩,
-    fun y _ => measurable_const⟩, fun t _ x o o' => ⟨rfl, fun y _ => ⟨by norm_num [halfStrat],
-      by norm_num [halfStrat]⟩, fun y z => ?_⟩⟩
-  simp only [halfStrat, sub_self, abs_zero]
-  positivity
 
 /-- The constant loss `c ∈ [0, 1]` with zero noise on the coin space is a noisy adversary, for every convex `K`, every
 `n` and all windows. -/
@@ -113,19 +84,6 @@ theorem lowerU_hyps_satisfiable (d n : ℕ) :
       IsLearnerAd (Metric.closedBall (0 : E d) 1) n (fun _ _ _ _ => 0 : Learner Unit d) :=
   ⟨⟨one_pos, le_rfl, isCompact_closedBall _ _, convex_closedBall _ _, subset_rfl, subset_rfl⟩, inferInstance,
     fun _ _ => ⟨measurable_const, fun _ _ _ => Metric.mem_closedBall_self zero_le_one⟩⟩
-
-/-- The conclusions of `TheoremLowerU` hold at the threshold `0`, with probability `1`, for every learner on a convex
-nonempty `K` and every `r0 > 0`: against the constant loss `1/2` the regret is `0`. -/
-theorem lowerU_zero {d : ℕ} {K : Set (E d)} (hK : Convex ℝ K) (hne : K.Nonempty) (n : ℕ) {r0 : ℝ} (hr0 : 0 < r0)
-    {Ω : Type} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasure μ] (pol : Learner Ω d) :
-    LowerMean K n r0 μ pol 0 ∧ LowerProb K n r0 μ pol 0 1 := by
-  have h0' : ∀ ω, regretAd K (halfStrat d) (fun t => pol t ω) n = 0 := fun _ => regretPts_const hne _ _ _
-  have h0 : (fun ω => regretAd K (halfStrat d) (fun t => pol t ω) n) = fun _ => 0 := funext h0'
-  refine ⟨⟨halfStrat d, halfStrat_mem hK n hr0, ?_, ?_⟩, ⟨halfStrat d, halfStrat_mem hK n hr0, ?_, ?_⟩⟩
-  · rw [h0]; exact integrable_const _
-  · rw [h0]; simp
-  · rw [h0]; exact measurable_const
-  · simp [h0']
 
 /-! ## `TheoremLowerUProg` -/
 
@@ -269,28 +227,6 @@ theorem progU_hyps_satisfiable (d n : ℕ) (δ : ℚ) :
   · rw [(hF k).1]
     exact ⟨fun _ => le_rfl, fun _ => le_rfl, fun _ => le_rfl⟩
 
-/-- The empty program never plays, so it fails `MachineOK` on every input with `n ≥ 1`, for every convex `K`. -/
-theorem nil_not_machineOK {d : ℕ} {K : Set (E d)} (hK : Convex ℝ K) (orc : (Fin d → ℚ) → ℕ → Bool) (s0 : State d)
-    (n : ℕ) (B : ℝ) (D D' : ℕ → ℕ) (h0 : s0.rounds < n) : ¬ MachineOK [] K orc s0 n B D D' := fun h =>
-  nil_not_costOKO _ s0 n B h0 (h (fun _ _ => 0) (fun _ => 0) (fun _ => false) fun _ _ => admLoss_zero hK).1
-
-/-- The conclusions of `TheoremLowerUProg` hold at the threshold `0`, with probability `1`, for every program on a
-convex nonempty `K` and every `r0 > 0`: the constant loss `1/2` is a strategy of `StratsLowU` in closed loop with any
-program, with zero noise it is a noisy adversary with any windows, and the regret against it is `0`. -/
-theorem progU_zero {d : ℕ} (P : List InstrO) {K : Set (E d)} (hK : Convex ℝ K) (hne : K.Nonempty)
-    (orc : (Fin d → ℚ) → ℕ → Bool) (s0 : State d) (n : ℕ) {r0 : ℝ} (hr0 : 0 < r0) (D D' : ℕ → ℕ) :
-    ProgMean P K orc s0 n r0 D D' 0 ∧ ProgProb P K orc s0 n r0 D D' 0 1 := by
-  have hcl : ClosedLoop P s0 orc n (halfStrat d) (fun _ _ _ => 1 / 2) := fun _ _ _ => rfl
-  have hN := noisyAdv_const hK n D D' (c := 1 / 2) (by norm_num) (by norm_num)
-  have h0 : (fun cs => regretU P K n s0 (envWorld orc id (fun _ _ _ => (1 / 2 : ℝ)) (fun _ _ => 0) cs)) =
-      fun _ => 0 := funext fun _ => regretPts_const hne _ _ _
-  refine ⟨⟨halfStrat d, fun _ _ _ => 1 / 2, halfStrat_mem hK n hr0, hcl, hN, ?_, ?_⟩,
-    ⟨halfStrat d, fun _ _ _ => 1 / 2, halfStrat_mem hK n hr0, hcl, hN, ?_, ?_⟩⟩
-  · rw [h0]; exact integrable_const _
-  · rw [h0]; simp
-  · rw [h0]; exact measurable_const
-  · simp [regretU, regretPts_const hne, envWorld]
-
 /-! ## The bodies and Corollary MATCH -/
 
 /-- Every body of `TheoremUnified` (rational centre and radii) is a body of `BodyU`. -/
@@ -298,36 +234,5 @@ theorem bodyU_of_unified {d : ℕ} {r0 R0 : ℚ} (h0 : 0 < r0) (h1 : r0 ≤ R0) 
     (hK : IsCompact K) (hc : Convex ℝ K) (hb1 : Metric.closedBall (toE a) (r0 : ℝ) ⊆ K)
     (hb2 : K ⊆ Metric.closedBall (toE a) (R0 : ℝ)) : BodyU K (toE a) r0 R0 :=
   ⟨by exact_mod_cast h0, by exact_mod_cast h1, hK, hc, hb1, hb2⟩
-
-/-- `TheoremLowerU` contains the lower statement of v2.1 (`TheoremConj1Lower`, StatementConj1Lower.lean): its clause (a)
-on the closed unit ball about `0` (`r0 = R0 = 1`), whose strategies are `1/4`-Lipschitz on all of `E d`, hence on the
-ball. -/
-theorem theoremConj1Lower_of_lowerU : TheoremLowerU → TheoremConj1Lower := by
-  intro h d hd n hn Ω _ μ hμ pol hpol
-  have hn1 : 1 ≤ n := le_trans (Nat.one_le_pow _ _ (by omega)) hn
-  obtain ⟨σ, hσ, hint, hmean⟩ :=
-    ((h d (by omega) n hn1 0 1 1 _ (lowerU_hyps_satisfiable d n).1 Ω _ μ hμ pol hpol).1 hd hn).1
-  refine ⟨σ, ⟨hσ.1, fun t ht x o o' => ⟨(hσ.2 t ht x o o').1, fun y _ z _ => ?_⟩⟩, hint, hmean⟩
-  have := (hσ.2 t ht x o o').2.2 y z
-  rwa [mul_one] at this
-
-/-- Corollary MATCH from the two theorems: the program of `TheoremUnified` meets `MachineOK` with its own bound and
-windows, so `TheoremLowerUProg` applies to it, in environments of its own class. -/
-theorem corollaryMatch_of_unified_lower : TheoremUnified → TheoremLowerUProg → CorollaryMatch := by
-  rintro ⟨P, C, C', k, D, D', hU⟩ hL
-  refine ⟨P, C, C', k, D, D', fun d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hK hc hb1 hb2 orc horc => ?_⟩
-  have h := hU d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hK hc hb1 hb2 orc horc
-  have hM : MachineOK P K orc (initU d n δ r0 R0 a) n
-      (C' * ((d : ℝ) * Real.log (2 * d * n / (δ : ℝ)) * sizeU δ r0 R0 a) ^ k) (D d n δ r0 R0 a)
-      (D' d n δ r0 R0 a) :=
-    fun f noise cs hf => ⟨(h.1 f noise cs hf).1, (h.1 f noise cs hf).2.2.1, (h.1 f noise cs hf).2.2.2⟩
-  exact ⟨h.1, h.2, hL P d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hK hc hb1 hb2 orc horc _ _ _ hM⟩
-
-/-- The upper part of `CorollaryMatch` is `TheoremUnified` word for word. -/
-theorem theoremUnified_of_corollaryMatch : CorollaryMatch → TheoremUnified := by
-  rintro ⟨P, C, C', k, D, D', h⟩
-  exact ⟨P, C, C', k, D, D', fun d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hK hc hb1 hb2 orc horc =>
-    ⟨(h d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hK hc hb1 hb2 orc horc).1,
-      (h d hd n hn δ r0 R0 hδ0 hδ1 hr0 hr0R a K hK hc hb1 hb2 orc horc).2.1⟩⟩
 
 end AdversarialBco.UnifiedLower.LowerSanity

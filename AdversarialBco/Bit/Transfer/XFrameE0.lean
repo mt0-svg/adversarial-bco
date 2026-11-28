@@ -10,11 +10,10 @@ public import AdversarialBco.Bit.Transfer.XFrame1
 @[expose] public section
 
 /-!
-# Procedure FRAME on the machine for `d ≥ 2`: `M̂` and `e_R`
+# Procedure FRAME on the machine for `d ≥ 2`: powers and products
 
-`xmhScan` computes `M̂ = frMhat A b` from the input cells of `ctxOf`, as the largest `|cell|` over the cells of the
-rows, at least `1` (`frMhat_cells`). `xpowS` is the power `x^k` by `k` products. `xfrE0` then computes
-`e_R = frER d m M̂` in a register, with `j = 1` and `λ = e_R + 1`, the registers that `xellSetR` reads.
+`xpowS` is the power `x^k` by `k` products, with its rule `XV.powS` (`pow_le_two_pow` bounds `v^j` for `0 ≤ v ≤ 2^E`),
+and `XV.mulIA` is the rule of the product of two cells.
 -/
 
 namespace AdversarialBco.Bit.Transfer
